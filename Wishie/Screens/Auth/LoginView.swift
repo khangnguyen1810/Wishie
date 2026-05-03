@@ -20,8 +20,6 @@ struct LoginView: View {
     @State private var isValidEmail: Bool = true
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var viewModel: AuthViewModel
-    
-    
     @FocusState private var focusedField: InputFieldType?
     
     
@@ -87,13 +85,13 @@ struct LoginView: View {
                     focusedField = nil
                 }
                 .padding(.bottom, 15)
-            Button {
-                // forgot password
-            } label: {
+            NavigationLink(
+                destination: ForgotPasswordView().navigationBarBackButtonHidden(),
+                label: {
                 Text("Forgot my password...")
                     .font(.wishies(.light, 14))
                     .foregroundStyle(.black)
-            }
+            })
             .frame(maxWidth: .infinity, alignment: .trailing)
             Button(action: {
                 viewModel.login(email: email, password: password)

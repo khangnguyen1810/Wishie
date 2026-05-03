@@ -1,5 +1,13 @@
+//
+//  GiftProgressView.swift
+//  Wishie
+//
+//  Created by Khang Huu Nguyen on 13/12/25.
+//
+
+import SwiftUI
 struct GiftProgressView: View {
-    var progress: CGFloat
+    var progress: Double
     
     var body: some View {
         ZStack {

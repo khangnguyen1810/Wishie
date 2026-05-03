@@ -10,7 +10,7 @@ import Combine
 import FirebaseAuth
 final class AuthViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
-    private let authService = AuthenticateService.shared
+    private let authService: AuthenticateServiceProtocol
     @Published var email: String = ""
     @Published var password: String = ""
     @Published var isLoggedIn: Bool = false
@@ -20,7 +20,11 @@ final class AuthViewModel: ObservableObject {
     @Published var errorMessage: String = ""
     @Published var isShowProgress: Bool = false
     @Published var request = SignUpRequest()
-    init() {
+    @Published var userInfo = UserModel(dictionary: [:])
+    @Published var isSentEmail: Bool = false
+    @Published var forgotenEmail: String = ""
+    init(authService: AuthenticateServiceProtocol = AuthenticateService()) {
+        self.authService = authService
         checkToken()
     }
     func checkToken() {
@@ -76,12 +80,38 @@ final class AuthViewModel: ObservableObject {
                 isLoggedIn = true
             }
             .store(in: &cancellables)
-
+        
     }
     func logOut() {
         self.isShowProgress = true
         UserDefaults.standard.removeObject(forKey: userid)
         isLoggedIn = false
         self.isShowProgress = false
+    }
+    
+    @MainActor
+    func getUserInfo() async {
+        do {
+            guard let result = try await authService.getUserInfo() else { return }
+            self.userInfo = result
+        } catch {
+            print(error.localizedDescription)
+        }
+    }
+    
+    func forgotPassword() {
+        authService.resetPassword(forgotenEmail)
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                switch completion {
+                case .finished:
+                    break
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            } receiveValue: { [weak self]success in
+                self?.isSentEmail = success
+            }
+            .store(in: &cancellables)
     }
 }

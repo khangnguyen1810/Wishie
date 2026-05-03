@@ -12,11 +12,12 @@ import Combine
 protocol AuthenticateServiceProtocol {
     func login(_ email: String, _ password: String) -> AnyPublisher<AuthDataResult?, Error>
     func signUp(_ signUpRequest: SignUpRequest) -> AnyPublisher<FirebaseAuth.AuthDataResult?, Error>
+    func resetPassword(_ email: String) -> AnyPublisher<Bool, Error>
+    func getUserInfo() async throws -> UserModel?
 }
 class AuthenticateService: AuthenticateServiceProtocol {
     private let db = Firestore.firestore()
     private var auth = Auth.auth()
-    public static var shared = AuthenticateService()
     func login(_ email: String, _ password: String) -> AnyPublisher<AuthDataResult?, Error> {
         return Future<AuthDataResult?, Error> { [weak self] promise in
             guard let self else { return }
@@ -63,5 +64,33 @@ class AuthenticateService: AuthenticateServiceProtocol {
             }
         }
         .eraseToAnyPublisher()
+    }
+    func resetPassword(_ email: String) -> AnyPublisher<Bool, Error> {
+        return Future<Bool, Error> { [weak self] promise in
+            guard let self else { return }
+            self.auth.sendPasswordReset(withEmail: email) { error in
+                if let error = error {
+                    promise(.failure(error))
+                } else {
+                    promise(.success(true))
+                }
+            }
+        }
+        .eraseToAnyPublisher()
+    }
+    func getUserInfo() async throws -> UserModel? {
+        guard let userId = UserDefaults.standard.string(forKey: "userid") else {
+            return nil
+        }
+        
+        let userDoc = try? await db
+            .collection("users")
+            .document(userId)
+            .getDocument()
+        
+        guard let data = userDoc?.data() else {
+            return nil
+        }
+        return UserModel(dictionary: data)
     }
 }

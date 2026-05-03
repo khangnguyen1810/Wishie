@@ -1,3 +1,11 @@
+//
+//  QRCodeGenerator.swift
+//  Wishie
+//
+//  Created by Khang Huu Nguyen on 21/1/26.
+//
+
+
 import CoreImage
 import CoreImage.CIFilterBuiltins
 import UIKit

@@ -51,32 +51,25 @@ struct LoginOrSignUpScreen: View {
                     Text("Wishie")
                         .font(.wishies(.bold, 30))
                         .foregroundStyle(.white)
-                    Button {
+                    WishieButton(
+                        title: "Login",
+                        enabled: true,
+                        width: UIScreen.main.bounds.width * 0.9
+                    ) {
                         path.append("login")
-                    } label: {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(.lightYellow)
-                                .frame(width: UIScreen.main.bounds.width*0.9, height: 60)
-                            Text("Login")
-                                .font(.wishies(.bold, 20))
-                                .foregroundStyle(.black)
-                        }
                     }
-                    Button {
+                    WishieButton(
+                        title: "Sign up",
+                        enabled: true,
+                        filColor: .black,
+                        titleColor: .lightYellow,
+                        width: UIScreen.main.bounds.width * 0.9
+                    ) {
                         path.append("signup")
-                    } label: {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(.lightYellow)
-                                .frame(width: UIScreen.main.bounds.width*0.9, height: 60)
-                            Text("Sign up")
-                                .font(.wishies(.bold, 20))
-                                .foregroundStyle(.black)
-                        }
                     }
                 }
                 .padding(.bottom,50)
+               
             }
             .navigationDestination(for: String.self) { path in
                 switch(path) {
@@ -93,7 +86,6 @@ struct LoginOrSignUpScreen: View {
                 }
             }
         }
-        
     }
 }
 struct BackgroundAnimationView: View {
@@ -114,7 +106,6 @@ struct BackgroundAnimationView: View {
             }
             .offset(x: xOffset)
             .onAppear {
-                // tổng chiều dài một vòng
                 totalWidth = (imageWidth + spacing) * CGFloat(listImage.count)
                 startInfiniteScroll(width: totalWidth)
             }

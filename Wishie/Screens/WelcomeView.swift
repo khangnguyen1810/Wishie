@@ -31,7 +31,8 @@ struct WelcomeView: View {
                         ZStack {
                             RoundedRectangle(cornerRadius: 15)
                                 .fill(.lightYellow)
-                                .frame(width: .infinity, height: 60)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 60)
                             Text("Let's get started")
                                 .font(.wishies(.bold, 20))
                                 .foregroundStyle(.black)

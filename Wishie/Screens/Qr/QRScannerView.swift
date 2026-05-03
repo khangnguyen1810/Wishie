@@ -1,3 +1,11 @@
+//
+//  QRScannerView.swift
+//  Wishie
+//
+//  Created by Khang Huu Nguyen on 26/1/26.
+//
+
+
 import SwiftUI
 
 struct QRScannerView: UIViewControllerRepresentable {

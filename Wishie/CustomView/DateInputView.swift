@@ -7,22 +7,25 @@
 
 import SwiftUI
 struct DateInputView: View {
+    var isCreating: Bool
     @State private var dateOfBirth = Date()
+    @Binding var date: Date
     @State private var showPicker = false
-    
     private var day: String {
-        let day = Calendar.current.component(.day, from: dateOfBirth)
+        let day = Calendar.current.component(
+            .day,
+            from: isCreating ? dateOfBirth : date
+        )
         return String(format: "%02d", day)
     }
     private var month: String {
-        let month = Calendar.current.component(.month, from: dateOfBirth)
+        let month = Calendar.current.component(.month, from: isCreating ? dateOfBirth : date)
         return String(format: "%02d", month)
     }
     private var year: String {
-        let year = Calendar.current.component(.year, from: dateOfBirth)
+        let year = Calendar.current.component(.year, from: isCreating ? dateOfBirth : date)
         return "\(year)"
     }
-    @Binding var date: Date
     var combinedDate: Date? {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd/MM/yyyy"

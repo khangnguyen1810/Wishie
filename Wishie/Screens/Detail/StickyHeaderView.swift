@@ -1,5 +1,5 @@
 //
-//  BaseAppLayoutView.swift
+//  StickyHeaderView.swift
 //  Wishie
 //
 //  Created by Khang Huu Nguyen on 18/3/26.
@@ -11,12 +11,17 @@ import SwiftUI
 
 struct StickyHeaderView<Content: View>: View {
     @State private var offsetY: CGFloat = 0
+    @State private var measuredHeight: CGFloat = 0
+    @Binding var isSharing: Bool
+    var headerBgColor: String = ""
+    var buttonColor: String = ""
     var titlePage: String
     var iconTitlePage: String?
     var wishlistTitle: String?
     var owner: String?
     let backAction: () -> Void
     @ViewBuilder let content: () -> Content
+    
     var body: some View {
         ZStack {
             GeometryReader { proxy in
@@ -24,7 +29,11 @@ struct StickyHeaderView<Content: View>: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     
                     VStack (spacing: 0) {
-                        headerView(safeArea)
+                        headerView(
+                            safeArea,
+                            headerColor: headerBgColor,
+                            buttonColor: buttonColor
+                        )
                             .zIndex(1)
                             .offset(y: -offsetY)
                         content()
@@ -33,7 +42,8 @@ struct StickyHeaderView<Content: View>: View {
                         Spacer()
                     }
                     .offset(coordinateSpace: .named("SCROLL")) { offset in
-                        offsetY = offset
+                     
+                        offsetY = min(offset, 0)
                     }
                 }
                 .coordinateSpace(name: "SCROLL")
@@ -43,7 +53,7 @@ struct StickyHeaderView<Content: View>: View {
         .ignoresSafeArea()
     }
     @ViewBuilder
-    func headerView(_ safeAreaTop: CGFloat) -> some View {
+    func headerView(_ safeAreaTop: CGFloat, headerColor: String = "#FEF3D7", buttonColor: String = "#F1D790") -> some View {
         let progress = -(offsetY / 80) > 1 ? -1 : (offsetY > 0 ? 0 : (offsetY / 80))
         let headerHeight: CGFloat = 200
         let minVisibleHeight: CGFloat = 130 + safeAreaTop
@@ -51,7 +61,7 @@ struct StickyHeaderView<Content: View>: View {
             ZStack {
                 HStack {
                     Circle()
-                        .fill(.lightYellow)
+                        .fill(Color(hex: buttonColor))
                         .frame(width: 40, height: 40)
                         .overlay(content: {
                             Image("back_icon")
@@ -63,6 +73,19 @@ struct StickyHeaderView<Content: View>: View {
                             backAction()
                         }
                     Spacer()
+                    Circle()
+                        .fill(Color(hex: buttonColor))
+                        .frame(width: 40, height: 40)
+                        .overlay(content: {
+                            Image("share")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 17)
+                        })
+                        .onTapGesture {
+                            
+                            isSharing = true
+                        }
                 }
                 .padding(.horizontal)
                 Text(titlePage)
@@ -76,20 +99,33 @@ struct StickyHeaderView<Content: View>: View {
                     .font(.wishies(.bold, 25))
                     .foregroundStyle(.black)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .lineLimit(2)
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear
+                                .preference(
+                                    key: TextHeightKey.self,
+                                    value: geo.size.height
+                                )
+                        }
+                    )
+                    .onPreferenceChange(TextHeightKey.self) { height in
+                        measuredHeight = height
+                    }
                 Text("by \(owner ?? "owner's name")")
                     .font(.wishies(.light, 15))
                     .foregroundStyle(.black)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.top,30)
+            .padding(.top, 30 )
             .padding(.horizontal,15)
             .offset(y: max(offsetY, -(headerHeight - minVisibleHeight)))
         }
-        .frame(height: headerHeight)
+        .frame(height: measuredHeight > 30 ? headerHeight + 30 : headerHeight)
         .padding(.top, safeAreaTop + 20)
         .background {
             InverseRoundedRectangle(radius: 30, )
-                .fill(.lightYellow1)
+                .fill(Color(hex: headerColor))
                 .padding(.bottom, -progress * 65)
         }
     }
@@ -130,7 +166,7 @@ struct InverseRoundedRectangle: Shape {
         
         path.addQuadCurve(to: CGPoint(x: radius, y: rect.height - radius),
                           control: CGPoint(x: 0, y: rect.height - radius))
-    
+        
         path.addLine(to: CGPoint(x: rect.width - radius, y: rect.height - radius))
         path.addQuadCurve(to: CGPoint(x: rect.width, y: rect.height),
                           control: CGPoint(x: rect.width, y: rect.height - radius))

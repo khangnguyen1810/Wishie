@@ -12,10 +12,17 @@ import Supabase
 protocol WishlistServiceProtocol {
     func createWishlist(wishList: WishlistModel) async throws -> Result<String, Error>
     func upload(image: UIImage, fileName: String) async throws -> String
-    func getWishlist(by id: String, of ownerId: String) async throws -> WishlistModel
+    func getWishlist(by id: String) async throws -> (WishlistModel, UserModel)
+    func joinWishlist(wishListId: String) async throws  -> Result<Bool, Error>
+    func getUserWishlists() async throws -> Result<[(WishlistModel, UserModel)], Error>
+    func pickItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
+    func updateWishlistItem(wishlistId: String, itemId: String, newName: String?, newDescription: String?, newImage: UIImage?) async throws -> Result<Bool, Error>
+    func deleteWishlist(wishlistId: String) async throws -> Result<Bool, Error>
+    func leaveWishlist(wishListId: String) async throws -> Result<Bool, Error>
 }
 
 class WishlistService: WishlistServiceProtocol {
+    private let db = Firestore.firestore()
     func createWishlist(wishList: WishlistModel) async throws -> Result<String, Error> {
         do {
             let data : [String: Any] = [
@@ -23,7 +30,7 @@ class WishlistService: WishlistServiceProtocol {
                 "wishListName": wishList.name,
                 "description": wishList.description,
                 "userCreateId": wishList.userCreateId,
-                "dueDate": wishList.dueDate,
+                "dueDate": Timestamp(date: wishList.dueDate),
                 "colorTheme": wishList.themeColor ?? "",
                 "wishListItems": wishList.items.map {
                     [
@@ -33,14 +40,28 @@ class WishlistService: WishlistServiceProtocol {
                         "imageUrl": $0.image ?? "",
                         "isPicked": $0.isPicked
                     ]
-                }
+                },
+                "members": [
+                    wishList.userCreateId: "owner"
+                ]
             ]
-            try await Firestore.firestore()
-                .collection("users")
-                .document(wishList.userCreateId)
+            try await db
                 .collection("wishList")
                 .document(wishList.id)
                 .setData(data)
+            
+            let userWishlistData: [String: Any] = [
+                "role": "owner",
+                "joinedAt": Timestamp()
+            ]
+            
+            try await db
+                .collection("users")
+                .document(wishList.userCreateId)
+                .collection("wishlists")
+                .document(wishList.id)
+                .setData(userWishlistData)
+            
             return .success(wishList.id)
         } catch {
             return .failure(error)
@@ -76,11 +97,9 @@ class WishlistService: WishlistServiceProtocol {
         
         return url.absoluteString
     }
-    func getWishlist(by id: String, of ownerId: String) async throws -> WishlistModel {
-      
-        let snapshot = try await Firestore.firestore()
-            .collection("users")
-            .document(ownerId)
+    func getWishlist(by id: String) async throws -> (WishlistModel, UserModel) {
+        
+        let snapshot = try await db
             .collection("wishList")
             .document(id)
             .getDocument()
@@ -93,6 +112,240 @@ class WishlistService: WishlistServiceProtocol {
             )
         }
         
-        return try WishlistModel(dictionary: data)
+        let wishlist = try WishlistModel(dictionary: data)
+        let ownerSnapshot = try await db.collection(
+            WishieConstants.firebaseUserPath
+        ).document(wishlist.userCreateId).getDocument()
+        guard let userData = ownerSnapshot.data() else {
+            throw NSError(
+                domain: "WishlistService",
+                code: 404,
+                userInfo: [NSLocalizedDescriptionKey: "User not found"]
+            )
+        }
+        let owner = try UserModel(dictionary: userData)
+        return (wishlist, owner)
+    }
+    func joinWishlist(wishListId: String) async throws -> Result<Bool, any Error> {
+        do {
+            guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else {
+                throw NSError(domain: "WishlistService", code: 404)
+            }
+            
+            let batch = db.batch()
+            
+            let wishListDoc = db
+                .collection("wishList")
+                .document(wishListId)
+            
+            let userDoc = db
+                .collection("users")
+                .document(userId)
+                .collection("wishlists")
+                .document(wishListId)
+            
+            let userWishlistData: [String: Any] = [
+                "role": "member",
+                "joinedAt": Timestamp()
+            ]
+            
+            batch.updateData([
+                "members.\(userId)": "member"
+            ], forDocument: wishListDoc)
+            
+            batch.setData(userWishlistData, forDocument: userDoc)
+            
+            try await batch.commit()
+            
+            return .success(true)
+        } catch {
+            return .failure(error)
+        }
+    }
+    func getUserWishlists() async throws -> Result<[(WishlistModel, UserModel)], any Error> {
+        do {
+            guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else {
+                throw NSError(domain: "WishlistServie", code: 404)
+            }
+            let snapshot = try await db
+                .collection(WishieConstants.firebaseUserPath)
+                .document(userId)
+                .collection(WishieConstants.firebaseWishlistPath)
+                .order(by: "joinedAt")
+                .getDocuments()
+            let wishlistIds = snapshot.documents.map { $0.documentID }
+            
+            let wishlists = try await withThrowingTaskGroup(of: (WishlistModel, UserModel).self) { [weak self] group in
+                guard let self else { throw NSError(domain: "", code: 404) }
+                for id in wishlistIds {
+                    group.addTask {
+                        let wishlist = try await self.getWishlist(by: id)
+                        return (wishlist.0, wishlist.1)
+                    }
+                }
+                
+                var results: [(WishlistModel, UserModel)] = []
+                
+                for try await result in group {
+                    results.append(result)
+                }
+                
+                return results
+            }
+            return .success(wishlists)
+        } catch {
+            return .failure(error)
+        }
+    }
+    func pickItem(wishlistId: String, itemId: String) async throws -> Result<Bool, any Error> {
+        do {
+            guard let userId = UserDefaults.standard.string(
+                forKey: WishieConstants.userIdKey
+            ) else {
+                throw NSError(domain: "WishlistService", code: 404)
+            }
+            let docRef = db.collection("wishList").document(wishlistId)
+            let snapshot = try await docRef.getDocument()
+            guard let data = snapshot.data(),
+                  var items = data["wishListItems"] as? [[String: Any]] else {
+                throw NSError(domain: "WishlistService", code: 404)
+            }
+            for index in items.indices {
+                if let id = items[index]["id"] as? String, id == itemId {
+                    items[index]["isPicked"] = true
+                    items[index]["pickedBy"] = userId
+                    break
+                }
+            }
+            
+            try await docRef.updateData([
+                "wishListItems": items
+            ])
+            return .success(true)
+        } catch {
+            return .failure(error)
+        }
+    }
+    func updateWishlistItem(
+        wishlistId: String,
+        itemId: String,
+        newName: String?,
+        newDescription: String?,
+        newImage: UIImage?
+    ) async throws -> Result<Bool, any Error> {
+        do {
+            let docRef = db.collection("wishList")
+                .document(wishlistId)
+            let snapshot = try await docRef.getDocument()
+            guard var items: [[String: Any]] = snapshot.data()?["wishListItems"] as? [[String: Any]] else {
+                throw NSError(domain: "WishlistService", code: 404)
+            }
+            for index in items.indices {
+                if let id = items[index]["id"] as? String, id == itemId {
+                    if let newName {
+                        items[index]["name"] = newName
+                    }
+                    if let newDescription {
+                        items[index]["description"] = newDescription
+                    }
+                    if let newImage {
+                       
+                        if let oldUrl = items[index]["imageUrl"] as? String,
+                           !oldUrl.isEmpty {
+                            try? await deleteImageStorage(imageUrl: oldUrl)
+                        }
+                        
+                        let fileName = UUID().uuidString
+                        let newUrl = try await upload(image: newImage, fileName: fileName)
+                        items[index]["imageUrl"] = newUrl
+                    }
+                    break
+                }
+            }
+            try await docRef.updateData([
+                "wishListItems": items
+            ])
+            
+            return .success(true)
+        } catch {
+            return .failure(error)
+        }
+    }
+    
+    func deleteWishlist(wishlistId: String) async throws -> Result<Bool, any Error> {
+        do {
+            let docRef = db.collection("wishList").document(wishlistId)
+            let snapshot = try await docRef.getDocument()
+            guard let data = snapshot.data(),
+                  let members = data["members"] as? [String: String],
+                  let items = data["wishListItems"] as? [[String: Any]] else {
+                throw NSError(domain: "Wishlist Service", code: 404)
+            }
+            for item in items {
+                if let url = item["imageUrl"] as? String, !url.isEmpty {
+                    try await deleteImageStorage(imageUrl: url)
+                }
+            }
+            let batch = db.batch()
+            batch.deleteDocument(docRef)
+            for (userId, _) in members {
+                let userRef = db
+                    .collection("users")
+                    .document(userId)
+                    .collection("wishlists")
+                    .document(wishlistId)
+                batch.deleteDocument(userRef)
+            }
+            try await batch.commit()
+            return .success(true)
+        } catch {
+            return .failure(error)
+        }
+    }
+    
+    func leaveWishlist(wishListId: String) async throws -> Result<Bool, any Error> {
+        do {
+            guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else {
+                throw NSError(domain: "Wishie App Storage", code: 403)
+            }
+            let docRef = db.collection("wishList").document(wishListId)
+            let snapshot = try await docRef.getDocument()
+            guard var data = snapshot.data(),
+                  var items = data["wishListItems"] as? [[String: Any]] else {
+                throw NSError(domain: "Wishlist Service", code: 404)
+            }
+            for index in items.indices {
+                if let pickedBy = items[index]["pickedBy"] as? String, pickedBy == userId {
+                    items[index]["pickedBy"] = nil
+                    items[index]["isPicked"] = false
+                }
+            }
+            let batch = db.batch()
+            batch.updateData([
+                "members.\(userId)": FieldValue.delete(),
+                "wishListItems": items
+            ], forDocument: docRef)
+            let userRef = db.collection("users")
+                .document(userId)
+                .collection("wishlists")
+                .document(wishListId)
+            batch.deleteDocument(userRef)
+            try await batch.commit()
+            return .success(true)
+        } catch {
+            return .failure(error)
+        }
+    }
+    
+    private func deleteImageStorage(imageUrl: String) async throws {
+        guard let range = imageUrl.range(
+            of: "/storage/v1/object/public/Wishie/"
+        ) else  { return }
+        let path = String(imageUrl[range.upperBound...])
+        
+        try await SupabaseManager.shared.client
+            .storage
+            .from("Wishie")
+            .remove(paths: [path])
     }
 }

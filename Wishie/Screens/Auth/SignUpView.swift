@@ -115,7 +115,7 @@ struct SignUpView: View {
                     RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
                         .frame(height: 56)
                 }
-            BirthdayInputView(date: $dob)
+            DateInputView(isCreating: true, date: $dob)
                 .padding(.vertical, 30)
             Button(action: {
                 focusedField = nil

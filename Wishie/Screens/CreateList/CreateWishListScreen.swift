@@ -9,21 +9,22 @@ import SwiftUI
 
 struct CreateWishListScreen: View {
     @Environment(\.dismiss) private var dismiss
+    @StateObject var createWishlistViewModel = CreateWishlistViewModel()
     @State private var progressTabIndex: Int = 0
-    @State private var name: String = ""
-    @State private var description: String = ""
-    @State private var dueDate: Date = Date()
+    @Binding var path: NavigationPath
+    @State private var errorMessage: String = ""
+    @State private var creating: Bool = false
     var body: some View {
         BaseWishieScreen {
             TopAppBar {
                 Circle()
                     .fill(.lightYellow)
-                    .frame(width: 50, height: 50)
+                    .frame(width: 40, height: 40)
                     .overlay(content: {
                         Image("back_icon")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 20)
+                            .frame(width: 17)
                     })
                     .onTapGesture {
                         dismiss()
@@ -35,47 +36,87 @@ struct CreateWishListScreen: View {
                     .foregroundStyle(.black)
             }
         } content: {
-            VStack {
-                stepProgress()
-                    .padding(.top,20)
-                    .padding(.bottom,50)
-                informationInputsPage1()
-                Spacer()
-                Button {
-                    if (progressTabIndex < 3) {
-                        progressTabIndex += 1
-                    } else {
-                        // Create wishlist
+            ZStack {
+                VStack {
+                    stepProgress()
+                        .padding(.top,20)
+                        .padding(.bottom,50)
+                    switch progressTabIndex {
+                    case 0:
+                        CreateWishlistPage1()
+                            .environmentObject(createWishlistViewModel)
+                    case 1:
+                        CreateWishlistPage2()
+                            .environmentObject(createWishlistViewModel)
+                    case 2:
+                        CreateWishlistPage3()
+                            .environmentObject(createWishlistViewModel)
+                    default:
+                        CreateWishlistPage1()
+                            .environmentObject(createWishlistViewModel)
                     }
-                } label: {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(.lightYellow)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .overlay {
-                            Text("Next step")
-                                .font(.wishies(.bold, 20))
-                                .foregroundStyle(.black)
-                        }
+                    Spacer()
                 }
-                .padding(.bottom, 50)
-                .padding(.horizontal,20)
+                VStack {
+                    Spacer()
+                    WishieButton(
+                        title: progressTabIndex < 2 ? "Next step" : "Create",
+                        enabled: !createWishlistViewModel.name.isEmpty,
+                        action: {
+                            if (progressTabIndex < 2) {
+                                progressTabIndex += 1
+                            } else {
+                                Task {
+                                    creating = true
+                                    let result = await createWishlistViewModel.saveItem()
+                                    switch result {
+                                    case .success(let id):
+                                        creating = false
+                                        path.append(
+                                            Route.createSuccess(
+                                                wishListId: id
+                                            )
+                                        )
+                                    case .failure(let failure):
+                                        creating = false
+                                        errorMessage = failure.localizedDescription
+                                    }
+                                }
+                            }
+                        })
+                    .padding(.bottom, 50)
+                    .padding(.horizontal,20)
+                }
             }
             .ignoresSafeArea(.keyboard, edges: .bottom)
         }
+        .showFullScreenDialog($creating)
     }
     @ViewBuilder
     func stepProgress() -> some View {
         HStack(spacing: 0) {
             circleStepItem(index: 0, step: "1")
+                .onTapGesture {
+                    progressTabIndex = 0
+                }
             Rectangle()
                 .fill(.black)
-                .frame(width: UIScreen.main.bounds.width * 0.2, height: 2)
+                .frame(width:70, height: 2)
             circleStepItem(index: 1, step: "2")
+                .onTapGesture {
+                    if ((progressTabIndex == 0 && !createWishlistViewModel.name.isEmpty) || progressTabIndex == 2) {
+                        progressTabIndex = 1
+                    }
+                }
             Rectangle()
                 .fill(.black)
-                .frame(width: UIScreen.main.bounds.width * 0.2, height: 2)
+                .frame(width: 70, height: 2)
             circleStepItem(index: 2, step: "3")
+                .onTapGesture {
+                    if ((progressTabIndex == 0 && !createWishlistViewModel.name.isEmpty) || progressTabIndex == 1) {
+                        progressTabIndex = 2
+                    }
+                }
         }
     }
     @ViewBuilder
@@ -91,45 +132,6 @@ struct CreateWishListScreen: View {
     
     @ViewBuilder
     func informationInputsPage1() -> some View {
-        TextField("Wishlist name", text: $name)
-            .font(.wishies(.regular, 17))
-            .padding(.horizontal,15)
-            .textInputAutocapitalization(.never)
-            .background {
-                RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
-                    .frame(height: 56)
-            }
-            .padding(.bottom,30)
-        ZStack(alignment: .topLeading) {
-            VStack(alignment: .trailing, spacing: 4) {
-                TextEditor(text: $description)
-                    .font(.wishies(.regular, 17))
-                    .padding(10)
-                    .frame(maxHeight: 100)
-                    .scrollContentBackground(.hidden)
-                    .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(.lightYellow)
-                    )
-                    .onChange(of: description) { _, newValue in
-                        if newValue.count > 200 {
-                            description = String(newValue.prefix(200))
-                        }
-                    }
-                
-                Text("\(description.count)/300")
-                    .font(.caption)
-                    .foregroundColor(description.count == 300 ? .red : .gray)
-            }
-            if description == "" {
-                Text("Description")
-                    .font(.wishies(.regular, 17))
-                    .foregroundColor(.lightGrey)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 15)
-            }
-        }
-        .padding(.bottom,20)
-        DateInputView(date: $dueDate)
+        
     }
 }

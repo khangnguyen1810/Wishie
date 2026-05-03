@@ -7,60 +7,47 @@
 
 import SwiftUI
 
-
+enum SheetType: String, Identifiable {
+    case add
+    case user
+    var id: String { self.rawValue }
+}
 
 struct HomeView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @StateObject var homeViewModel: HomeViewModel = HomeViewModel()
     @State private var isShowError = false
     @State private var isShowLoading = false
-    @State private var showBottomSheet = false
     @State private var sheetHeight: CGFloat = .zero
     @State private var path = NavigationPath()
-    @State private var typeSheet: String = ""
+    @State private var activeSheet: SheetType?
     @Namespace private var animation
+    @State private var selectedWishlist: (WishlistModel, UserModel)?
+    @State private var isShowWishlistDetail: Bool = false
+    @State private var showDeleteConfirm = false
+    @State private var showLeaveConfirm = false
     enum HomeTab {
         case myList
         case friendsList
     }
     @State private var selectedTab: HomeTab = .myList
+    private var currentWishlists: [(WishlistModel, UserModel)] {
+        switch selectedTab {
+        case .myList:
+            return homeViewModel.myWishlists
+        case .friendsList:
+            return homeViewModel.myFriendWishlists
+        }
+    }
+    
+    private var isEmpty: Bool {
+        currentWishlists.isEmpty
+    }
     var body: some View {
         NavigationStack(path: $path) {
             BaseWishieScreen(
                 topBar: {
-                    TopAppBar  {
-                        Text("Are you gud?")
-                            .font(.wishies(.bold, 30))
-                            .foregroundColor(.black)
-                    } trailing: {
-                        Circle()
-                            .fill(.lightYellow)
-                            .frame(width: 50, height: 50)
-                            .overlay(content: {
-                                Image("add")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 30)
-                            })
-                            .onTapGesture {
-                                typeSheet = "Add"
-                                showBottomSheet = true
-                            }
-                            .padding(.trailing, 10)
-                        Circle()
-                            .fill(.lightYellow)
-                            .frame(width: 50, height: 50)
-                            .overlay(content: {
-                                Image("user")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 30)
-                            })
-                            .onTapGesture {
-                                typeSheet = "User"
-                                showBottomSheet = true
-                            }
-                    }
-                    
+                    topAppBar()
                 },
                 content: {
                     HStack {
@@ -75,28 +62,112 @@ struct HomeView: View {
                     }
                     .animation(.spring(response: 0.25, dampingFraction: 0.8), value: selectedTab)
                     .padding(.bottom)
-                    ScrollView() {
-                        VStack(spacing: 10) {
+                    if isEmpty {
+                        contentUnavailable(
+                            msg: selectedTab == .myList
+                            ? "You haven't created any wishlist yet."
+                            : "You haven't joined to any wishlist yet.",
+                            buttonTitle: selectedTab == .myList
+                            ? "Create wishlist"
+                            : "Join wishlist"
+                        ) {
+                            if selectedTab == .myList {
+                                path.append(Route.createNew)
+                                activeSheet = nil
+                            } else {
+                                path.append(Route.scanQRCode)
+                                activeSheet = nil
+                            }
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        
+                    } else {
+                        List {
                             switch selectedTab {
                             case .myList:
+                                ForEach(homeViewModel.myWishlists, id: \.self.0) { wishlist in
+                                    ZStack {
+                                        NavigationLink {
+                                            WishlistDetailScreen(
+                                                navigationPath: $path,
+                                                wishlist: wishlist.0 ,
+                                                owner: wishlist.1
+                                            )
+                                            .navigationTransition(
+                                                .zoom(
+                                                    sourceID: wishlist.0.id,
+                                                    in: animation
+                                                )
+                                            )
+                                        } label: {
+                                            EmptyView()
+                                        }
+                                        .opacity(0)
+                                        HomeItemViewCell(item: wishlist)
+                                    }
+                                    .contentShape(Rectangle())
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets())
+                                    .listRowBackground(Color.clear)
+                                    .swipeActions {
+                                        Button {
+                                            selectedWishlist = wishlist
+                                            showDeleteConfirm = true
+                                        } label: {
+                                            Label("Delete wishlist", systemImage: "trash")
+                                        }
+                                        .tint(.wishiePink)
+                                        
+                                    }
+                                }
                                 
-                                wishListItem(item: <#WishlistModel#>)
                             case .friendsList:
-                                ForEach(0..<10) { _ in
-                                    wishListItem()
-                                        .redacted(reason: .placeholder)
+                                ForEach(homeViewModel.myFriendWishlists, id: \.self.0) { wishlist in
+                                    ZStack {
+                                        NavigationLink {
+                                            WishlistDetailScreen(
+                                                navigationPath: $path,
+                                                wishlist: wishlist.0 ,
+                                                owner: wishlist.1
+                                            )
+                                            .navigationTransition(
+                                                .zoom(
+                                                    sourceID: wishlist.0.id,
+                                                    in: animation
+                                                )
+                                            )
+                                        } label: {
+                                            EmptyView()
+                                        }
+                                        .opacity(0)
+                                        HomeItemViewCell(item: wishlist)
+                                    }
+                                    .contentShape(Rectangle())
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets())
+                                    .listRowBackground(Color.clear)
+                                    .swipeActions {
+                                        Button() {
+                                            selectedWishlist = wishlist
+                                            showLeaveConfirm = true
+                                        } label: {
+                                            Label("Leave Wishlist", systemImage: "trash")
+                                        }
+                                        .tint(.wishiePink)
+                                    }
                                 }
                             }
                         }
+                        .listRowSpacing(10)
+                        .listStyle(.plain)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.clear)
+                        .refreshable {
+                            await homeViewModel.getListWishlist()
+                        }
                     }
-                    .scrollIndicators(.hidden)
                 }
             )
-            .onTapGesture {
-                if (showBottomSheet == true) {
-                    showBottomSheet = false
-                }
-            }
             .navigationDestination(for: Route.self) { path in
                 switch path {
                 case .createNew:
@@ -109,33 +180,54 @@ struct HomeView: View {
                     WishlistQRCodeView(wishlistId: id)
                 case .wishListInfoScreen(wishlistId: let id):
                     WishListInformationView(wishlistId: id, path: $path)
+                case .wishListDetailScreen(wishlistId: let id, isFromInfo: let isFromInfo):
+                    WishlistDetailScreen(
+                        navigationPath: $path,
+                        wishlistId: id,
+                        isFromInfo: isFromInfo
+                    )
                 }
             }
             .task {
-                viewm
+                await authViewModel.getUserInfo()
+                if (
+                    homeViewModel.myWishlists.isEmpty && homeViewModel.myFriendWishlists.isEmpty
+                ) {
+                    await homeViewModel.getListWishlist()
+                }
             }
         }
-        .sheet(isPresented: $showBottomSheet, content: {
-            bottomSheet()
-                .overlay {
-                    GeometryReader { geometry in
-                        Color.clear.preference(key: InnerHeightPreferenceKey.self, value: geometry.size.height)
-                    }
-                }
-                .onPreferenceChange(InnerHeightPreferenceKey.self) { newHeight in
-                    sheetHeight = newHeight
-                }
-                .presentationDetents([.height(sheetHeight)])
-        })
+        .sheet(item: $activeSheet) { type in
+            bottomSheet(type: type)
+                .presentationDetents([.fraction(0.2)])
+                .presentationDragIndicator(.visible)
+        }
         .showDialogIfNeeded(
             $isShowError, title: "You want to leave?",
             message: "You can login again later, please come back :3",
             onOk:  {
-                showBottomSheet = false
                 authViewModel.logOut()
             }
         )
-        .showFullScreenDialog($authViewModel.isShowProgress)
+        .showDialogIfNeeded($showDeleteConfirm, title: "Are you sure to delete it?", message: "When you delete this wishlist, you can't recover it again.", onOk: {
+            Task {
+                guard let wishlist = selectedWishlist else { return }
+                await homeViewModel.deleteWishlist(wishlistId: wishlist.0.id)
+            }
+            showDeleteConfirm = false
+        }, onCancel: {
+            showDeleteConfirm = false
+        })
+        .showDialogIfNeeded($showLeaveConfirm, title: "Are you sure to leave this wishlist?", message: "You can join this wishlist later, please come back :3", onOk: {
+            Task {
+                guard let wishlist = selectedWishlist else { return }
+                await homeViewModel.leaveWishlist(wishlistId: wishlist.0.id)
+            }
+            showLeaveConfirm = false
+        }, onCancel: {
+            showLeaveConfirm = false
+        })
+        .showFullScreenDialog($homeViewModel.isGettingList)
     }
     @ViewBuilder
     func typeSegmentItem(title: String, tab: HomeTab) -> some View {
@@ -155,13 +247,16 @@ struct HomeView: View {
         .onTapGesture { selectedTab = tab }
     }
     @ViewBuilder
-    func wishListItem(item: WishlistModel) -> some View {
+    func wishListItem(item: (WishlistModel, UserModel)) -> some View {
         VStack {
             HStack {
-                Text(item.name)
+                Text(item.0.name)
+                    .foregroundStyle(Color.black)
+                    .multilineTextAlignment(.leading)
                     .font(.wishies(.bold, 17))
                 Spacer()
-                Text(item.userCreateId)
+                Text("\(item.1.firstName) \(item.1.lastName)")
+                    .foregroundStyle(Color.black)
                     .font(.wishies(.regular, 15))
                     .truncationMode(.tail)
                 Image("user")
@@ -171,97 +266,102 @@ struct HomeView: View {
             }
             HStack {
                 VStack(alignment: .leading, spacing: 20) {
-                    Text(item.description)
+                    Text(item.0.description)
                         .font(.wishies(.italic, 14))
-                        .frame(width: UIScreen.main.bounds.width * 0.6)
-                        .frame(maxHeight: 60, alignment: .topLeading)
-                    Text("end date: \(item.dueDate)")
+                        .foregroundStyle(Color.black)
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("end date: \(item.0.dueDate.toShortDateString())")
                         .font(.wishies(.regular, 14))
+                        .foregroundStyle(Color.black)
                         .frame(maxWidth: .infinity,alignment: .leading)
                 }
-                
                 Spacer()
                 VStack {
-                    GiftProgressView(progress: 1/4)
-                    Text("1/4 gifts")
-                        .font(.wishies(.regular, 14))
-                        .foregroundStyle(Color.darkGrey)
+                    let itemPicked = item.0.items.filter({ $0.isPicked })
+                    if item.0.items.count > 0 {
+                        let progress = Double(itemPicked.count) / Double(item.0.items.count)
+                        GiftProgressView(progress: progress)
+                        Text("\(itemPicked.count)/\(item.0.items.count) gifts")
+                            .font(.wishies(.regular, 14))
+                            .foregroundStyle(Color.darkGrey)
+                    } else {
+                        Text("0 gift")
+                            .font(.wishies(.regular, 14))
+                            .foregroundStyle(Color.darkGrey)
+                    }
                 }
+                .frame(maxWidth: 100)
             }
         }
         .padding(10)
         .frame(maxWidth: .infinity)
         .background {
             RoundedRectangle(cornerRadius: 10)
-                .fill(LinearGradient(
-                    colors: [
-                        .wishiePink.opacity(0.5),
-                        .lightYellow1.opacity(0.5)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing)
-                )
+                .fill(.sunset).opacity(0.5)
         }
     }
     
     @ViewBuilder
     func topAppBar() -> some View {
-        HStack {
-            Text("Are you gud?")
-                .font(.wishies(.bold, 30))
+        TopAppBar  {
+            Text("Are you gud? \(authViewModel.userInfo.firstName)")
+                .font(.wishies(.bold, 25))
                 .foregroundColor(.black)
-            Spacer()
+        } trailing: {
             Circle()
                 .fill(.lightYellow)
-                .frame(width: 50, height: 50)
+                .frame(width: 40, height: 40)
                 .overlay(content: {
                     Image("add")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 30)
+                        .frame(width: 20)
                 })
                 .onTapGesture {
-                    showBottomSheet = true
+                    activeSheet = .add
                 }
                 .padding(.trailing, 10)
             Circle()
                 .fill(.lightYellow)
-                .frame(width: 50, height: 50)
+                .frame(width: 40, height: 40)
                 .overlay(content: {
                     Image("user")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 30)
+                        .frame(width: 20)
                 })
                 .onTapGesture {
-                    isShowError = true
+                    activeSheet = .user
                 }
         }
     }
     @ViewBuilder
-    func bottomSheet() -> some View {
+    func bottomSheet(type: SheetType) -> some View {
         ZStack {
             Color.lightYellow1.ignoresSafeArea()
-            if typeSheet == "Add" {
+            if type == .add {
                 VStack(spacing: 20) {
                     bottomSheetOption(image: "qr_icon", title: "Scan QR code")
                         .onTapGesture {
-                            showBottomSheet = false
                             path.append(Route.scanQRCode)
+                            activeSheet = nil
                         }
                     bottomSheetOption(image: "create_new_icon", title: "Create new wishlist")
                         .onTapGesture {
-                            showBottomSheet = false
                             path.append(Route.createNew)
+                            activeSheet = nil
                         }
                 }
                 .padding()
-            } else if typeSheet == "User" {
+            } else if type == .user {
                 bottomSheetOption(image: "log_out", title: "Log out")
                     .padding()
                     .onTapGesture {
-                        showBottomSheet = false
                         isShowError = true
+                        activeSheet = nil
                     }
             }
         }
@@ -286,6 +386,41 @@ struct HomeView: View {
                 .foregroundStyle(.black)
                 .frame(maxWidth: .infinity, alignment: .center)
         }
+    }
+    @ViewBuilder
+    func contentUnavailable(
+        msg: String,
+        buttonTitle: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        VStack {
+            Image(systemName: "tray.fill")
+                .resizable()
+                .foregroundStyle(.black)
+                .scaledToFit()
+                .frame(width: 50, height: 50)
+            Text(msg)
+                .font(Font.wishies(.bold, 25))
+                .multilineTextAlignment(.center)
+                .foregroundColor(.black)
+                .padding(.vertical,20)
+            WishieButton(
+                title: buttonTitle,
+                enabled: true,
+                width: 250,
+                height: 50) {
+                    action()
+                }
+            Text("Refresh")
+                .font(.wishies(.regular, 15))
+                .foregroundStyle(.wishiePink)
+                .onTapGesture {
+                    Task {
+                        await homeViewModel.getListWishlist()
+                    }
+                }
+        }
+        .frame(maxHeight: .infinity, alignment: .center)
     }
 }
 

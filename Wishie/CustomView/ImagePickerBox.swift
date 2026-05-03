@@ -1,42 +1,30 @@
+//
+//  ImagePickerBox.swift
+//  Wishie
+//
+//  Created by Khang Huu Nguyen on 17/12/25.
+//
+
+
 import PhotosUI
-
-struct ImagePickerBox: View {
+import SwiftUI
+struct ImagePickerBox<Content: View>: View {
     let height: CGFloat
-
+    
     @State private var selectedItem: PhotosPickerItem?
-    @State private var selectedImage: UIImage?
+    @Binding var selectedImage: UIImage?
+    @ViewBuilder let content: () -> Content
 
     var body: some View {
         PhotosPicker(
             selection: $selectedItem,
             matching: .images
         ) {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(.wishiePink)
-                .frame(height: height * 0.8)
-                .overlay {
-                    VStack {
-                        if let selectedImage {
-                            Image(uiImage: selectedImage)
-                                .resizable()
-                                .scaledToFill()
-                                .clipped()
-                        } else {
-                            Image("upload")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 24, height: 24)
-
-                            Text("Add image")
-                                .font(.wishies(.regular, 10))
-                                .foregroundStyle(.black)
-                        }
-                    }
-                }
+            content()
         }
-        .onChange(of: selectedItem) { newItem in
+        .onChange(of: selectedItem) { _, newItem in
             guard let newItem else { return }
-
+            
             Task {
                 if let data = try? await newItem.loadTransferable(type: Data.self),
                    let image = UIImage(data: data) {

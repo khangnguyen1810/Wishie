@@ -5,7 +5,6 @@
 //  Created by Khang Huu Nguyen on 26/1/26.
 //
 
-
 import UIKit
 import AVFoundation
 
@@ -65,4 +64,5 @@ extension QRScannerViewController: AVCaptureMetadataOutputObjectsDelegate {
         captureSession.stopRunning()
         onResult?(value)
     }
+    
 }

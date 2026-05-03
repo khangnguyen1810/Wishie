@@ -6,6 +6,17 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		22015C812EAFBDE6009E7E05 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 22015C802EAFBDE6009E7E05 /* FirebaseFirestore */; };
+		228084BE2E9D4D14003AAEC4 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 228084BD2E9D4D14003AAEC4 /* GoogleService-Info.plist */; };
+		228084C12E9D4DC3003AAEC4 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 228084C02E9D4DC3003AAEC4 /* FirebaseAuth */; };
+		22CB1A152EA1476000FAE2D7 /* DotLottie in Frameworks */ = {isa = PBXBuildFile; productRef = 22CB1A142EA1476000FAE2D7 /* DotLottie */; };
+		F08C489B2EF3041E00DC87DC /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = F08C489A2EF3041E00DC87DC /* Storage */; };
+		F08C489F2EF305A500DC87DC /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = F08C489E2EF305A500DC87DC /* Supabase */; };
+		F08C48A52EF31AE500DC87DC /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = F08C48A42EF31AE500DC87DC /* Auth */; };
+		F0BE20C22F6FB94800D043F5 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = F0BE20C12F6FB94800D043F5 /* SDWebImageSwiftUI */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		2257D0F22E922166009D268F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -23,15 +34,42 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		223865692E9B6F2F005928EE /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		2257D0E32E922161009D268F /* Wishie.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wishie.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2257D0F12E922166009D268F /* WishieTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WishieTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2257D0FB2E922166009D268F /* WishieUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WishieUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		228084BD2E9D4D14003AAEC4 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		2257D11C2E922B3D009D268F /* Exceptions for "Wishie" folder in "Wishie" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2257D0E22E922161009D268F /* Wishie */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2257D0E52E922161009D268F /* Wishie */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2257D11C2E922B3D009D268F /* Exceptions for "Wishie" folder in "Wishie" target */,
+			);
 			path = Wishie;
 			sourceTree = "<group>";
 		};
@@ -52,6 +90,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				228084C12E9D4DC3003AAEC4 /* FirebaseAuth in Frameworks */,
+				22015C812EAFBDE6009E7E05 /* FirebaseFirestore in Frameworks */,
+				F08C489F2EF305A500DC87DC /* Supabase in Frameworks */,
+				F08C48A52EF31AE500DC87DC /* Auth in Frameworks */,
+				F0BE20C22F6FB94800D043F5 /* SDWebImageSwiftUI in Frameworks */,
+				22CB1A152EA1476000FAE2D7 /* DotLottie in Frameworks */,
+				F08C489B2EF3041E00DC87DC /* Storage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,6 +117,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		22015C7F2EAFBDE6009E7E05 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		2257D0DA2E922161009D268F = {
 			isa = PBXGroup;
 			children = (
@@ -79,6 +131,8 @@
 				2257D0F42E922166009D268F /* WishieTests */,
 				2257D0FE2E922166009D268F /* WishieUITests */,
 				2257D0E42E922161009D268F /* Products */,
+				228084BD2E9D4D14003AAEC4 /* GoogleService-Info.plist */,
+				22015C7F2EAFBDE6009E7E05 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -102,6 +156,7 @@
 				2257D0DF2E922161009D268F /* Sources */,
 				2257D0E02E922161009D268F /* Frameworks */,
 				2257D0E12E922161009D268F /* Resources */,
+				223865692E9B6F2F005928EE /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -112,6 +167,13 @@
 			);
 			name = Wishie;
 			packageProductDependencies = (
+				228084C02E9D4DC3003AAEC4 /* FirebaseAuth */,
+				22CB1A142EA1476000FAE2D7 /* DotLottie */,
+				22015C802EAFBDE6009E7E05 /* FirebaseFirestore */,
+				F08C489A2EF3041E00DC87DC /* Storage */,
+				F08C489E2EF305A500DC87DC /* Supabase */,
+				F08C48A42EF31AE500DC87DC /* Auth */,
+				F0BE20C12F6FB94800D043F5 /* SDWebImageSwiftUI */,
 			);
 			productName = Wishie;
 			productReference = 2257D0E32E922161009D268F /* Wishie.app */;
@@ -195,6 +257,12 @@
 			);
 			mainGroup = 2257D0DA2E922161009D268F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				228084BF2E9D4DC3003AAEC4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				22CB1A132EA1476000FAE2D7 /* XCRemoteSwiftPackageReference "dotlottie-ios" */,
+				F08C48992EF3041E00DC87DC /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				F0BE20C02F6FB94800D043F5 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2257D0E42E922161009D268F /* Products */;
 			projectDirPath = "";
@@ -212,6 +280,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				228084BE2E9D4D14003AAEC4 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -393,10 +462,14 @@
 				CODE_SIGN_ENTITLEMENTS = Wishie/Wishie.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 29N547R43F;
+				DEVELOPMENT_TEAM = 8QPXDS5LYT;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Wishie/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Wishie need your camera permission to scan Qr";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Wishie need access to your photos to add an image to wishlist items.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -405,8 +478,8 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
@@ -416,10 +489,11 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Debug;
@@ -432,10 +506,14 @@
 				CODE_SIGN_ENTITLEMENTS = Wishie/Wishie.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 29N547R43F;
+				DEVELOPMENT_TEAM = 8QPXDS5LYT;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Wishie/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Wishie need your camera permission to scan Qr";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Wishie need access to your photos to add an image to wishlist items.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -444,8 +522,8 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
@@ -455,10 +533,11 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TARGETED_DEVICE_FAMILY = "1,2";
 				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Release;
@@ -593,6 +672,79 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		228084BF2E9D4DC3003AAEC4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.4.0;
+			};
+		};
+		22CB1A132EA1476000FAE2D7 /* XCRemoteSwiftPackageReference "dotlottie-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/LottieFiles/dotlottie-ios.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		F08C48992EF3041E00DC87DC /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase-community/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+		F0BE20C02F6FB94800D043F5 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/SDWebImageSwiftUI.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		22015C802EAFBDE6009E7E05 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 228084BF2E9D4DC3003AAEC4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		228084C02E9D4DC3003AAEC4 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 228084BF2E9D4DC3003AAEC4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		22CB1A142EA1476000FAE2D7 /* DotLottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 22CB1A132EA1476000FAE2D7 /* XCRemoteSwiftPackageReference "dotlottie-ios" */;
+			productName = DotLottie;
+		};
+		F08C489A2EF3041E00DC87DC /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F08C48992EF3041E00DC87DC /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		F08C489E2EF305A500DC87DC /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F08C48992EF3041E00DC87DC /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+		F08C48A42EF31AE500DC87DC /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F08C48992EF3041E00DC87DC /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		F0BE20C12F6FB94800D043F5 /* SDWebImageSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F0BE20C02F6FB94800D043F5 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */;
+			productName = SDWebImageSwiftUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 2257D0DB2E922161009D268F /* Project object */;
 }

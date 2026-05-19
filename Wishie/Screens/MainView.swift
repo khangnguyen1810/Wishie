@@ -6,24 +6,23 @@
 //
 
 import SwiftUI
-struct MainView: View {
 
-    @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
+struct MainView: View {
+    @EnvironmentObject var rootNavigationCoordinator: RootNavigationCoordinator
     @EnvironmentObject var authViewModel: AuthViewModel
 
     var body: some View {
-
-        if !hasCompletedOnboarding {
+        switch rootNavigationCoordinator.appState {
+        case .welcome:
             WelcomeView()
                 .transition(.opacity)
-
-        } else if authViewModel.isLoggedIn {
-            HomeView()
-                .transition(.move(edge: .trailing))
-
-        } else {
+        case .unauthenticated:
             LoginOrSignUpScreen()
                 .transition(.move(edge: .leading))
+        case .authenticated:
+            HomeView()
+                .environmentObject(authViewModel)
+                .transition(.move(edge: .trailing))
         }
     }
 }

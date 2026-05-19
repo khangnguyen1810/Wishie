@@ -7,10 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		22015C812EAFBDE6009E7E05 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 22015C802EAFBDE6009E7E05 /* FirebaseFirestore */; };
 		228084BE2E9D4D14003AAEC4 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 228084BD2E9D4D14003AAEC4 /* GoogleService-Info.plist */; };
-		228084C12E9D4DC3003AAEC4 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 228084C02E9D4DC3003AAEC4 /* FirebaseAuth */; };
 		22CB1A152EA1476000FAE2D7 /* DotLottie in Frameworks */ = {isa = PBXBuildFile; productRef = 22CB1A142EA1476000FAE2D7 /* DotLottie */; };
+		F03ED6E82FBB755500157DF9 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F03ED6E72FBB755500157DF9 /* FirebaseAuth */; };
+		F03ED6EA2FBB755500157DF9 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = F03ED6E92FBB755500157DF9 /* FirebaseCore */; };
+		F03ED6EC2FBB755500157DF9 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = F03ED6EB2FBB755500157DF9 /* FirebaseFirestore */; };
 		F08C489B2EF3041E00DC87DC /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = F08C489A2EF3041E00DC87DC /* Storage */; };
 		F08C489F2EF305A500DC87DC /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = F08C489E2EF305A500DC87DC /* Supabase */; };
 		F08C48A52EF31AE500DC87DC /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = F08C48A42EF31AE500DC87DC /* Auth */; };
@@ -90,11 +91,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				228084C12E9D4DC3003AAEC4 /* FirebaseAuth in Frameworks */,
-				22015C812EAFBDE6009E7E05 /* FirebaseFirestore in Frameworks */,
 				F08C489F2EF305A500DC87DC /* Supabase in Frameworks */,
+				F03ED6E82FBB755500157DF9 /* FirebaseAuth in Frameworks */,
 				F08C48A52EF31AE500DC87DC /* Auth in Frameworks */,
 				F0BE20C22F6FB94800D043F5 /* SDWebImageSwiftUI in Frameworks */,
+				F03ED6EA2FBB755500157DF9 /* FirebaseCore in Frameworks */,
+				F03ED6EC2FBB755500157DF9 /* FirebaseFirestore in Frameworks */,
 				22CB1A152EA1476000FAE2D7 /* DotLottie in Frameworks */,
 				F08C489B2EF3041E00DC87DC /* Storage in Frameworks */,
 			);
@@ -167,13 +169,14 @@
 			);
 			name = Wishie;
 			packageProductDependencies = (
-				228084C02E9D4DC3003AAEC4 /* FirebaseAuth */,
 				22CB1A142EA1476000FAE2D7 /* DotLottie */,
-				22015C802EAFBDE6009E7E05 /* FirebaseFirestore */,
 				F08C489A2EF3041E00DC87DC /* Storage */,
 				F08C489E2EF305A500DC87DC /* Supabase */,
 				F08C48A42EF31AE500DC87DC /* Auth */,
 				F0BE20C12F6FB94800D043F5 /* SDWebImageSwiftUI */,
+				F03ED6E72FBB755500157DF9 /* FirebaseAuth */,
+				F03ED6E92FBB755500157DF9 /* FirebaseCore */,
+				F03ED6EB2FBB755500157DF9 /* FirebaseFirestore */,
 			);
 			productName = Wishie;
 			productReference = 2257D0E32E922161009D268F /* Wishie.app */;
@@ -258,10 +261,10 @@
 			mainGroup = 2257D0DA2E922161009D268F;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				228084BF2E9D4DC3003AAEC4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				22CB1A132EA1476000FAE2D7 /* XCRemoteSwiftPackageReference "dotlottie-ios" */,
 				F08C48992EF3041E00DC87DC /* XCRemoteSwiftPackageReference "supabase-swift" */,
 				F0BE20C02F6FB94800D043F5 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
+				F03ED6E62FBB755500157DF9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2257D0E42E922161009D268F /* Products */;
@@ -674,20 +677,20 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		228084BF2E9D4DC3003AAEC4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 12.4.0;
-			};
-		};
 		22CB1A132EA1476000FAE2D7 /* XCRemoteSwiftPackageReference "dotlottie-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/LottieFiles/dotlottie-ios.git";
 			requirement = {
 				branch = main;
 				kind = branch;
+			};
+		};
+		F03ED6E62FBB755500157DF9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.13.0;
 			};
 		};
 		F08C48992EF3041E00DC87DC /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
@@ -709,20 +712,25 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		22015C802EAFBDE6009E7E05 /* FirebaseFirestore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 228084BF2E9D4DC3003AAEC4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseFirestore;
-		};
-		228084C02E9D4DC3003AAEC4 /* FirebaseAuth */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 228084BF2E9D4DC3003AAEC4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAuth;
-		};
 		22CB1A142EA1476000FAE2D7 /* DotLottie */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 22CB1A132EA1476000FAE2D7 /* XCRemoteSwiftPackageReference "dotlottie-ios" */;
 			productName = DotLottie;
+		};
+		F03ED6E72FBB755500157DF9 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F03ED6E62FBB755500157DF9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		F03ED6E92FBB755500157DF9 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F03ED6E62FBB755500157DF9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		F03ED6EB2FBB755500157DF9 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F03ED6E62FBB755500157DF9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
 		};
 		F08C489A2EF3041E00DC87DC /* Storage */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -1,0 +1,43 @@
+{
+  "servers": {
+    "sdlc-workflow": {
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/.sdlc-workflows/mcp/sdlc-workflow/dist/sdlc-workflow-mcp.mjs"
+      ],
+      "env": {
+        "LOG_LEVEL": "INFO",
+        "DESCRIBE_IMAGE_TEMPLATE_URI": "${workspaceFolder}/.sdlc-workflows/mcp/sdlc-workflow/prompt-templates/describe-image-prompt.template.md",
+        "CONVERT_IMAGE_TEMPLATE_URI": "${workspaceFolder}/.sdlc-workflows/mcp/sdlc-workflow/prompt-templates/convert-image-prompt.template.md",
+        "REVIEW_NEW_CODE_WITH_FILTER_TEMPLATE_URI": "${workspaceFolder}/.sdlc-workflows/mcp/sdlc-workflow/prompt-templates/review-new-code-with-filter-prompt.template.md",
+        "REVIEW_NEW_CODE_TEMPLATE_URI": "${workspaceFolder}/.sdlc-workflows/mcp/sdlc-workflow/prompt-templates/code-review-prompt.template.md",
+        "REVIEW_FILE_TEMPLATE_URI": "${workspaceFolder}/.sdlc-workflows/mcp/sdlc-workflow/prompt-templates/code-review-prompt.template.md",
+        "GENERATE_CODE_REVIEWS_TEMPLATE_URI": "${workspaceFolder}/.sdlc-workflows/mcp/sdlc-workflow/prompt-templates/generate_code_reviews.template.md",
+        "ANALYSIS_UNIT_TESTS_TEMPLATE_URI": "${workspaceFolder}/.sdlc-workflows/mcp/sdlc-workflow/prompt-templates/analysis-unit-tests-prompt.template.md",
+        "GENERATE_TEST_CASES_TEMPLATE_URI": "${workspaceFolder}/.sdlc-workflows/mcp/sdlc-workflow/prompt-templates/generate-test-cases-prompt.template.md",
+        "JIRA_ENDPOINT": "",
+        "JIRA_TOKEN": ""
+      },
+      "type": "stdio"
+    },
+    "gh-pull_requests": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/x/pull_requests"
+    },
+    "slack": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "slack-mcp-server@latest",
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "SLACK_MCP_ADD_MESSAGE_TOOL": "YOUR CHANNEL ID",
+        "SLACK_MCP_XOXC_TOKEN": "xoxc-",
+        "SLACK_MCP_XOXD_TOKEN": "xoxd-"
+      }
+    }
+  },
+  "inputs": []
+}

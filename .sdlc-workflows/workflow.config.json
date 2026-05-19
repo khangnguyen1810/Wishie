@@ -1,0 +1,12 @@
+{
+  "installationId": "7c512c81-dfb9-4d46-bc50-7142ab62af33",
+  "workflowType": "dev",
+  "editorType": "github-copilot",
+  "installedWorkflows": [
+    "dev"
+  ],
+  "version": "3.1.0",
+  "lastUpdatedAt": "2026-05-18T09:10:09.204Z",
+  "createdAt": "2026-05-18T09:10:09.205Z",
+  "installedBy": "@kms-technology/sdlc-workflows"
+}

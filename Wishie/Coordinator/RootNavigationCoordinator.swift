@@ -9,31 +9,50 @@ class RootNavigationCoordinator: ObservableObject {
 
     init(authViewModel: AuthViewModel) {
         self.authViewModel = authViewModel
-        self.appState = deriveAppState()
+        self.appState = deriveAppState(isLoggedIn: authViewModel.isLoggedIn)
 
         authViewModel.$isLoggedIn
+            .sink { [weak self] isLoggedIn in
+                guard let self else { return }
+                let newState = self.deriveAppState(isLoggedIn: isLoggedIn)
+                if self.appState != newState {
+                    self.appState = newState
+                }
+            }
+            .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+            .map { _ in UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") }
+            .removeDuplicates()
             .sink { [weak self] _ in
-                self?.appState = self?.deriveAppState() ?? .welcome
+                self?.updateAppState()
             }
             .store(in: &cancellables)
     }
 
     func completeOnboarding() {
         hasCompletedOnboarding = true
-        appState = deriveAppState()
+        updateAppState()
     }
 
     func logout() {
         authViewModel.logOut()
-        appState = deriveAppState()
+        updateAppState()
     }
 
-    private func deriveAppState() -> AppState {
+    private func updateAppState() {
+        let newState = deriveAppState(isLoggedIn: authViewModel.isLoggedIn)
+        if appState != newState {
+            appState = newState
+        }
+    }
+
+    private func deriveAppState(isLoggedIn: Bool) -> AppState {
         if !hasCompletedOnboarding {
             return .welcome
         }
 
-        if authViewModel.isLoggedIn,
+        if isLoggedIn,
            let userId = UserDefaults.standard.string(forKey: "userid"),
            !userId.isEmpty {
             return .authenticated(userId: userId)

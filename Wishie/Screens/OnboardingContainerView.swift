@@ -21,18 +21,13 @@ let onboardings: [Onboarding] = [
 struct OnboardingView: View {
     var onboarding: Onboarding
     @Binding var currentIndex: Int
+    @EnvironmentObject var coordinator: RootNavigationCoordinator
     @State var headlineContent: String = ""
     @State private var amount = -10.0
     @State var nextPage: Bool = false
-    @State var hasCompletedOnboarding: Bool = false
     var body: some View {
-        NavigationStack {
-            onboadingViewContent(image: onboarding.image, headline: onboarding.headline)
-                .navigationDestination(isPresented: $hasCompletedOnboarding, destination: {
-                    LoginOrSignUpScreen()
-                })
-                .navigationBarBackButtonHidden()
-        }
+        onboadingViewContent(image: onboarding.image, headline: onboarding.headline)
+            .navigationBarBackButtonHidden()
     }
     @ViewBuilder
     func onboadingViewContent(image: String, headline: String) -> some View {
@@ -59,8 +54,7 @@ struct OnboardingView: View {
             }
             if currentIndex == onboardings.count - 1 {
                 Button {
-                    UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
-                    hasCompletedOnboarding = true
+                    coordinator.completeOnboarding()
                 } label: {
                     ZStack {
                         RoundedRectangle(cornerRadius: 15)
@@ -124,5 +118,7 @@ struct OnboardingContainerView: View {
     }
 }
 #Preview {
+    let authViewModel = AuthViewModel()
     OnboardingContainerView()
+        .environmentObject(RootNavigationCoordinator(authViewModel: authViewModel))
 }

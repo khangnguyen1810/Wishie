@@ -20,16 +20,19 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct WishieApp: App {
-    @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    @StateObject private var authViewModel = AuthViewModel()
-    @State private var rootNavigationCoordinator: RootNavigationCoordinator?
+    @StateObject private var authViewModel: AuthViewModel
+    @StateObject private var coordinator: RootNavigationCoordinator
     @State private var isActive: Bool = false
+
+    init() {
+        let auth = AuthViewModel()
+        _authViewModel = StateObject(wrappedValue: auth)
+        _coordinator = StateObject(wrappedValue: RootNavigationCoordinator(authViewModel: auth))
+    }
 
     var body: some Scene {
         WindowGroup {
-            let coordinator = rootNavigationCoordinator ?? RootNavigationCoordinator(authViewModel: authViewModel)
-
             ZStack {
                 if isActive {
                     MainView()
@@ -44,11 +47,8 @@ struct WishieApp: App {
             }
             .preferredColorScheme(.light)
             .animation(.easeInOut(duration: 0.4), value: authViewModel.isLoggedIn)
-            .animation(.easeInOut(duration: 0.4), value: hasCompletedOnboarding)
+            .animation(RootNavigationAnimations.welcomeToAuth, value: coordinator.appState)
             .onAppear {
-                if rootNavigationCoordinator == nil {
-                    rootNavigationCoordinator = RootNavigationCoordinator(authViewModel: authViewModel)
-                }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     withAnimation(.spring) {
                         isActive = true

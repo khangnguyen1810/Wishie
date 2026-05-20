@@ -67,9 +67,7 @@ Base64-encoded API Token (recommended for simplicity)**
 1. Go to [https://id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
 2. Click **Create API token**, give it a label, and copy the token
 3. Base64-encode your credentials: `email:api_token`
-   ```bash
-   echo -n "hieutrinh@kms-technology.com:REDACTED_ATLASSIAN_API_TOKEN" | base64
-   ```
+   
 4. Use the base64 string as `JIRA_TOKEN`
 
 > **Note:** When using this approach, you must update the MCP server's auth header from `Bearer` to `Basic`. Set the env var as:

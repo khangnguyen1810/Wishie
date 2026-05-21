@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import FirebaseFirestore
+
 struct UserModel: Codable, Hashable {
     var firstName: String = ""
     var lastName: String = ""
@@ -19,6 +21,9 @@ struct UserModel: Codable, Hashable {
         self.lastName = dictionary["lastName"] as? String ?? ""
         self.email = dictionary["email"] as? String ?? ""
         self.phone = dictionary["phone"] as? String ?? ""
+        if let timestamp = dictionary["dateOfBirth"] as? Timestamp {
+            self.dateOfBirth = timestamp.dateValue()
+        }
     }
     func getFullName() -> String {
         return "\(firstName) \(lastName)"

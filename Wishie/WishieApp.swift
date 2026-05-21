@@ -6,28 +6,33 @@
 //
 
 import SwiftUI
+import Combine
 import Firebase
-class AppDelegate: NSObject, UIApplicationDelegate {
-    func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        FirebaseApp.configure()
-        
-        return true
-    }
-}
 
 @main
 struct WishieApp: App {
-    @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
-    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    @StateObject private var authViewModel = AuthViewModel()
+    @StateObject private var authViewModel: AuthViewModel
+    @StateObject private var coordinator: RootNavigationCoordinator
     @State private var isActive: Bool = false
+    
+    init() {
+        if FirebaseApp.app() == nil {
+            
+            FirebaseApp.configure()
+            
+        }
+        let auth = AuthViewModel()
+        _authViewModel = StateObject(wrappedValue: auth)
+        _coordinator = StateObject(wrappedValue: RootNavigationCoordinator(authViewModel: auth))
+    }
+    
     var body: some Scene {
         WindowGroup {
             ZStack {
                 if isActive {
-                   MainView()
+                    MainView()
                         .environmentObject(authViewModel)
+                        .environmentObject(coordinator)
                 } else {
                     Image("LaunchScreen")
                         .resizable()
@@ -37,7 +42,7 @@ struct WishieApp: App {
             }
             .preferredColorScheme(.light)
             .animation(.easeInOut(duration: 0.4), value: authViewModel.isLoggedIn)
-            .animation(.easeInOut(duration: 0.4), value: hasCompletedOnboarding)
+            .animation(RootNavigationAnimations.welcomeToAuth, value: coordinator.appState)
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     withAnimation(.spring) {

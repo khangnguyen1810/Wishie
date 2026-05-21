@@ -28,13 +28,33 @@ final class AuthViewModel: ObservableObject {
         checkToken()
     }
     func checkToken() {
-        if let token = UserDefaults.standard.string(forKey: userid), !token.isEmpty {
-            isLoggedIn = true
+        guard let firebaseUser = Auth.auth().currentUser,
+              let storedId = UserDefaults.standard.string(forKey: userid),
+              !storedId.isEmpty,
+              firebaseUser.uid == storedId else {
+            UserDefaults.standard.removeObject(forKey: userid)
+            return
+        }
+        Task {
+            do {
+                _ = try await firebaseUser.getIDToken(forcingRefresh: true)
+                await MainActor.run { self.isLoggedIn = true }
+            } catch {
+                await MainActor.run { UserDefaults.standard.removeObject(forKey: self.userid) }
+            }
         }
     }
     func login(email: String, password: String) {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedEmail.isEmpty, !trimmedPassword.isEmpty, StringUtils.isValidEmail(trimmedEmail) else {
+            self.isShowError = true
+            self.errorTitle = "Invalid Input"
+            self.errorMessage = "Please enter a valid email address and password."
+            return
+        }
         self.isShowProgress = true
-        authService.login(email, password)
+        authService.login(trimmedEmail, trimmedPassword)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
                 guard let self else { return }

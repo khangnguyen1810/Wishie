@@ -1,0 +1,29 @@
+# Sensitive files
+setup.sh
+README.md
+kms-gitlab-intermediate-root.crt
+GoogleService-Info.plist
+
+# Xcode
+.DS_Store
+xcuserdata/
+DerivedData/
+*.xcworkspace/xcuserdata/
+
+# Build
+Build/
+DerivedData/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Environment
+.env
+.env.local

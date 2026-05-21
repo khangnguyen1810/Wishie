@@ -26,6 +26,6 @@ struct UserModel: Codable, Hashable {
         }
     }
     func getFullName() -> String {
-        return "\(firstName) \(lastName)"
+        return "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
     }
 }

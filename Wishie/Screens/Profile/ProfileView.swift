@@ -47,12 +47,16 @@ struct ProfileView: View {
                             .padding(.horizontal, 16)
                     }
 
-                    profileInfoRow(label: "Full Name", value: viewModel.userInfo.getFullName())
-                    profileInfoRow(label: "Date of Birth", value: viewModel.userInfo.dateOfBirth.toShortDateString())
-                    profileInfoRow(label: "Email", value: viewModel.userInfo.email)
-                    profileInfoRow(label: "Phone", value: viewModel.userInfo.phone)
+                    VStack(spacing: 0) {
+                        Divider()
+                        profileInfoRow(label: "Full Name", value: viewModel.userInfo.getFullName())
+                        profileInfoRow(label: "Date of Birth", value: viewModel.userInfo.dateOfBirth.toShortDateString())
+                        profileInfoRow(label: "Email", value: viewModel.userInfo.email)
+                        profileInfoRow(label: "Phone", value: viewModel.userInfo.phone)
+                    }
                 }
                 .padding(.vertical, 10)
+                .padding(.horizontal, 16)
             }
 
             WishieButton(
@@ -73,20 +77,19 @@ struct ProfileView: View {
 
     @ViewBuilder
     private func profileInfoRow(label: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(label)
-                .font(.wishies(.regular, 16))
-                .foregroundStyle(.black)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Text(value.isEmpty ? "-" : value)
-                .font(.wishies(.bold, 17))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 15)
-                .background {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(.lightYellow)
-                        .frame(height: 56)
-                }
+        VStack(spacing: 0) {
+            HStack(alignment: .center) {
+                Text(label)
+                    .font(.wishies(.regular, 16))
+                    .foregroundStyle(.black)
+                Spacer()
+                Text(value.isEmpty ? "-" : value)
+                    .font(.wishies(.bold, 16))
+                    .foregroundStyle(.black)
+                    .multilineTextAlignment(.trailing)
+            }
+            .padding(.vertical, 14)
+            Divider()
         }
     }
 }

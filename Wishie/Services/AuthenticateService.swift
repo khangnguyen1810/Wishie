@@ -106,10 +106,11 @@ class AuthenticateService: AuthenticateServiceProtocol {
         try await SupabaseManager.shared.client.storage
             .from("Wishie")
             .upload(path, data: data, options: FileOptions(contentType: "image/jpeg", upsert: true))
-        return try SupabaseManager.shared.client.storage
+        let publicURL = try SupabaseManager.shared.client.storage
             .from("Wishie")
             .getPublicURL(path: path)
             .absoluteString
+        return "\(publicURL)?t=\(Int(Date().timeIntervalSince1970))"
     }
 
     func updateUserInfo(userId: String, firstName: String, lastName: String, phone: String, dateOfBirth: Date, avatarUrl: String?) async throws {

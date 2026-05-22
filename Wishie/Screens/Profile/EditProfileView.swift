@@ -42,6 +42,7 @@ struct EditProfileView: View {
                                         .resizable()
                                         .scaledToFill()
                                         .frame(width: 100, height: 100)
+                                        .clipped()
                                         .clipShape(Circle())
                                 } else {
                                     Circle()
@@ -49,6 +50,7 @@ struct EditProfileView: View {
                                         .frame(width: 100, height: 100)
                                 }
                             }
+                            .frame(width: 100, height: 100)
                         } else {
                             Circle()
                                 .fill(.lightYellow)

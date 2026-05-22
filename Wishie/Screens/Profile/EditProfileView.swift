@@ -3,6 +3,7 @@ import SwiftUI
 struct EditProfileView: View {
     let userModel: UserModel
     @StateObject private var viewModel = EditProfileViewModel()
+    @State private var showDatePicker: Bool = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -138,7 +139,7 @@ struct EditProfileView: View {
                             Text("Date of Birth")
                                 .font(.wishies(.bold, 17))
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            DateInputView(isCreating: false, date: $viewModel.dateOfBirth)
+                            DateInputView(isCreating: $showDatePicker , date: $viewModel.dateOfBirth)
                         }
                     }
                     .padding(.horizontal, 16)

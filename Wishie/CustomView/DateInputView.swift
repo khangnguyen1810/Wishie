@@ -7,7 +7,7 @@
 
 import SwiftUI
 struct DateInputView: View {
-    var isCreating: Bool
+    @Binding var isCreating: Bool
     @State private var dateOfBirth = Date()
     @Binding var date: Date
     @State private var showPicker = false
@@ -40,6 +40,9 @@ struct DateInputView: View {
             }
             .onTapGesture {
                 showPicker = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    isCreating = true
+                }
             }
             .sheet(isPresented: $showPicker) {
                 VStack {
@@ -52,6 +55,7 @@ struct DateInputView: View {
                     Button(action: {
                         date = combinedDate ?? Date()
                         showPicker = false
+                        isCreating = false
                     }) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 15)

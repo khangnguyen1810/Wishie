@@ -48,7 +48,6 @@ struct ProfileView: View {
                     }
 
                     VStack(spacing: 0) {
-                        Divider()
                         profileInfoRow(label: "Full Name", value: viewModel.userInfo.getFullName())
                         profileInfoRow(label: "Date of Birth", value: viewModel.userInfo.dateOfBirth.toShortDateString())
                         profileInfoRow(label: "Email", value: viewModel.userInfo.email)
@@ -63,7 +62,7 @@ struct ProfileView: View {
                 title: "Log out",
                 enabled: true,
                 filColor: .wishiePink,
-                titleColor: .white
+                titleColor: .black
             ) {
                 authViewModel.logOut()
             }
@@ -89,7 +88,6 @@ struct ProfileView: View {
                     .multilineTextAlignment(.trailing)
             }
             .padding(.vertical, 14)
-            Divider()
         }
     }
 }

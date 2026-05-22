@@ -186,6 +186,8 @@ struct HomeView: View {
                         wishlistId: id,
                         isFromInfo: isFromInfo
                     )
+                default:
+                    EmptyView()
                 }
             }
             .task {

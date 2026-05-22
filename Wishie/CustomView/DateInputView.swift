@@ -8,9 +8,15 @@
 import SwiftUI
 struct DateInputView: View {
     @Binding var isCreating: Bool
-    @State private var dateOfBirth = Date()
+    @State private var dateOfBirth: Date
     @Binding var date: Date
     @State private var showPicker = false
+
+    init(isCreating: Binding<Bool>, date: Binding<Date>) {
+        _isCreating = isCreating
+        _date = date
+        _dateOfBirth = State(initialValue: date.wrappedValue)
+    }
     private var day: String {
         let day = Calendar.current.component(
             .day,
@@ -51,7 +57,7 @@ struct DateInputView: View {
                                displayedComponents: .date)
                     .datePickerStyle(.wheel)
                     .labelsHidden()
-                    
+
                     Button(action: {
                         date = combinedDate ?? Date()
                         showPicker = false
@@ -71,6 +77,14 @@ struct DateInputView: View {
                 }
                 .presentationDetents([.fraction(0.33)])
                 .presentationDragIndicator(.visible)
+            }
+        }
+        .onChange(of: date) { _, newValue in
+            dateOfBirth = newValue
+        }
+        .onChange(of: showPicker) { _, isShowing in
+            if isShowing {
+                dateOfBirth = date
             }
         }
     }

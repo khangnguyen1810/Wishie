@@ -15,6 +15,7 @@ struct UserModel: Codable, Hashable {
     var phone: String = ""
     var password: String = ""
     var dateOfBirth: Date = Date()
+    var avatarUrl: String? = nil
     
     init(dictionary: [String: Any] = [:]) {
         self.firstName = dictionary["firstName"] as? String ?? ""
@@ -24,6 +25,7 @@ struct UserModel: Codable, Hashable {
         if let timestamp = dictionary["dateOfBirth"] as? Timestamp {
             self.dateOfBirth = timestamp.dateValue()
         }
+        self.avatarUrl = dictionary["avatarUrl"] as? String
     }
     func getFullName() -> String {
         return "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)

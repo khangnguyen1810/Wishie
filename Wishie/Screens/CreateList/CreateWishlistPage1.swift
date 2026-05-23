@@ -56,7 +56,7 @@ struct CreateWishlistPage1: View {
                     .foregroundColor(createWishlistViewModel.description.count == 200 ? .red : .gray)
             }
             .padding(.bottom,20)
-            DateInputView(isCreating: true, date: $createWishlistViewModel.dueDate)
+            DateInputView(isCreating: .constant(true), date: $createWishlistViewModel.dueDate)
         }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {

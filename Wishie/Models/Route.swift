@@ -14,4 +14,5 @@ enum Route: Hashable {
     case qrCodeScreen(wishlistId: String)
     case wishListInfoScreen(wishlistId: String)
     case wishListDetailScreen(wishlistId: String, isFromInfo: Bool)
+    case editProfile
 }

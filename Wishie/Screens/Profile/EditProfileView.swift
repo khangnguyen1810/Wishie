@@ -75,37 +75,40 @@ struct EditProfileView: View {
                     }
 
                     VStack(spacing: 24) {
-                        VStack(spacing: 0) {
-                            Text("First Name")
-                                .font(.wishies(.bold, 17))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            TextField("First name", text: $viewModel.firstName)
-                                .font(.wishies(.regular, 17))
-                                .padding(.horizontal, 15)
-                                .textInputAutocapitalization(.never)
-                                .background {
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(.lightYellow)
-                                        .frame(height: 56)
-                                }
+                        HStack {
+                            VStack(spacing: 8) {
+                                Text("First Name")
+                                    .font(.wishies(.bold, 17))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                TextField("First name", text: $viewModel.firstName)
+                                    .font(.wishies(.regular, 17))
+                                    .textInputAutocapitalization(.never)
+                                    .padding(.horizontal, 15)
+                                    .frame(height: 56)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(.lightYellow)
+                                    )
+                            }
+                            
+                            VStack {
+                                Text("Last Name")
+                                    .font(.wishies(.bold, 17))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                TextField("Last name", text: $viewModel.lastName)
+                                    .font(.wishies(.regular, 17))
+                                    .padding(.horizontal, 15)
+                                    .textInputAutocapitalization(.never)
+                                    .frame(height: 56)
+                                    .background {
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(.lightYellow)
+                                        
+                                    }
+                            }
                         }
-
-                        VStack(spacing: 0) {
-                            Text("Last Name")
-                                .font(.wishies(.bold, 17))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            TextField("Last name", text: $viewModel.lastName)
-                                .font(.wishies(.regular, 17))
-                                .padding(.horizontal, 15)
-                                .textInputAutocapitalization(.never)
-                                .background {
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(.lightYellow)
-                                        .frame(height: 56)
-                                }
-                        }
-
-                        VStack(spacing: 0) {
+                        VStack {
                             Text("Phone")
                                 .font(.wishies(.bold, 17))
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -114,14 +117,15 @@ struct EditProfileView: View {
                                 .padding(.horizontal, 15)
                                 .textInputAutocapitalization(.never)
                                 .keyboardType(.phonePad)
+                                .frame(height: 56)
                                 .background {
                                     RoundedRectangle(cornerRadius: 15)
                                         .fill(.lightYellow)
-                                        .frame(height: 56)
+                                        
                                 }
                         }
 
-                        VStack(spacing: 0) {
+                        VStack {
                             Text("Email")
                                 .font(.wishies(.bold, 17))
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -135,7 +139,7 @@ struct EditProfileView: View {
                                 }
                         }
 
-                        VStack(spacing: 0) {
+                        VStack {
                             Text("Date of Birth")
                                 .font(.wishies(.bold, 17))
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -157,6 +161,7 @@ struct EditProfileView: View {
                     await viewModel.saveProfile()
                 }
             }
+            .padding(.horizontal,16)
             .padding(.bottom, 20)
         }
         .showFullScreenDialog($viewModel.isLoading)

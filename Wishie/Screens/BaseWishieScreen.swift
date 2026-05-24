@@ -31,7 +31,7 @@ struct BaseWishieScreen<
                 content
                     .ignoresSafeArea()
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 15)
         }
         .navigationBarBackButtonHidden()
     }

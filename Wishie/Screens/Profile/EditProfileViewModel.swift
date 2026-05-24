@@ -9,9 +9,11 @@ class EditProfileViewModel: ObservableObject {
     @Published var dateOfBirth: Date = Date()
     @Published var selectedAvatar: UIImage? = nil
     @Published var existingAvatarUrl: String? = nil
+    private var email: String = ""
     @Published var isLoading: Bool = false
     @Published var errorMessage: String = ""
     @Published var isSaveSuccess: Bool = false
+    @Published var updatedUser: UserModel? = nil
 
     private let authService: AuthenticateServiceProtocol
 
@@ -22,6 +24,7 @@ class EditProfileViewModel: ObservableObject {
     func populate(from user: UserModel) {
         firstName = user.firstName
         lastName = user.lastName
+        email = user.email
         phone = user.phone
         dateOfBirth = user.dateOfBirth
         existingAvatarUrl = user.avatarUrl
@@ -58,6 +61,14 @@ class EditProfileViewModel: ObservableObject {
                 dateOfBirth: dateOfBirth,
                 avatarUrl: avatarUrl
             )
+            var model = UserModel()
+            model.firstName = firstName.trimmingCharacters(in: .whitespaces)
+            model.lastName = lastName.trimmingCharacters(in: .whitespaces)
+            model.email = email
+            model.phone = phone
+            model.dateOfBirth = dateOfBirth
+            model.avatarUrl = avatarUrl
+            updatedUser = model
             isLoading = false
             isSaveSuccess = true
         } catch {

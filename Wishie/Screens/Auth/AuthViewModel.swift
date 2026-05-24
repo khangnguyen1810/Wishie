@@ -23,6 +23,7 @@ final class AuthViewModel: ObservableObject {
     @Published var userInfo = UserModel(dictionary: [:])
     @Published var isSentEmail: Bool = false
     @Published var forgotenEmail: String = ""
+    @Published var userInfoError: String = ""
     init(authService: AuthenticateServiceProtocol = AuthenticateService()) {
         self.authService = authService
         checkToken()
@@ -39,6 +40,7 @@ final class AuthViewModel: ObservableObject {
             do {
                 _ = try await firebaseUser.getIDToken(forcingRefresh: true)
                 await MainActor.run { self.isLoggedIn = true }
+                await self.getUserInfo()
             } catch {
                 await MainActor.run { UserDefaults.standard.removeObject(forKey: self.userid) }
             }
@@ -73,6 +75,7 @@ final class AuthViewModel: ObservableObject {
                 else { return }
                 UserDefaults.standard.setValue(user.uid, forKey: userid)
                 isLoggedIn = true
+                Task { await self.getUserInfo() }
             }
             .store(in: &cancellables)
     }
@@ -98,6 +101,7 @@ final class AuthViewModel: ObservableObject {
                 else { return }
                 UserDefaults.standard.setValue(user.uid, forKey: userid)
                 isLoggedIn = true
+                Task { await self.getUserInfo() }
             }
             .store(in: &cancellables)
         
@@ -106,6 +110,8 @@ final class AuthViewModel: ObservableObject {
         self.isShowProgress = true
         UserDefaults.standard.removeObject(forKey: userid)
         isLoggedIn = false
+        self.userInfo = UserModel()
+        self.userInfoError = ""
         self.isShowProgress = false
     }
     
@@ -115,7 +121,7 @@ final class AuthViewModel: ObservableObject {
             guard let result = try await authService.getUserInfo() else { return }
             self.userInfo = result
         } catch {
-            print(error.localizedDescription)
+            self.userInfoError = error.localizedDescription
         }
     }
     

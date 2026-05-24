@@ -1,8 +1,10 @@
 import SwiftUI
+import DotLottie
+import SDWebImageSwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject private var authViewModel: AuthViewModel
-    @StateObject private var viewModel: ProfileViewModel = ProfileViewModel()
+    @StateObject private var editViewModel: EditProfileViewModel = EditProfileViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var path = NavigationPath()
 
@@ -12,12 +14,12 @@ struct ProfileView: View {
                 TopAppBar {
                     Circle()
                         .fill(.lightYellow)
-                        .frame(width: 50, height: 50)
+                        .frame(width: 40, height: 40)
                         .overlay {
                             Image("back_icon")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 20)
+                                .frame(width: 17)
                         }
                         .onTapGesture {
                             dismiss()
@@ -29,12 +31,12 @@ struct ProfileView: View {
                 } trailing: {
                     Circle()
                         .fill(.lightYellow)
-                        .frame(width: 50, height: 50)
+                        .frame(width: 40, height: 40)
                         .overlay {
                             Image("edit_icon")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 20)
+                                .frame(width: 17)
                         }
                         .onTapGesture {
                             path.append(Route.editProfile)
@@ -46,8 +48,8 @@ struct ProfileView: View {
                         avatarView
                             .padding(.top, 20)
 
-                        if !viewModel.errorMessage.isEmpty {
-                            Text(viewModel.errorMessage)
+                        if !authViewModel.userInfoError.isEmpty {
+                            Text(authViewModel.userInfoError)
                                 .font(.wishies(.regular, 15))
                                 .foregroundStyle(.wishiePink)
                                 .multilineTextAlignment(.center)
@@ -55,10 +57,10 @@ struct ProfileView: View {
                         }
 
                         VStack(spacing: 0) {
-                            profileInfoRow(label: "Full Name", value: viewModel.userInfo.getFullName())
-                            profileInfoRow(label: "Date of Birth", value: viewModel.userInfo.dateOfBirth.toShortDateString())
-                            profileInfoRow(label: "Email", value: viewModel.userInfo.email)
-                            profileInfoRow(label: "Phone", value: viewModel.userInfo.phone)
+                            profileInfoRow(label: "Full Name", value: authViewModel.userInfo.getFullName())
+                            profileInfoRow(label: "Date of Birth", value: authViewModel.userInfo.dateOfBirth.toShortDateString())
+                            profileInfoRow(label: "Email", value: authViewModel.userInfo.email)
+                            profileInfoRow(label: "Phone", value: authViewModel.userInfo.phone)
                         }
                     }
                     .padding(.vertical, 10)
@@ -75,21 +77,17 @@ struct ProfileView: View {
                 }
                 .padding(.bottom, 20)
             }
-            .showFullScreenDialog($viewModel.isLoading)
-            .task {
-                await viewModel.fetchUserInfo()
-            }
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case .editProfile:
-                    EditProfileView(userModel: viewModel.userInfo)
-                        .onDisappear {
-                            Task {
-                                await viewModel.fetchUserInfo()
-                            }
-                        }
+                    EditProfileView(userModel: authViewModel.userInfo, viewModel: editViewModel)
                 default:
                     EmptyView()
+                }
+            }
+            .onChange(of: editViewModel.updatedUser) { _, updated in
+                if let updated {
+                    authViewModel.userInfo = updated
                 }
             }
         }
@@ -97,30 +95,22 @@ struct ProfileView: View {
 
     @ViewBuilder
     private var avatarView: some View {
-        if let avatarUrl = viewModel.userInfo.avatarUrl, !avatarUrl.isEmpty {
-            AsyncImage(url: URL(string: avatarUrl)) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 100, height: 100)
-                        .clipped()
-                        .clipShape(Circle())
-                default:
-                    Circle()
-                        .fill(.lightYellow)
-                        .frame(width: 100, height: 100)
-                        .overlay {
-                            Image("user")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 50)
-                        }
-                }
-            }
+
+        if let avatarUrl = authViewModel.userInfo.avatarUrl,
+           !avatarUrl.isEmpty {
+
+            WishieWebImage(url: avatarUrl)
+                .transition(.fade(duration: 0.25))
+                .frame(width: 100, height: 100)
+                .clipped()
+                .clipShape(Circle())
+            .transition(.fade(duration: 0.25))
             .frame(width: 100, height: 100)
+            .clipped()
+            .clipShape(Circle())
+
         } else {
+
             Circle()
                 .fill(.lightYellow)
                 .frame(width: 100, height: 100)

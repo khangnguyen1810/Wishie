@@ -1,4 +1,6 @@
 import SwiftUI
+import DotLottie
+import SDWebImageSwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject private var authViewModel: AuthViewModel
@@ -12,12 +14,12 @@ struct ProfileView: View {
                 TopAppBar {
                     Circle()
                         .fill(.lightYellow)
-                        .frame(width: 50, height: 50)
+                        .frame(width: 40, height: 40)
                         .overlay {
                             Image("back_icon")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 20)
+                                .frame(width: 17)
                         }
                         .onTapGesture {
                             dismiss()
@@ -29,12 +31,12 @@ struct ProfileView: View {
                 } trailing: {
                     Circle()
                         .fill(.lightYellow)
-                        .frame(width: 50, height: 50)
+                        .frame(width: 40, height: 40)
                         .overlay {
                             Image("edit_icon")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 20)
+                                .frame(width: 17)
                         }
                         .onTapGesture {
                             path.append(Route.editProfile)
@@ -93,30 +95,22 @@ struct ProfileView: View {
 
     @ViewBuilder
     private var avatarView: some View {
-        if let avatarUrl = authViewModel.userInfo.avatarUrl, !avatarUrl.isEmpty {
-            AsyncImage(url: URL(string: avatarUrl)) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 100, height: 100)
-                        .clipped()
-                        .clipShape(Circle())
-                default:
-                    Circle()
-                        .fill(.lightYellow)
-                        .frame(width: 100, height: 100)
-                        .overlay {
-                            Image("user")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 50)
-                        }
-                }
-            }
+
+        if let avatarUrl = authViewModel.userInfo.avatarUrl,
+           !avatarUrl.isEmpty {
+
+            WishieWebImage(url: avatarUrl)
+                .transition(.fade(duration: 0.25))
+                .frame(width: 100, height: 100)
+                .clipped()
+                .clipShape(Circle())
+            .transition(.fade(duration: 0.25))
             .frame(width: 100, height: 100)
+            .clipped()
+            .clipShape(Circle())
+
         } else {
+
             Circle()
                 .fill(.lightYellow)
                 .frame(width: 100, height: 100)

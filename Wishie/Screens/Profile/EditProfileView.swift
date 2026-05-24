@@ -1,4 +1,6 @@
 import SwiftUI
+import DotLottie
+import SDWebImageSwiftUI
 
 struct EditProfileView: View {
     let userModel: UserModel
@@ -12,12 +14,12 @@ struct EditProfileView: View {
             TopAppBar {
                 Circle()
                     .fill(.lightYellow)
-                    .frame(width: 50, height: 50)
+                    .frame(width: 40, height: 40)
                     .overlay {
                         Image("back_icon")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 20)
+                            .frame(width: 17)
                     }
                     .onTapGesture {
                         dismiss()
@@ -38,21 +40,11 @@ struct EditProfileView: View {
                                 .frame(width: 100, height: 100)
                                 .clipShape(Circle())
                         } else if let url = viewModel.existingAvatarUrl, !url.isEmpty {
-                            AsyncImage(url: URL(string: url)) { phase in
-                                if let image = phase.image {
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 100, height: 100)
-                                        .clipped()
-                                        .clipShape(Circle())
-                                } else {
-                                    Circle()
-                                        .fill(.lightYellow)
-                                        .frame(width: 100, height: 100)
-                                }
-                            }
-                            .frame(width: 100, height: 100)
+                            WishieWebImage(url: url)
+                                .transition(.fade(duration: 0.25))
+                                .frame(width: 100, height: 100)
+                                .clipped()
+                                .clipShape(Circle())
                         } else {
                             Circle()
                                 .fill(.lightYellow)

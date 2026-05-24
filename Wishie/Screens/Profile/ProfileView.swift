@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject private var authViewModel: AuthViewModel
-    @StateObject private var viewModel: ProfileViewModel = ProfileViewModel()
+    @StateObject private var editViewModel: EditProfileViewModel = EditProfileViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var path = NavigationPath()
 
@@ -46,8 +46,8 @@ struct ProfileView: View {
                         avatarView
                             .padding(.top, 20)
 
-                        if !viewModel.errorMessage.isEmpty {
-                            Text(viewModel.errorMessage)
+                        if !authViewModel.userInfoError.isEmpty {
+                            Text(authViewModel.userInfoError)
                                 .font(.wishies(.regular, 15))
                                 .foregroundStyle(.wishiePink)
                                 .multilineTextAlignment(.center)
@@ -55,10 +55,10 @@ struct ProfileView: View {
                         }
 
                         VStack(spacing: 0) {
-                            profileInfoRow(label: "Full Name", value: viewModel.userInfo.getFullName())
-                            profileInfoRow(label: "Date of Birth", value: viewModel.userInfo.dateOfBirth.toShortDateString())
-                            profileInfoRow(label: "Email", value: viewModel.userInfo.email)
-                            profileInfoRow(label: "Phone", value: viewModel.userInfo.phone)
+                            profileInfoRow(label: "Full Name", value: authViewModel.userInfo.getFullName())
+                            profileInfoRow(label: "Date of Birth", value: authViewModel.userInfo.dateOfBirth.toShortDateString())
+                            profileInfoRow(label: "Email", value: authViewModel.userInfo.email)
+                            profileInfoRow(label: "Phone", value: authViewModel.userInfo.phone)
                         }
                     }
                     .padding(.vertical, 10)
@@ -75,21 +75,17 @@ struct ProfileView: View {
                 }
                 .padding(.bottom, 20)
             }
-            .showFullScreenDialog($viewModel.isLoading)
-            .task {
-                await viewModel.fetchUserInfo()
-            }
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case .editProfile:
-                    EditProfileView(userModel: viewModel.userInfo)
-                        .onDisappear {
-                            Task {
-                                await viewModel.fetchUserInfo()
-                            }
-                        }
+                    EditProfileView(userModel: authViewModel.userInfo, viewModel: editViewModel)
                 default:
                     EmptyView()
+                }
+            }
+            .onChange(of: editViewModel.updatedUser) { _, updated in
+                if let updated {
+                    authViewModel.userInfo = updated
                 }
             }
         }
@@ -97,7 +93,7 @@ struct ProfileView: View {
 
     @ViewBuilder
     private var avatarView: some View {
-        if let avatarUrl = viewModel.userInfo.avatarUrl, !avatarUrl.isEmpty {
+        if let avatarUrl = authViewModel.userInfo.avatarUrl, !avatarUrl.isEmpty {
             AsyncImage(url: URL(string: avatarUrl)) { phase in
                 switch phase {
                 case .success(let image):

@@ -2,8 +2,9 @@ import SwiftUI
 
 struct EditProfileView: View {
     let userModel: UserModel
-    @StateObject private var viewModel = EditProfileViewModel()
+    @ObservedObject var viewModel: EditProfileViewModel
     @State private var showDatePicker: Bool = false
+    @State private var isInitializing: Bool = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -165,8 +166,17 @@ struct EditProfileView: View {
             .padding(.bottom, 20)
         }
         .showFullScreenDialog($viewModel.isLoading)
+        .showFullScreenDialog($isInitializing)
         .onAppear {
-            viewModel.populate(from: userModel)
+            if userModel.firstName.isEmpty {
+                isInitializing = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    viewModel.populate(from: userModel)
+                    isInitializing = false
+                }
+            } else {
+                viewModel.populate(from: userModel)
+            }
         }
         .onChange(of: viewModel.isSaveSuccess) { _, success in
             if success {

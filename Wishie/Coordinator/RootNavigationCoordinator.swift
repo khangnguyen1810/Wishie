@@ -6,6 +6,7 @@ class RootNavigationCoordinator: ObservableObject {
     private let authViewModel: AuthViewModel
     private var cancellables = Set<AnyCancellable>()
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
+    @AppStorage("hasCompletedInterestsSetup") private var hasCompletedInterestsSetup: Bool = false
 
     init(authViewModel: AuthViewModel) {
         self.authViewModel = authViewModel
@@ -35,6 +36,11 @@ class RootNavigationCoordinator: ObservableObject {
         updateAppState()
     }
 
+    func completeInterestsSetup() {
+        hasCompletedInterestsSetup = true
+        updateAppState()
+    }
+
     func logout() {
         authViewModel.logOut()
         updateAppState()
@@ -55,6 +61,9 @@ class RootNavigationCoordinator: ObservableObject {
         if isLoggedIn,
            let userId = UserDefaults.standard.string(forKey: "userid"),
            !userId.isEmpty {
+            if !hasCompletedInterestsSetup {
+                return .interestsSetup
+            }
             return .authenticated(userId: userId)
         }
 

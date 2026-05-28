@@ -18,6 +18,7 @@ protocol AuthenticateServiceProtocol {
     func getUserInfo() async throws -> UserModel?
     func uploadAvatar(image: UIImage, userId: String) async throws -> String
     func updateUserInfo(userId: String, firstName: String, lastName: String, phone: String, dateOfBirth: Date, avatarUrl: String?) async throws
+    func updateUserInterests(userId: String, interests: [String]) async throws
 }
 class AuthenticateService: AuthenticateServiceProtocol {
     private let db = Firestore.firestore()
@@ -124,5 +125,12 @@ class AuthenticateService: AuthenticateServiceProtocol {
             updateDict["avatarUrl"] = avatarUrl
         }
         try await db.collection("users").document(userId).updateData(updateDict)
+    }
+
+    func updateUserInterests(userId: String, interests: [String]) async throws {
+        try await db.collection(WishieConstants.firebaseUserPath).document(userId).updateData([
+            "interests": interests,
+            "hasCompletedInterestsSetup": true
+        ])
     }
 }

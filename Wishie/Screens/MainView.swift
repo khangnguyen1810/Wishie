@@ -21,6 +21,10 @@ struct MainView: View {
             case .unauthenticated:
                 LoginOrSignUpScreen()
                     .transition(.opacity)
+            case .interestsSetup:
+                InterestsSelectionView()
+                    .environmentObject(authViewModel)
+                    .transition(.opacity)
             case .authenticated:
                 HomeView()
                     .environmentObject(authViewModel)

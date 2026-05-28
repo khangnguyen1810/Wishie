@@ -10,29 +10,41 @@ import SwiftUI
 struct CreateWishlistPage2: View {
     @EnvironmentObject var createWishlistViewModel: CreateWishlistViewModel
     var body: some View {
-        Text("Wishlist gift items...")
-            .font(.wishies(.regular, 17))
-            .frame(maxWidth: .infinity, alignment: .leading)
-        GeometryReader { geo in
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Add your gift ideas")
+                .font(.wishies(.bold, 18))
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text("Photos and details help friends pick the perfect gift.")
+                .font(.wishies(.regular, 14))
+                .foregroundStyle(.black.opacity(0.65))
+                .frame(maxWidth: .infinity, alignment: .leading)
             List {
                 ForEach($createWishlistViewModel.items) { $item in
-                    WishlistItemCard(item: $item, height: geo.size.height * 0.3)
+                    WishlistItemCard(item: $item)
                         .environmentObject(createWishlistViewModel)
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.lightYellow1)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 }
                 .onDelete { indexSet in
                     createWishlistViewModel.items.remove(atOffsets: indexSet)
                 }
-                Text("+ add new item")
-                    .font(.wishies(.regular, 14))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.lightYellow1)
-                    .onTapGesture {
-                        createWishlistViewModel.items.append(WishlistItem())
-                    }
-                    .padding(.bottom,100)
-                
+                HStack(spacing: 10) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.wishiePink)
+                    Text("Add another gift")
+                        .font(.wishies(.bold, 15))
+                        .foregroundStyle(.wishiePink)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.vertical, 8)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.lightYellow1)
+                .onTapGesture {
+                    createWishlistViewModel.items.append(WishlistItem())
+                }
+                .padding(.bottom, 100)
             }
             .listStyle(.plain)
             .scrollIndicators(.hidden)
@@ -41,78 +53,91 @@ struct CreateWishlistPage2: View {
 }
 
 struct WishlistItemCard: View {
+    private enum CreateWishlistItemField: Hashable {
+        case name, description, itemLink
+    }
+
     @Binding var item: WishlistItem
-    @FocusState var isInputActive: Bool
-    @State private var maxWidth: CGFloat = .infinity
-    var height: CGFloat = 100
+    @FocusState private var focusedField: CreateWishlistItemField?
     var body: some View {
-        HStack {
-            VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Gift idea")
+                    .font(.wishies(.bold, 13))
+                    .foregroundStyle(.wishiePink)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(.wishiePink.opacity(0.12))
+                    .clipShape(Capsule())
+                Spacer()
+            }
+            ImagePickerBox(height: 180, selectedImage: $item.localImage) {
+                ZStack {
+                    if let selectedImage = item.localImage {
+                        Image(uiImage: selectedImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity, minHeight: 180)
+                            .clipped()
+                    } else {
+                        VStack(spacing: 8) {
+                            Image("upload")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 26, height: 26)
+                            Text("Add photo")
+                                .font(.wishies(.regular, 12))
+                                .foregroundStyle(.black)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, minHeight: 180)
+                .background(.wishiePink)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            VStack(alignment: .leading, spacing: 12) {
                 TextField("Item name", text: $item.name)
                     .font(.wishies(.bold, 17))
-                    .textFieldStyle(.plain)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(.lightYellow)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .focused($focusedField, equals: .name)
                 TextField("About this item...", text: $item.description, axis: .vertical)
                     .font(.wishies(.italic, 14))
-                    .frame(height: 60, alignment: .topLeading)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .frame(height: 74, alignment: .topLeading)
                     .lineLimit(2...4)
-                    .focused($isInputActive)
+                    .background(.lightYellow)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .focused($focusedField, equals: .description)
                 TextField("Paste product link", text: $item.itemLink)
                     .font(.wishies(.regular, 15))
                     .keyboardType(.URL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .textFieldStyle(.plain)
-
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(.lightYellow)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .focused($focusedField, equals: .itemLink)
             }
-            .frame(maxWidth: maxWidth * 0.6, alignment: .leading)
-            ImagePickerBox(
-                height: height*0.8,
-                selectedImage: $item.localImage) {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(.wishiePink)
-                        .frame(height: height * 0.8)
-                        .overlay {
-                            VStack {
-                                if let selectedImage = item.localImage {
-                                    Image(uiImage: selectedImage)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .clipped()
-                                } else {
-                                    Image("upload")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 24, height: 24)
-
-                                    Text("Add image")
-                                        .font(.wishies(.regular, 10))
-                                        .foregroundStyle(.black)
-                                }
-                            }
-                        }
-                }
-            
         }
-        .padding(10)
-        .frame(maxWidth: maxWidth)
-        .frame(height: height)
-        .background {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(LinearGradient(
-                    colors: [
-                        .wishiePink.opacity(0.5),
-                        .lightYellow1.opacity(0.5)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing)
-                )
-        }
+        .padding(14)
+        .background(Color.white.opacity(0.95))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(.black.opacity(0.04), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.07), radius: 10, x: 0, y: 5)
         .toolbar {
-            ToolbarItem(placement: .keyboard) {
-                VStack {
+            if focusedField != nil {
+                ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button("Done") {
-                        isInputActive = false
+                        focusedField = nil
                     }
                 }
             }

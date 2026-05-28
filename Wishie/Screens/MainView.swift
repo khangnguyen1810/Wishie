@@ -22,7 +22,7 @@ struct MainView: View {
                 LoginOrSignUpScreen()
                     .transition(.opacity)
             case .interestsSetup:
-                InterestsSelectionView()
+                InterestsSelectionView(isOnboarding: true)
                     .environmentObject(authViewModel)
                     .transition(.opacity)
             case .authenticated:

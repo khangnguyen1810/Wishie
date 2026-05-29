@@ -68,7 +68,7 @@ struct InterestsSelectionView: View {
                     WishieButton(title: isOnboarding ? "Save & Continue" : "Save", enabled: !viewModel.isLoading) {
                         Task { await viewModel.saveInterests() }
                     }
-                    .padding(.bottom, max(proxy.safeAreaInsets.bottom, 16))
+                    .padding(.bottom, max(proxy.safeAreaInsets.bottom, 30))
 
                     if !viewModel.errorMessage.isEmpty {
                         Text(viewModel.errorMessage)

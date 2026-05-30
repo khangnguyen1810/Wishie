@@ -16,6 +16,8 @@ struct UserModel: Codable, Hashable {
     var password: String = ""
     var dateOfBirth: Date = Date()
     var avatarUrl: String? = nil
+    var interests: [String] = []
+    var hasCompletedInterestsSetup: Bool = false
     
     init(dictionary: [String: Any] = [:]) {
         self.firstName = dictionary["firstName"] as? String ?? ""
@@ -26,6 +28,8 @@ struct UserModel: Codable, Hashable {
             self.dateOfBirth = timestamp.dateValue()
         }
         self.avatarUrl = dictionary["avatarUrl"] as? String
+        self.interests = dictionary["interests"] as? [String] ?? []
+        self.hasCompletedInterestsSetup = dictionary["hasCompletedInterestsSetup"] as? Bool ?? false
     }
     func getFullName() -> String {
         return "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)

@@ -39,8 +39,11 @@ final class AuthViewModel: ObservableObject {
         Task {
             do {
                 _ = try await firebaseUser.getIDToken(forcingRefresh: true)
-                await MainActor.run { self.isLoggedIn = true }
                 await self.getUserInfo()
+                await MainActor.run {
+                    UserDefaults.standard.set(self.userInfo.hasCompletedInterestsSetup, forKey: "hasCompletedInterestsSetup")
+                    self.isLoggedIn = true
+                }
             } catch {
                 await MainActor.run { UserDefaults.standard.removeObject(forKey: self.userid) }
             }

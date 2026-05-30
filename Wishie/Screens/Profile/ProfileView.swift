@@ -61,6 +61,13 @@ struct ProfileView: View {
                             profileInfoRow(label: "Date of Birth", value: authViewModel.userInfo.dateOfBirth.toShortDateString())
                             profileInfoRow(label: "Email", value: authViewModel.userInfo.email)
                             profileInfoRow(label: "Phone", value: authViewModel.userInfo.phone)
+                            profileInfoRow(
+                                label: "Interests",
+                                value: authViewModel.userInfo.interests.isEmpty ? "-" : "\(authViewModel.userInfo.interests.count) selected"
+                            )
+                            .onTapGesture {
+                                path.append(Route.editInterests)
+                            }
                         }
                     }
                     .padding(.vertical, 10)
@@ -81,6 +88,8 @@ struct ProfileView: View {
                 switch route {
                 case .editProfile:
                     EditProfileView(userModel: authViewModel.userInfo, viewModel: editViewModel)
+                case .editInterests:
+                    InterestsSelectionView(isOnboarding: false)
                 default:
                     EmptyView()
                 }

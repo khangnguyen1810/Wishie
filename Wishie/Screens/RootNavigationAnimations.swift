@@ -12,6 +12,10 @@ enum RootNavigationAnimations {
             return welcomeToAuth
         case (.unauthenticated, .authenticated):
             return authToHome
+        case (.unauthenticated, .interestsSetup):
+            return authToHome
+        case (.interestsSetup, .authenticated):
+            return authToHome
         case (.authenticated, .unauthenticated):
             return homeToWelcome
         case (.unauthenticated, .welcome):

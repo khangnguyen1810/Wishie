@@ -31,6 +31,8 @@ The `HomeView.swift` screen is the main authenticated screen. It renders two tab
 - System MUST render the tab selector as a styled pill/capsule that highlights the selected tab using a matched geometry effect.
 - System MUST render an empty state using the `gift_img` image asset when `currentWishlists` is empty, with contextual copy per tab.
 - System MUST render the bottom sheet with celebration-themed action options using `lightYellow` fill and themed icon containers.
+- System MUST display the wishlist owner's real avatar image in `HomeItemViewCell` when `UserModel.avatarUrl` is non-nil and non-empty, loaded via `WishieWebImage`.
+- System MUST display a fallback placeholder (`Image("user")`) in the avatar circle when `UserModel.avatarUrl` is nil or empty.
 
 ## Non-Functional Requirements:
 
@@ -39,3 +41,5 @@ The `HomeView.swift` screen is the main authenticated screen. It renders two tab
 - System MUST use only existing asset catalog colors (`.lightYellow`, `.lightYellow1`, `.wishiePink`, `.darkGrey`, `.lightGrey`, `.sunset`) and `Color(hex:)` via `GradientTheme` hex values.
 - System MUST use `Font.wishies(_:_:)` for all text elements.
 - System MUST use `WishieButton` for CTA buttons in the empty state.
+- System MUST use `WishieWebImage` (backed by SDWebImage) for all remote avatar image loading in `HomeItemViewCell`.
+- System MUST clip the avatar to a `Circle` shape at 38×38 when displaying a real avatar via `WishieWebImage`.

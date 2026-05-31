@@ -15,11 +15,30 @@ struct HomeItemViewCell: View {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         let due = calendar.startOfDay(for: item.0.dueDate)
-        return max(0, calendar.dateComponents([.day], from: today, to: due).day ?? 0)
+        return max(-1, calendar.dateComponents([.day], from: today, to: due).day ?? 0)
     }
 
     private var isUrgent: Bool {
-        daysRemaining <= 7
+        daysRemaining <= 7 && daysRemaining >= 0
+    }
+
+    private var isOverDue: Bool {
+        daysRemaining < 0
+    }
+
+    private var avatarView: some View {
+        Group {
+            if let avatarUrl = item.1.avatarUrl, !avatarUrl.isEmpty {
+                WishieWebImage(url: avatarUrl)
+                    .frame(width: 38, height: 38)
+                    .clipShape(Circle())
+            } else {
+                Image("user")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 21, height: 21)
+            }
+        }
     }
 
     var body: some View {
@@ -106,10 +125,7 @@ struct HomeItemViewCell: View {
                         .fill(Color.white.opacity(0.55))
                         .frame(width: 38, height: 38)
                         .overlay(Circle().stroke(Color.white.opacity(0.9), lineWidth: 1.5))
-                    Image("user")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 21, height: 21)
+                    avatarView
                 }
                 Text(item.1.firstName.isEmpty ? "—" : item.1.firstName)
                     .font(.wishies(.regular, 10))
@@ -139,9 +155,9 @@ struct HomeItemViewCell: View {
                 Image(systemName: daysRemaining == 0 ? "star.fill" : "clock.fill")
                     .font(.system(size: 10))
                     .foregroundStyle(isUrgent ? Color.wishiePink : Color.black.opacity(0.5))
-                Text(daysRemaining == 0 ? "Today!" : "\(daysRemaining)d left")
+                Text(daysRemaining == -1 ? "Overdue": (daysRemaining == 0 ? "Today!" : "\(daysRemaining)d left"))
                     .font(.wishies(.bold, 11))
-                    .foregroundStyle(isUrgent ? Color.wishiePink : Color.black.opacity(0.65))
+                    .foregroundStyle(isUrgent ? Color.wishiePink : (isOverDue ? Color.lightGrey : Color.black.opacity(0.65)))
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 5)

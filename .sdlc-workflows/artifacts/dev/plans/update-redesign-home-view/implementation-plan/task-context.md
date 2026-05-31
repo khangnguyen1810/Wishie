@@ -19,6 +19,7 @@
 - `DateExtension.toShortDateString()`: Formats a `Date` to a short display string. Located at `Wishie/Utils/DateExtension.swift`.
 - `BaseWishieScreen(topBar:content:)`: Base screen wrapper providing `lightYellow1` background and horizontal padding. Located at `Wishie/Screens/BaseWishieScreen.swift`.
 - `TopAppBar(leading:center:trailing:)`: Horizontal app bar layout. Located at `Wishie/Screens/BaseWishieScreen.swift`.
+- `WishieWebImage(url:)`: Remote image loader backed by SDWebImage. Renders a `scaledToFill` image with an animated Lottie placeholder while loading. Located at `Wishie/CustomView/WishieWebImage.swift`.
 
 ## Shared Contracts
 
@@ -81,3 +82,15 @@
   - Replace `RoundedRectangle.fill(.lightYellow)` background with a `RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.6)).overlay(RoundedRectangle(cornerRadius: 16).stroke(Color(hex: "#F1D790"), lineWidth: 1))`.
   - Change icon container from a plain `Image` to a `ZStack`: `RoundedRectangle(cornerRadius: 10).fill(LinearGradient(colors: [Color(hex: "#F1D790"), Color(hex: "#FEF3D7")], startPoint: .topLeading, endPoint: .bottomTrailing)).frame(width: 40, height: 40)` with `Image(image).resizable().aspectRatio(contentMode: .fit).frame(width: 24).padding(.leading, 8)` overlaid.
   - Update title font to `.wishies(.bold, 17)` and color to `.black`.
+
+---
+
+# Task 5: Implement User Avatar in `HomeItemViewCell`
+
+- [ ] 5.1: In `Wishie/Screens/Home/HomeItemViewCell.swift` UPDATE `headerRow`:
+  - Replace the static `Image("user")` avatar placeholder inside the avatar `ZStack` with a conditional block that checks `item.1.avatarUrl`:
+    - When `item.1.avatarUrl` is non-nil and non-empty: render `WishieWebImage(url: avatarUrl)` inside a `Circle` clip shape at 38×38, retaining the existing `Circle().stroke(Color.white.opacity(0.9), lineWidth: 1.5)` overlay border and the `Color.white.opacity(0.55)` fill background.
+    - When `item.1.avatarUrl` is nil or empty: retain the existing `Image("user").resizable().scaledToFit().frame(width: 21, height: 21)` fallback inside the same `ZStack`.
+  - Extract a private computed property `private var avatarView: some View` in `HomeItemViewCell` that encapsulates the conditional avatar rendering, keeping `headerRow` readable.
+  - The `ZStack` container remains `Circle().fill(Color.white.opacity(0.55)).frame(width: 38, height: 38).overlay(Circle().stroke(Color.white.opacity(0.9), lineWidth: 1.5))`; only the inner content changes.
+  - The `Text(item.1.firstName.isEmpty ? "—" : item.1.firstName)` label below the avatar remains unchanged.

@@ -422,7 +422,7 @@ struct HomeView: View {
                     Text("What would you like to do?")
                         .font(.wishies(.bold, 16))
                         .foregroundStyle(Color.darkGrey)
-                        .padding(.top, 8)
+                        .padding(.top, 30)
                     bottomSheetOption(image: "qr_icon", title: "Scan QR code")
                         .onTapGesture {
                             path.append(Route.scanQRCode)

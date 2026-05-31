@@ -9,4 +9,3 @@
   - **Root Cause**: `Text(item.0.name)` at line 16 in `HomeItemViewCell.swift` has no `.lineLimit(1)` modifier. Without a line limit, SwiftUI wraps the text to as many lines as needed rather than truncating. The `.truncationMode(.tail)` is only effective when a `lineLimit` is also applied. As a result, an 80-character name expands the card's `VStack` vertically, breaking both the truncation requirement and the standard card height guarantee.
   - **Affected Files**: `Wishie/Screens/Home/HomeItemViewCell.swift` — lines 16–19 (`Text(item.0.name)` modifier chain missing `.lineLimit(1)`)
   - **Resolution**: Added `.lineLimit(1)` and `.truncationMode(.tail)` modifiers to `Text(item.0.name)` in `HomeItemViewCell.swift`. SwiftUI now enforces a single-line constraint so tail truncation activates for names exceeding available width, preserving standard card height and keeping the owner row fully visible.
-

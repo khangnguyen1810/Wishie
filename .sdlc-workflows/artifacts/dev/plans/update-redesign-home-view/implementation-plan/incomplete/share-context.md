@@ -19,6 +19,7 @@
 - `DateExtension.toShortDateString()`: Formats a `Date` to a short display string. Located at `Wishie/Utils/DateExtension.swift`.
 - `BaseWishieScreen(topBar:content:)`: Base screen wrapper providing `lightYellow1` background and horizontal padding. Located at `Wishie/Screens/BaseWishieScreen.swift`.
 - `TopAppBar(leading:center:trailing:)`: Horizontal app bar layout. Located at `Wishie/Screens/BaseWishieScreen.swift`.
+- `WishieWebImage(url:)`: Remote image loader backed by SDWebImage. Renders a `scaledToFill` image with an animated Lottie placeholder while loading. Located at `Wishie/CustomView/WishieWebImage.swift`.
 
 ## Shared Contracts
 

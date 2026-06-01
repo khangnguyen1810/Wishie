@@ -6,3 +6,5 @@
   - Then: The description is clamped to exactly 2 lines with trailing truncation; the `GiftProgressView` circular element alongside it remains vertically aligned to `.top`; the overall card height is consistent with other cards
   - Verify: No text overflow beyond the 2-line boundary; the `HStack(alignment: .top)` keeps the progress ring anchored to the top of the description area
 
+---
+

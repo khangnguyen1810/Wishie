@@ -13,6 +13,7 @@ The `HomeView.swift` screen is the main authenticated screen. It renders two tab
 - Redesign the tab selector (`typeSegmentItem`) to use a polished pill-capsule style that aligns with the celebration palette.
 - Redesign the empty state (`contentUnavailable`) to use the existing `gift_img` asset instead of a plain system icon, with copy that fits the theme.
 - Redesign the bottom sheet (`bottomSheet`, `bottomSheetOption`) to feel cohesive with the celebration theme.
+- Implement an App Store-style zoom transition (matched geometry effect) when tapping a `HomeItemViewCell` card to navigate to `WishlistDetailScreen`, using SwiftUI's `.matchedTransitionSource` on the source card and `.navigationTransition(.zoom(sourceID:in:))` on the destination.
 
 ## Risk & Mitigation
 
@@ -33,6 +34,7 @@ The `HomeView.swift` screen is the main authenticated screen. It renders two tab
 - System MUST render the bottom sheet with celebration-themed action options using `lightYellow` fill and themed icon containers.
 - System MUST display the wishlist owner's real avatar image in `HomeItemViewCell` when `UserModel.avatarUrl` is non-nil and non-empty, loaded via `WishieWebImage`.
 - System MUST display a fallback placeholder (`Image("user")`) in the avatar circle when `UserModel.avatarUrl` is nil or empty.
+- System MUST apply `.matchedTransitionSource(id: wishlist.0.id, in: animation)` to the card `ZStack` in both `myList` and `friendsList` `ForEach` loops in `HomeView` so the card geometrically zooms into `WishlistDetailScreen` on tap.
 
 ## Non-Functional Requirements:
 
@@ -43,3 +45,5 @@ The `HomeView.swift` screen is the main authenticated screen. It renders two tab
 - System MUST use `WishieButton` for CTA buttons in the empty state.
 - System MUST use `WishieWebImage` (backed by SDWebImage) for all remote avatar image loading in `HomeItemViewCell`.
 - System MUST clip the avatar to a `Circle` shape at 38×38 when displaying a real avatar via `WishieWebImage`.
+- System MUST use the existing `@Namespace private var animation` declared in `HomeView` for both source and destination transition identifiers — no new namespace required.
+- System MUST apply `.matchedTransitionSource` only to the card container `ZStack` (not to the hidden `NavigationLink` or its label) to ensure the visual card bounds define the zoom origin and end bounds.

@@ -59,6 +59,58 @@ Each scenario MUST use unique, scenario-specific test data namespaced by scenari
   - Then: The description is clamped to exactly 2 lines with trailing truncation; the `GiftProgressView` circular element alongside it remains vertically aligned to `.top`; the overall card height is consistent with other cards
   - Verify: No text overflow beyond the 2-line boundary; the `HStack(alignment: .top)` keeps the progress ring anchored to the top of the description area
 
+---
+
+### Task 6 — App Store-Style Zoom Transition Edge Cases
+
+### EC-T6-1: Duplicate Wishlist ID — Namespace Collision in Same Tab
+
+- [ ] **Scenario: Two wishlists sharing the same ID in myList tab cause ambiguous zoom source geometry**
+  - Given: `homeViewModel.myWishlists` contains two entries ('wishlist-t6ec1-dup-a', 'wishlist-t6ec1-dup-b') whose `WishlistModel.id` are both `"dup-id-001"`
+  - When: The `myList` `ForEach` renders both cards and applies `.matchedTransitionSource(id: "dup-id-001", in: animation)` to each outer `ZStack`
+  - Then: SwiftUI registers two sources with the same namespace key; tapping either card produces undefined zoom origin — the transition may animate from the wrong card bounds or produce a broken/snapping animation
+  - Verify: Confirm data layer guarantees UUID uniqueness for `WishlistModel.id`; no two entries in the rendered list share the same `id` string; if this invariant is violated the transition degrades gracefully without a crash
+
+### EC-T6-2: Rapid Successive Taps Before Transition Completes
+
+- [ ] **Scenario: Double-tapping a wishlist card before the zoom animation finishes does not push duplicate detail screens**
+  - Given: `homeViewModel.myWishlists` contains at least one entry ('wishlist-t6ec2-double-tap') and the zoom transition animation duration is approximately 0.35 s
+  - When: The user taps the card twice in rapid succession (< 200 ms apart) before `WishlistDetailScreen` has finished appearing
+  - Then: Only one `WishlistDetailScreen` instance is pushed onto the `NavigationStack`; the `NavigationPath` does not contain two identical destinations; the second tap is ignored or de-bounced by SwiftUI's navigation lock
+  - Verify: After the transition completes, pressing back returns to `HomeView` in a single pop; the navigation stack depth is exactly 1 above home
+
+### EC-T6-3: Tab Switch During In-Flight Zoom Transition
+
+- [ ] **Scenario: Switching tabs while the zoom transition is animating does not orphan the source card geometry**
+  - Given: Both `myList` and `friendsList` tabs are populated; the user is viewing the `myList` tab
+  - When: The user taps a 'wishlist-t6ec3-tab-switch' card (initiating the zoom-in animation) and simultaneously or immediately after taps the `friendsList` tab pill before `WishlistDetailScreen` finishes appearing
+  - Then: The zoom animation completes without visual tearing; `WishlistDetailScreen` appears fully; on dismissal the zoom-out reverse animation resolves without crashing even if the source card is no longer in the active tab's list
+  - Verify: No `matchedGeometryEffect` assertion failure or purple runtime warning is emitted; the app remains interactive after the transition sequence completes
+
+### EC-T6-4: `.matchedTransitionSource` Absent from `friendsList` Loop (Regression)
+
+- [ ] **Scenario: Zoom transition is missing from the friendsList ForEach loop causing a plain push transition instead of zoom**
+  - Given: Only the `myList` `ForEach` has `.matchedTransitionSource(id: wishlist.0.id, in: animation)` applied; the `friendsList` `ForEach` is missing the modifier
+  - When: The user selects the `friendsList` tab and taps any entry ('wishlist-t6ec4-friends-no-zoom')
+  - Then: `WishlistDetailScreen` opens with a standard slide push transition instead of the App Store zoom; no crash occurs but the visual spec is violated
+  - Verify: Inspect `HomeView.swift` to confirm `.matchedTransitionSource(id: wishlist.0.id, in: animation)` is present on the outer `ZStack` in BOTH `myList` and `friendsList` `ForEach` closures; run the friends-list tap and confirm the zoom animation plays
+
+### EC-T6-5: Zoom Reverse Animation — Source Card Still Present on Dismissal
+
+- [ ] **Scenario: Dismissing WishlistDetailScreen zooms back into the correct source card without layout jump**
+  - Given: `homeViewModel.myWishlists` contains 'wishlist-t6ec5-back-nav' at list position 2; the user has tapped it, triggering the zoom-in transition
+  - When: `WishlistDetailScreen` is presented and the user performs the interactive back gesture (swipe-from-left-edge or back button)
+  - Then: The zoom-out reverse animation correctly targets the card at its original position in the `List`; the card does not appear to snap from a different position; the `HomeView` list scroll offset is preserved so the source card is visible upon return
+  - Verify: The `@Namespace private var animation` namespace is the same instance used for both `.matchedTransitionSource` (source) and `.navigationTransition(.zoom(sourceID:in:))` (destination); list scroll position is unchanged after back navigation
+
+### EC-T6-6: `.matchedTransitionSource` Applied to Wrong View (HomeItemViewCell Instead of Outer ZStack)
+
+- [ ] **Scenario: Applying matchedTransitionSource to HomeItemViewCell directly produces incorrect zoom bounds**
+  - Given: A hypothetical misconfiguration where `.matchedTransitionSource(id: wishlist.0.id, in: animation)` is placed on `HomeItemViewCell` instead of the enclosing outer `ZStack`
+  - When: The user taps 'wishlist-t6ec6-wrong-placement' and the zoom transition fires
+  - Then: The zoom origin bounds correspond to the cell's inner content area rather than the full card `ZStack` bounds, causing a visual mismatch where the zoom appears to originate from an inner rect; the hidden `NavigationLink` layer is excluded from the geometry capture
+  - Verify: Confirm in `HomeView.swift` that `.matchedTransitionSource` is chained on the outer `ZStack` (after `.contentShape(Rectangle())`), NOT on `HomeItemViewCell(_:)`; the transition visually covers the entire card including padding areas
+
 ### EC 7: Empty Owner Name — Both firstName and lastName Empty
 
 - [ ] **Scenario: Wishlist card gracefully handles a UserModel with both name fields empty**

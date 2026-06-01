@@ -121,6 +121,7 @@ struct HomeView: View {
                                         HomeItemViewCell(item: wishlist)
                                     }
                                     .contentShape(Rectangle())
+                                    .matchedTransitionSource(id: wishlist.0.id, in: animation)
                                     .listRowSeparator(.hidden)
                                     .listRowInsets(EdgeInsets())
                                     .listRowBackground(Color.clear)
@@ -153,6 +154,7 @@ struct HomeView: View {
                                         HomeItemViewCell(item: wishlist)
                                     }
                                     .contentShape(Rectangle())
+                                    .matchedTransitionSource(id: wishlist.0.id, in: animation)
                                     .listRowSeparator(.hidden)
                                     .listRowInsets(EdgeInsets())
                                     .listRowBackground(Color.clear)

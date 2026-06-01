@@ -11,3 +11,4 @@
   - When: `bottomSheetOption(image:title:)` renders each row
   - Then: each row card uses `RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.6))` with a `stroke` of `Color(hex: "#F1D790")` at 1pt lineWidth; the icon is inside a 40×40 `RoundedRectangle(cornerRadius: 10)` filled with a gradient from `Color(hex: "#F1D790")` (top-leading) to `Color(hex: "#FEF3D7")` (bottom-trailing); title text uses `.wishies(.bold, 17)` with `.black` foreground
   - Verify: old `RoundedRectangle.fill(.lightYellow)` row backgrounds are absent; gradient icon container matches the gold palette; title font weight is bold at 17pt
+

@@ -43,6 +43,23 @@ struct HomeView: View {
     private var isEmpty: Bool {
         currentWishlists.isEmpty
     }
+
+    private var totalGifts: Int {
+        currentWishlists.reduce(0) { $0 + $1.0.items.count }
+    }
+
+    private var pickedGifts: Int {
+        currentWishlists.reduce(0) { $0 + $1.0.items.filter { $0.isPicked }.count }
+    }
+
+    private var nearestDueDate: Date? {
+        let today = Calendar.current.startOfDay(for: Date())
+        return currentWishlists
+            .map { $0.0.dueDate }
+            .filter { Calendar.current.startOfDay(for: $0) >= today }
+            .min()
+    }
+
     var body: some View {
         NavigationStack(path: $path) {
             BaseWishieScreen(
@@ -50,26 +67,26 @@ struct HomeView: View {
                     topAppBar()
                 },
                 content: {
-                    HStack {
-                        typeSegmentItem(title: "My list", tab: .myList)
-                        typeSegmentItem(title: "Friend's list", tab: .friendsList)
-                    }
-                    .frame(height: 40)
-                    
-                    .background {
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(.lightYellow.opacity(0.2))
-                    }
-                    .animation(.spring(response: 0.25, dampingFraction: 0.8), value: selectedTab)
-                    .padding(.bottom)
+                    tabSelector
+                        .frame(height: 44)
+                        .background {
+                            Capsule()
+                                .fill(Color.white.opacity(0.4))
+                                .overlay(
+                                    Capsule().stroke(Color(hex: "#F1D790").opacity(0.6), lineWidth: 1)
+                                )
+                        }
+                        .animation(.spring(response: 0.25, dampingFraction: 0.8), value: selectedTab)
+                        .padding(.bottom, 14)
                     if isEmpty {
                         contentUnavailable(
                             msg: selectedTab == .myList
-                            ? "You haven't created any wishlist yet."
-                            : "You haven't joined to any wishlist yet.",
+                                ? "You haven't created any wishlist yet."
+                                : "You haven't joined to any wishlist yet.",
                             buttonTitle: selectedTab == .myList
-                            ? "Create wishlist"
-                            : "Join wishlist"
+                                ? "Create wishlist"
+                                : "Join wishlist",
+                            selectedTab: selectedTab
                         ) {
                             if selectedTab == .myList {
                                 path.append(Route.createNew)
@@ -80,8 +97,9 @@ struct HomeView: View {
                             }
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        
                     } else {
+                        summaryCard()
+                            .padding(.bottom, 12)
                         List {
                             switch selectedTab {
                             case .myList:
@@ -90,14 +108,11 @@ struct HomeView: View {
                                         NavigationLink {
                                             WishlistDetailScreen(
                                                 navigationPath: $path,
-                                                wishlist: wishlist.0 ,
+                                                wishlist: wishlist.0,
                                                 owner: wishlist.1
                                             )
                                             .navigationTransition(
-                                                .zoom(
-                                                    sourceID: wishlist.0.id,
-                                                    in: animation
-                                                )
+                                                .zoom(sourceID: wishlist.0.id, in: animation)
                                             )
                                         } label: {
                                             EmptyView()
@@ -106,6 +121,7 @@ struct HomeView: View {
                                         HomeItemViewCell(item: wishlist)
                                     }
                                     .contentShape(Rectangle())
+                                    .matchedTransitionSource(id: wishlist.0.id, in: animation)
                                     .listRowSeparator(.hidden)
                                     .listRowInsets(EdgeInsets())
                                     .listRowBackground(Color.clear)
@@ -117,24 +133,19 @@ struct HomeView: View {
                                             Label("Delete wishlist", systemImage: "trash")
                                         }
                                         .tint(.wishiePink)
-                                        
                                     }
                                 }
-                                
                             case .friendsList:
                                 ForEach(homeViewModel.myFriendWishlists, id: \.self.0) { wishlist in
                                     ZStack {
                                         NavigationLink {
                                             WishlistDetailScreen(
                                                 navigationPath: $path,
-                                                wishlist: wishlist.0 ,
+                                                wishlist: wishlist.0,
                                                 owner: wishlist.1
                                             )
                                             .navigationTransition(
-                                                .zoom(
-                                                    sourceID: wishlist.0.id,
-                                                    in: animation
-                                                )
+                                                .zoom(sourceID: wishlist.0.id, in: animation)
                                             )
                                         } label: {
                                             EmptyView()
@@ -143,11 +154,12 @@ struct HomeView: View {
                                         HomeItemViewCell(item: wishlist)
                                     }
                                     .contentShape(Rectangle())
+                                    .matchedTransitionSource(id: wishlist.0.id, in: animation)
                                     .listRowSeparator(.hidden)
                                     .listRowInsets(EdgeInsets())
                                     .listRowBackground(Color.clear)
                                     .swipeActions {
-                                        Button() {
+                                        Button {
                                             selectedWishlist = wishlist
                                             showLeaveConfirm = true
                                         } label: {
@@ -235,121 +247,184 @@ struct HomeView: View {
         })
         .showFullScreenDialog($homeViewModel.isGettingList)
     }
+
+    private var tabSelector: some View {
+        HStack(spacing: 0) {
+            tabItem(title: "My list", tab: .myList)
+            tabItem(title: "Friend's list", tab: .friendsList)
+        }
+    }
+
     @ViewBuilder
-    func typeSegmentItem(title: String, tab: HomeTab) -> some View {
+    private func tabItem(title: String, tab: HomeTab) -> some View {
         ZStack {
             if selectedTab == tab {
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(.lightYellow)
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(hex: "#F9C46B"), Color(hex: "#FEF3D7")],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                     .matchedGeometryEffect(id: "TAB", in: animation)
             }
-            
             Text(title)
-                .font(.wishies(.bold, 17))
-                .foregroundStyle(selectedTab == tab ? .black : .lightGrey)
+                .font(.wishies(.bold, 15))
+                .foregroundStyle(selectedTab == tab ? .black : Color.darkGrey)
                 .padding(.vertical, 10)
                 .frame(maxWidth: .infinity)
         }
         .onTapGesture { selectedTab = tab }
     }
+
     @ViewBuilder
-    func wishListItem(item: (WishlistModel, UserModel)) -> some View {
-        VStack {
-            HStack {
-                Text(item.0.name)
-                    .foregroundStyle(Color.black)
-                    .multilineTextAlignment(.leading)
-                    .font(.wishies(.bold, 17))
-                Spacer()
-                Text("\(item.1.firstName) \(item.1.lastName)")
-                    .foregroundStyle(Color.black)
-                    .font(.wishies(.regular, 15))
-                    .truncationMode(.tail)
-                Image("user")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 30)
-            }
-            HStack {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text(item.0.description)
-                        .font(.wishies(.italic, 14))
-                        .foregroundStyle(Color.black)
-                        .frame(maxWidth: .infinity, alignment: .topLeading)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(3)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text("end date: \(item.0.dueDate.toShortDateString())")
-                        .font(.wishies(.regular, 14))
-                        .foregroundStyle(Color.black)
-                        .frame(maxWidth: .infinity,alignment: .leading)
-                }
-                Spacer()
-                VStack {
-                    let itemPicked = item.0.items.filter({ $0.isPicked })
-                    if item.0.items.count > 0 {
-                        let progress = Double(itemPicked.count) / Double(item.0.items.count)
-                        GiftProgressView(progress: progress)
-                        Text("\(itemPicked.count)/\(item.0.items.count) gifts")
-                            .font(.wishies(.regular, 14))
-                            .foregroundStyle(Color.darkGrey)
-                    } else {
-                        Text("0 gift")
-                            .font(.wishies(.regular, 14))
-                            .foregroundStyle(Color.darkGrey)
-                    }
-                }
-                .frame(maxWidth: 100)
-            }
+    func summaryCard() -> some View {
+        HStack(spacing: 0) {
+            summaryStatItem(
+                value: "\(currentWishlists.count)",
+                label: selectedTab == .myList ? "Wishlists" : "Joined",
+                icon: "list.star"
+            )
+            Divider()
+                .frame(height: 28)
+                .background(Color(hex: "#F1D790").opacity(0.8))
+            summaryStatItem(
+                value: "\(pickedGifts)/\(totalGifts)",
+                label: "Gifts Picked",
+                icon: "gift.fill"
+            )
+            nearestEventSection()
         }
-        .padding(10)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .frame(maxWidth: .infinity)
         .background {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(.sunset).opacity(0.5)
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.white.opacity(0.55))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color(hex: "#F9C46B"), Color(hex: "#FEF3D7").opacity(0.6)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                )
+        }
+        .shadow(color: Color(hex: "#F1D790").opacity(0.3), radius: 8, x: 0, y: 3)
+    }
+
+    @ViewBuilder
+    private func nearestEventSection() -> some View {
+        if let nearest = nearestDueDate {
+            let days = max(0, Calendar.current.dateComponents(
+                [.day],
+                from: Calendar.current.startOfDay(for: Date()),
+                to: Calendar.current.startOfDay(for: nearest)
+            ).day ?? 0)
+            Divider()
+                .frame(height: 28)
+                .background(Color(hex: "#F1D790").opacity(0.8))
+            summaryStatItem(
+                value: days == 0 ? "Today!" : "\(days)d",
+                label: "Next Event",
+                icon: "party.popper.fill"
+            )
         }
     }
-    
+
+    @ViewBuilder
+    private func summaryStatItem(value: String, label: String, icon: String) -> some View {
+        VStack(spacing: 5) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.wishiePink)
+                Text(value)
+                    .font(.wishies(.bold, 15))
+                    .foregroundStyle(Color.black)
+            }
+            Text(label)
+                .font(.wishies(.regular, 11))
+                .foregroundStyle(Color.darkGrey)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
     @ViewBuilder
     func topAppBar() -> some View {
-        TopAppBar  {
-            Text("Are you gud? \(authViewModel.userInfo.firstName)")
-                .font(.wishies(.bold, 25))
-                .foregroundColor(.black)
+        TopAppBar {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(authViewModel.userInfo.firstName.isEmpty
+                     ? "Hey there! \u{1F381}"
+                     : "Hey, \(authViewModel.userInfo.firstName)! \u{1F389}")
+                    .font(.wishies(.bold, 22))
+                    .foregroundColor(.black)
+                Text("Your celebrations await \u{2728}")
+                    .font(.wishies(.regular, 13))
+                    .foregroundStyle(Color.darkGrey)
+            }
         } trailing: {
-            Circle()
-                .fill(.lightYellow)
-                .frame(width: 40, height: 40)
-                .overlay(content: {
+            HStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(hex: "#F9C46B"), Color(hex: "#F1D790")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 42, height: 42)
+                        .shadow(color: Color(hex: "#F9C46B").opacity(0.45), radius: 6, x: 0, y: 3)
                     Image("add")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 20)
-                })
-                .onTapGesture {
-                    activeSheet = .add
+                        .frame(width: 20, height: 20)
                 }
-                .padding(.trailing, 10)
-            Circle()
-                .fill(.lightYellow)
-                .frame(width: 40, height: 40)
-                .overlay(content: {
+                .onTapGesture { activeSheet = .add }
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.7))
+                        .frame(width: 42, height: 42)
+                        .overlay(
+                            Circle().stroke(
+                                LinearGradient(
+                                    colors: [Color(hex: "#F9C46B"), Color(hex: "#FEF3D7")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1.5
+                            )
+                        )
                     Image("user")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 20)
-                })
-                .onTapGesture {
-                    isShowProfile = true
+                        .frame(width: 20, height: 20)
                 }
+                .onTapGesture { isShowProfile = true }
+            }
+            .padding(.trailing, 4)
         }
     }
+
     @ViewBuilder
     func bottomSheet(type: SheetType) -> some View {
         ZStack {
-            Color.lightYellow1.ignoresSafeArea()
+            LinearGradient(
+                colors: [Color(hex: "#FEF9EC"), Color(hex: "#FEF3D7")],
+                startPoint: .top,
+                endPoint: .bottom
+            ).ignoresSafeArea()
             if type == .add {
-                VStack(spacing: 20) {
+                VStack(spacing: 16) {
+                    Text("What would you like to do?")
+                        .font(.wishies(.bold, 16))
+                        .foregroundStyle(Color.darkGrey)
+                        .padding(.top, 30)
                     bottomSheetOption(image: "qr_icon", title: "Scan QR code")
                         .onTapGesture {
                             path.append(Route.scanQRCode)
@@ -365,69 +440,108 @@ struct HomeView: View {
             }
         }
     }
+
     @ViewBuilder
     func bottomSheetOption(image: String, title: String) -> some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 15)
-                .fill(.lightYellow)
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white.opacity(0.65))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color(hex: "#F9C46B"), Color(hex: "#FEF3D7")],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
                 .frame(maxWidth: .infinity)
-                .frame(height: 50)
+                .frame(height: 56)
             HStack {
-                Image(image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 40)
-                    .padding(.leading, 20)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(hex: "#F9C46B"), Color(hex: "#F1D790")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 40, height: 40)
+                    Image(image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 24)
+                        .padding(.leading, 8)
+                }
+                .padding(.leading, 12)
+                Text(title)
+                    .font(.wishies(.bold, 16))
+                    .foregroundStyle(Color.black)
+                    .padding(.leading, 10)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.darkGrey)
+                    .padding(.trailing, 16)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Text(title)
-                .font(.wishies(.bold, 20))
-                .foregroundStyle(.black)
-                .frame(maxWidth: .infinity, alignment: .center)
         }
     }
+
     @ViewBuilder
     func contentUnavailable(
         msg: String,
         buttonTitle: String,
+        selectedTab: HomeTab,
         action: @escaping () -> Void
     ) -> some View {
-        VStack {
-            Image(systemName: "tray.fill")
-                .resizable()
-                .foregroundStyle(.black)
-                .scaledToFit()
-                .frame(width: 50, height: 50)
-            Text(msg)
-                .font(Font.wishies(.bold, 25))
-                .multilineTextAlignment(.center)
-                .foregroundColor(.black)
-                .padding(.vertical,20)
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(hex: "#FEF3D7"), Color(hex: "#F9C46B")],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 110, height: 110)
+                Image("gift_img")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 64, height: 64)
+            }
+            VStack(spacing: 8) {
+                Text(selectedTab == .myList ? "Your wishlist is waiting..." : "No events joined yet")
+                    .font(.wishies(.bold, 20))
+                    .foregroundStyle(Color.black)
+                    .multilineTextAlignment(.center)
+                Text(msg)
+                    .font(.wishies(.regular, 14))
+                    .foregroundStyle(Color.darkGrey)
+                    .multilineTextAlignment(.center)
+            }
             WishieButton(
                 title: buttonTitle,
                 enabled: true,
-                width: 250,
-                height: 50) {
-                    action()
-                }
-            Text("Refresh")
-                .font(.wishies(.regular, 15))
-                .foregroundStyle(.wishiePink)
-                .onTapGesture {
-                    Task {
-                        await homeViewModel.getListWishlist()
-                    }
-                }
+                filColor: Color(hex: "#F1D790"),
+                width: 220,
+                height: 48
+            ) {
+                action()
+            }
+            Button {
+                Task { await homeViewModel.getListWishlist() }
+            } label: {
+                Text("Refresh")
+                    .font(.wishies(.regular, 14))
+                    .foregroundStyle(Color.wishiePink)
+            }
         }
+        .padding(40)
         .frame(maxHeight: .infinity, alignment: .center)
-    }
-}
-
-
-struct InnerHeightPreferenceKey: PreferenceKey {
-    static let defaultValue: CGFloat = .zero
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
     }
 }
 

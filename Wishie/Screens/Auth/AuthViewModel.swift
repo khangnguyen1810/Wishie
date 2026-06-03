@@ -23,18 +23,43 @@ final class AuthViewModel: ObservableObject {
     @Published var userInfo = UserModel(dictionary: [:])
     @Published var isSentEmail: Bool = false
     @Published var forgotenEmail: String = ""
+    @Published var userInfoError: String = ""
     init(authService: AuthenticateServiceProtocol = AuthenticateService()) {
         self.authService = authService
         checkToken()
     }
     func checkToken() {
-        if let token = UserDefaults.standard.string(forKey: userid), !token.isEmpty {
-            isLoggedIn = true
+        guard let firebaseUser = Auth.auth().currentUser,
+              let storedId = UserDefaults.standard.string(forKey: userid),
+              !storedId.isEmpty,
+              firebaseUser.uid == storedId else {
+            UserDefaults.standard.removeObject(forKey: userid)
+            return
+        }
+        Task {
+            do {
+                _ = try await firebaseUser.getIDToken(forcingRefresh: true)
+                await self.getUserInfo()
+                await MainActor.run {
+                    UserDefaults.standard.set(self.userInfo.hasCompletedInterestsSetup, forKey: "hasCompletedInterestsSetup")
+                    self.isLoggedIn = true
+                }
+            } catch {
+                await MainActor.run { UserDefaults.standard.removeObject(forKey: self.userid) }
+            }
         }
     }
     func login(email: String, password: String) {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedEmail.isEmpty, !trimmedPassword.isEmpty, StringUtils.isValidEmail(trimmedEmail) else {
+            self.isShowError = true
+            self.errorTitle = "Invalid Input"
+            self.errorMessage = "Please enter a valid email address and password."
+            return
+        }
         self.isShowProgress = true
-        authService.login(email, password)
+        authService.login(trimmedEmail, trimmedPassword)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
                 guard let self else { return }
@@ -53,6 +78,7 @@ final class AuthViewModel: ObservableObject {
                 else { return }
                 UserDefaults.standard.setValue(user.uid, forKey: userid)
                 isLoggedIn = true
+                Task { await self.getUserInfo() }
             }
             .store(in: &cancellables)
     }
@@ -78,6 +104,7 @@ final class AuthViewModel: ObservableObject {
                 else { return }
                 UserDefaults.standard.setValue(user.uid, forKey: userid)
                 isLoggedIn = true
+                Task { await self.getUserInfo() }
             }
             .store(in: &cancellables)
         
@@ -86,6 +113,8 @@ final class AuthViewModel: ObservableObject {
         self.isShowProgress = true
         UserDefaults.standard.removeObject(forKey: userid)
         isLoggedIn = false
+        self.userInfo = UserModel()
+        self.userInfoError = ""
         self.isShowProgress = false
     }
     
@@ -95,7 +124,7 @@ final class AuthViewModel: ObservableObject {
             guard let result = try await authService.getUserInfo() else { return }
             self.userInfo = result
         } catch {
-            print(error.localizedDescription)
+            self.userInfoError = error.localizedDescription
         }
     }
     

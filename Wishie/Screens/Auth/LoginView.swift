@@ -107,7 +107,6 @@ struct LoginView: View {
                         .foregroundStyle(.lightYellow)
                 }
             })
-            .disabled(validateGoinButton())
             .padding(.vertical, 20)
             HStack {
                 Rectangle()

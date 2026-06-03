@@ -9,7 +9,6 @@ import SwiftUI
 
 enum SheetType: String, Identifiable {
     case add
-    case user
     var id: String { self.rawValue }
 }
 
@@ -21,6 +20,7 @@ struct HomeView: View {
     @State private var sheetHeight: CGFloat = .zero
     @State private var path = NavigationPath()
     @State private var activeSheet: SheetType?
+    @State private var isShowProfile: Bool = false
     @Namespace private var animation
     @State private var selectedWishlist: (WishlistModel, UserModel)?
     @State private var isShowWishlistDetail: Bool = false
@@ -186,6 +186,8 @@ struct HomeView: View {
                         wishlistId: id,
                         isFromInfo: isFromInfo
                     )
+                default:
+                    EmptyView()
                 }
             }
             .task {
@@ -201,6 +203,10 @@ struct HomeView: View {
             bottomSheet(type: type)
                 .presentationDetents([.fraction(0.2)])
                 .presentationDragIndicator(.visible)
+        }
+        .fullScreenCover(isPresented: $isShowProfile) {
+            ProfileView()
+                .environmentObject(authViewModel)
         }
         .showDialogIfNeeded(
             $isShowError, title: "You want to leave?",
@@ -334,7 +340,7 @@ struct HomeView: View {
                         .frame(width: 20)
                 })
                 .onTapGesture {
-                    activeSheet = .user
+                    isShowProfile = true
                 }
         }
     }
@@ -356,13 +362,6 @@ struct HomeView: View {
                         }
                 }
                 .padding()
-            } else if type == .user {
-                bottomSheetOption(image: "log_out", title: "Log out")
-                    .padding()
-                    .onTapGesture {
-                        isShowError = true
-                        activeSheet = nil
-                    }
             }
         }
     }

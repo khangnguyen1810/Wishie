@@ -6,24 +6,34 @@
 //
 
 import SwiftUI
-struct MainView: View {
 
-    @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
+struct MainView: View {
+    @EnvironmentObject var rootNavigationCoordinator: RootNavigationCoordinator
     @EnvironmentObject var authViewModel: AuthViewModel
+    @State private var currentAnimation: Animation = RootNavigationAnimations.welcomeToAuth
 
     var body: some View {
-
-        if !hasCompletedOnboarding {
-            WelcomeView()
-                .transition(.opacity)
-
-        } else if authViewModel.isLoggedIn {
-            HomeView()
-                .transition(.move(edge: .trailing))
-
-        } else {
-            LoginOrSignUpScreen()
-                .transition(.move(edge: .leading))
+        ZStack {
+            switch rootNavigationCoordinator.appState {
+            case .welcome:
+                WelcomeView()
+                    .transition(.opacity)
+            case .unauthenticated:
+                LoginOrSignUpScreen()
+                    .transition(.opacity)
+            case .interestsSetup:
+                InterestsSelectionView(isOnboarding: true)
+                    .environmentObject(authViewModel)
+                    .transition(.opacity)
+            case .authenticated:
+                HomeView()
+                    .environmentObject(authViewModel)
+                    .transition(.move(edge: .trailing))
+            }
+        }
+        .animation(currentAnimation, value: rootNavigationCoordinator.appState)
+        .onChange(of: rootNavigationCoordinator.appState) { oldState, newState in
+            currentAnimation = RootNavigationAnimations.animationFor(transition: (from: oldState, to: newState))
         }
     }
 }

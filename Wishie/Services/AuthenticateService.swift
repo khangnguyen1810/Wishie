@@ -6,14 +6,19 @@
 //
 
 import Foundation
+import UIKit
 import FirebaseAuth
 import FirebaseFirestore
+import Supabase
 import Combine
 protocol AuthenticateServiceProtocol {
     func login(_ email: String, _ password: String) -> AnyPublisher<AuthDataResult?, Error>
     func signUp(_ signUpRequest: SignUpRequest) -> AnyPublisher<FirebaseAuth.AuthDataResult?, Error>
     func resetPassword(_ email: String) -> AnyPublisher<Bool, Error>
     func getUserInfo() async throws -> UserModel?
+    func uploadAvatar(image: UIImage, userId: String) async throws -> String
+    func updateUserInfo(userId: String, firstName: String, lastName: String, phone: String, dateOfBirth: Date, avatarUrl: String?) async throws
+    func updateUserInterests(userId: String, interests: [String]) async throws
 }
 class AuthenticateService: AuthenticateServiceProtocol {
     private let db = Firestore.firestore()
@@ -92,5 +97,40 @@ class AuthenticateService: AuthenticateServiceProtocol {
             return nil
         }
         return UserModel(dictionary: data)
+    }
+
+    func uploadAvatar(image: UIImage, userId: String) async throws -> String {
+        guard let data = image.jpegData(compressionQuality: 0.8) else {
+            throw NSError(domain: "avatar", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to encode image."])
+        }
+        let path = "avatar/\(userId).jpg"
+        try await SupabaseManager.shared.client.storage
+            .from("Wishie")
+            .upload(path, data: data, options: FileOptions(contentType: "image/jpeg", upsert: true))
+        let publicURL = try SupabaseManager.shared.client.storage
+            .from("Wishie")
+            .getPublicURL(path: path)
+            .absoluteString
+        return "\(publicURL)?t=\(Int(Date().timeIntervalSince1970))"
+    }
+
+    func updateUserInfo(userId: String, firstName: String, lastName: String, phone: String, dateOfBirth: Date, avatarUrl: String?) async throws {
+        var updateDict: [String: Any] = [
+            "firstName": firstName,
+            "lastName": lastName,
+            "phone": phone,
+            "dateOfBirth": Timestamp(date: dateOfBirth)
+        ]
+        if let avatarUrl {
+            updateDict["avatarUrl"] = avatarUrl
+        }
+        try await db.collection("users").document(userId).updateData(updateDict)
+    }
+
+    func updateUserInterests(userId: String, interests: [String]) async throws {
+        try await db.collection(WishieConstants.firebaseUserPath).document(userId).updateData([
+            "interests": interests,
+            "hasCompletedInterestsSetup": true
+        ])
     }
 }

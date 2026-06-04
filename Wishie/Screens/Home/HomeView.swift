@@ -26,6 +26,7 @@ struct HomeView: View {
     @State private var isShowWishlistDetail: Bool = false
     @State private var showDeleteConfirm = false
     @State private var showLeaveConfirm = false
+    @AppStorage(WishieConstants.hasSeenHomeTutorial) private var hasSeenHomeTutorial: Bool = false
     enum HomeTab {
         case myList
         case friendsList
@@ -219,6 +220,16 @@ struct HomeView: View {
         .fullScreenCover(isPresented: $isShowProfile) {
             ProfileView()
                 .environmentObject(authViewModel)
+        }
+        .overlay {
+            if !hasSeenHomeTutorial {
+                HomeTutorialOverlayView {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        hasSeenHomeTutorial = true
+                    }
+                }
+                .transition(.opacity)
+            }
         }
         .showDialogIfNeeded(
             $isShowError, title: "You want to leave?",

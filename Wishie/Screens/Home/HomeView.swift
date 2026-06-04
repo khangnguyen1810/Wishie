@@ -221,14 +221,16 @@ struct HomeView: View {
             ProfileView()
                 .environmentObject(authViewModel)
         }
-        .overlay {
+        .overlayPreferenceValue(CoachMarkBoundsKey.self) { anchors in
             if !hasSeenHomeTutorial {
-                HomeTutorialOverlayView {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        hasSeenHomeTutorial = true
+                HomeTutorialOverlayView(
+                    anchors: anchors,
+                    onComplete: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            hasSeenHomeTutorial = true
+                        }
                     }
-                }
-                .transition(.opacity)
+                )
             }
         }
         .showDialogIfNeeded(
@@ -264,6 +266,7 @@ struct HomeView: View {
             tabItem(title: "My list", tab: .myList)
             tabItem(title: "Friend's list", tab: .friendsList)
         }
+        .anchorPreference(key: CoachMarkBoundsKey.self, value: .bounds) { ["homeTabSelector": $0] }
     }
 
     @ViewBuilder
@@ -396,6 +399,7 @@ struct HomeView: View {
                         .scaledToFit()
                         .frame(width: 20, height: 20)
                 }
+                .anchorPreference(key: CoachMarkBoundsKey.self, value: .bounds) { ["homeAddButton": $0] }
                 .onTapGesture { activeSheet = .add }
                 ZStack {
                     Circle()

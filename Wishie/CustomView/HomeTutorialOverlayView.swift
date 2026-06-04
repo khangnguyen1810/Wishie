@@ -1,67 +1,54 @@
 import SwiftUI
 
 struct HomeTutorialOverlayView: View {
-    let onDismiss: () -> Void
-    @State private var isVisible = false
+    let anchors: [String: Anchor<CGRect>]
+    let onComplete: () -> Void
+
+    @State private var currentStep: Int = 0
+
+    private let steps: [CoachMarkStep] = [
+        CoachMarkStep(
+            anchorID: "homeAddButton",
+            title: "Create or Join",
+            message: "Tap + to create a new wishlist or scan a QR code to join a friend's list",
+            arrowDirection: .up
+        ),
+        CoachMarkStep(
+            anchorID: "homeTabSelector",
+            title: "Your Lists",
+            message: "Switch between your own wishlists and the wishlists you have joined",
+            arrowDirection: .up
+        ),
+        CoachMarkStep(
+            anchorID: nil,
+            title: "Swipe to Manage",
+            message: "Swipe left on any wishlist to quickly delete it or leave a friend's list",
+            arrowDirection: .none
+        )
+    ]
 
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.65)
-                .ignoresSafeArea()
+        GeometryReader { proxy in
+            let currentStepData = steps[min(currentStep, steps.count - 1)]
+            let highlightRect: CGRect? = {
+                guard let anchorID = currentStepData.anchorID,
+                      let anchor = anchors[anchorID] else { return nil }
+                return proxy[anchor]
+            }()
 
-            VStack(spacing: 20) {
-                Text("How Wishie works 🎁")
-                    .font(.wishies(.bold, 20))
-                    .foregroundStyle(Color.black)
-
-                hintRow(icon: "plus.circle.fill", text: "Tap + to create a new wishlist or join a friend's")
-                hintRow(icon: "list.bullet.rectangle.portrait", text: "Switch between My list and Friend's list tabs")
-                hintRow(icon: "arrow.left", text: "Swipe left on a wishlist to delete or leave it")
-
-                Text("Tap anywhere to get started")
-                    .font(.wishies(.regular, 13))
-                    .foregroundStyle(Color.darkGrey)
-            }
-            .padding(24)
-            .background {
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(hex: "#FEF9EC"), Color(hex: "#FEF3D7")],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24)
-                            .stroke(Color(hex: "#F9C46B").opacity(0.6), lineWidth: 1.5)
-                    )
-            }
-            .padding(.horizontal, 32)
+            CoachMarkOverlayView(
+                highlightRect: highlightRect,
+                step: currentStepData,
+                stepIndex: currentStep,
+                totalSteps: steps.count,
+                onNext: {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        currentStep = min(currentStep + 1, steps.count - 1)
+                    }
+                },
+                onDone: onComplete
+            )
         }
-        .opacity(isVisible ? 1 : 0)
-        .animation(.easeInOut(duration: 0.3), value: isVisible)
-        .onAppear { isVisible = true }
-        .onTapGesture {
-            guard isVisible else { return }
-            isVisible = false
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                onDismiss()
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func hintRow(icon: String, text: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundStyle(Color(hex: "#F9C46B"))
-
-            Text(text)
-                .font(.wishies(.regular, 14))
-                .foregroundStyle(Color.black)
-                .fixedSize(horizontal: false, vertical: true)
-        }
+        .ignoresSafeArea()
     }
 }

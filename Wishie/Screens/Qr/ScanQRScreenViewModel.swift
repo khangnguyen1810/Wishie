@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import UIKit
+import Vision
 
 class ScanQRScreenViewModel: ObservableObject {
     @Published var showError: Bool = false
@@ -45,5 +47,48 @@ class ScanQRScreenViewModel: ObservableObject {
         else { return nil }
         
         return payload
+    }
+    
+    func detectQRCode(from image: UIImage) {
+        guard let cgImage = image.cgImage else {
+            showError(title: "Invalid Image", message: "Unable to process the selected image.")
+            return
+        }
+        
+        let request = VNDetectBarcodesRequest { [weak self] request, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                self.showError(title: "Detection Failed", message: error.localizedDescription)
+                return
+            }
+            
+            guard let results = request.results as? [VNBarcodeObservation],
+                  let firstBarcode = results.first,
+                  let qrValue = firstBarcode.payloadStringValue else {
+                self.showError(title: "No QR Code Found", message: "No valid QR code was detected in the image.")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.handleResult(qrValue)
+            }
+        }
+        
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        
+        do {
+            try handler.perform([request])
+        } catch {
+            showError(title: "Processing Error", message: error.localizedDescription)
+        }
+    }
+    
+    private func showError(title: String, message: String) {
+        DispatchQueue.main.async {
+            self.showError = true
+            self.errorTitle = title
+            self.errorMessage = message
+        }
     }
 }

@@ -9,4 +9,5 @@ enum WishieConstants {
     static let userIdKey: String = "userid"
     static let firebaseUserPath: String = "users"
     static let firebaseWishlistPath: String = "wishlists"
+    static let hasSeenHomeTutorial: String = "hasSeenHomeTutorial"
 }

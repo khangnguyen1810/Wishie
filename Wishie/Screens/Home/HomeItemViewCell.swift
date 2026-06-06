@@ -165,8 +165,25 @@ struct HomeItemViewCell: View {
 
             Spacer()
 
-            GiftProgressView(progress: progress)
-                .frame(width: 48, height: 48)
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.3), lineWidth: 4)
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.wishiePink, Color.lightYellow1],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+                Text("\(Int(progress * 100))%")
+                    .font(.wishies(.bold, 11))
+                    .foregroundStyle(Color.black.opacity(0.75))
+            }
+            .frame(width: 48, height: 48)
         }
     }
 }

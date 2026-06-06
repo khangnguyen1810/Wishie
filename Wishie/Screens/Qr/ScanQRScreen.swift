@@ -6,10 +6,13 @@
 //
 
 import SwiftUI
+import PhotosUI
+
 struct ScanQRScreen: View {
     @StateObject var viewModel = ScanQRScreenViewModel()
     @Environment(\.dismiss) private var dismiss
     @State var animate: Bool = false
+    @State private var selectedImage: UIImage?
     @Binding var path: NavigationPath
     var body: some View {
         ZStack (alignment: .topLeading) {
@@ -23,23 +26,54 @@ struct ScanQRScreen: View {
                     )
                 )
             }
+            .onChange(of: selectedImage) { _, newImage in
+                guard let image = newImage else { return }
+                viewModel.detectQRCode(from: image)
+            }
             .ignoresSafeArea()
             .overlay {
                 ScannerAreaView(animate: $animate)
             }
-            Circle()
-                .fill(.lightYellow)
-                .frame(width: 50, height: 50)
-                .overlay(content: {
-                    Image("back_icon")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20)
-                })
-                .onTapGesture {
-                    dismiss()
+            
+            VStack {
+                HStack {
+                    Circle()
+                        .fill(.lightYellow)
+                        .frame(width: 50, height: 50)
+                        .overlay(content: {
+                            Image("back_icon")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 20)
+                        })
+                        .onTapGesture {
+                            dismiss()
+                        }
+                    
+                    Spacer()
                 }
-                .padding(10)
+                
+                Spacer()
+                
+                ImagePickerBox(height: 60, selectedImage: $selectedImage) {
+                    HStack {
+                        Image(systemName: "photo.on.rectangle")
+                            .font(.system(size: 24))
+                            .foregroundColor(.black)
+                        
+                        Text("Choose from Library")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.black)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(.lightYellow)
+                    .cornerRadius(12)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 40)
+            }
+            .padding(10)
         }
         .navigationBarBackButtonHidden()
         .showDialogIfNeeded($viewModel.showError, title: viewModel.errorTitle, message: viewModel.errorMessage)

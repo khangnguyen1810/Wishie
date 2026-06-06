@@ -20,10 +20,10 @@ struct HomeTutorialOverlayView: View {
             arrowDirection: .up
         ),
         CoachMarkStep(
-            anchorID: nil,
+            anchorID: "homeExampleItem",
             title: "Swipe to Manage",
             message: "Swipe left on any wishlist to quickly delete it or leave a friend's list",
-            arrowDirection: .none
+            arrowDirection: .down
         )
     ]
 

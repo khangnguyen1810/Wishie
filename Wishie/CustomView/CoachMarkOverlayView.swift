@@ -40,31 +40,43 @@ struct CoachMarkOverlayView: View {
     @ViewBuilder
     private var positionedTooltip: some View {
         if let rect = highlightRect, step.arrowDirection == .up {
-            VStack(alignment: .center, spacing: 0) {
-                Spacer().frame(height: rect.maxY + 16)
-                Image(systemName: "arrowtriangle.up.fill")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color(hex: "#F9C46B"))
-                tooltipCard
-                Spacer()
-            }
-        } else if let rect = highlightRect, step.arrowDirection == .down {
-            VStack(alignment: .center, spacing: 0) {
-                Spacer().frame(height: max(0, rect.minY - estimatedTooltipHeight - 16))
-                tooltipCard
-                Image(systemName: "arrowtriangle.down.fill")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color(hex: "#F9C46B"))
-                Spacer()
-            }
-        } else {
             GeometryReader { geo in
-                VStack {
-                    Spacer()
+                VStack(alignment: .center, spacing: 0) {
+                    Spacer().frame(height: rect.maxY + 16)
+                    HStack {
+                        Spacer().frame(width: rect.midX - 7)
+                        Image(systemName: "arrowtriangle.up.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Color(hex: "#F9C46B"))
+                        Spacer()
+                    }
                     tooltipCard
                     Spacer()
                 }
                 .frame(width: geo.size.width)
+            }
+        } else if let rect = highlightRect, step.arrowDirection == .down {
+            GeometryReader { geo in
+                VStack(alignment: .center, spacing: 0) {
+                    Spacer().frame(height: max(0, rect.minY - estimatedTooltipHeight - 16))
+                    tooltipCard
+                    HStack {
+                        Spacer().frame(width: rect.midX - 7)
+                        Image(systemName: "arrowtriangle.down.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Color(hex: "#F9C46B"))
+                        Spacer()
+                    }
+                    Spacer()
+                }
+                .frame(width: geo.size.width)
+            }
+        } else {
+            VStack(spacing: 0) {
+                Spacer()
+                tooltipCard
+                    .padding(.bottom, 120)
+                Spacer()
             }
         }
     }

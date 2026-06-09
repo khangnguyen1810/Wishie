@@ -99,18 +99,12 @@ struct WishlistDetailScreen: View {
             message: "This item doesn't have a link yet."
         )
         .showDialogIfNeeded(
-            $viewModel.showReserveConfirmation,
-            title: "Reserve this gift?",
-            message: "Do you want to select this gift?",
-            showCancel: true,
-            onOk: { Task { viewModel.showBottomSheet = false; let wId = viewModel.wishlistInfo.id; await viewModel.pickItem(wishlistId: wId) } }
-        )
-        .showDialogIfNeeded(
             $viewModel.showDeleteConfirmation,
             title: "Delete item?",
             message: "This action cannot be undone.",
             showCancel: true,
-            onOk: { Task { viewModel.showBottomSheet = false; let wId = viewModel.wishlistInfo.id; await viewModel.deleteWishlistItem(wishlistId: wId) } }
+            onOk: { Task { viewModel.showBottomSheet = false; let wId = viewModel.wishlistInfo.id; await viewModel.deleteWishlistItem(wishlistId: wId) } },
+            onCancel: { viewModel.showBottomSheet = false }
         )
         .task {
             guard let wishlistId else { return }
@@ -477,6 +471,20 @@ struct WishlistDetailScreen: View {
                 Task {
                     viewModel.showBottomSheet = false
                     await viewModel.deleteWishlistItem(wishlistId: wishlist?.id ?? "")
+                }
+            },
+            onCancel: { viewModel.showBottomSheet = false }
+        )
+        .showDialogIfNeeded(
+            $viewModel.showReserveConfirmation,
+            title: "Reserve this gift?",
+            message: "Do you want to select this gift?",
+            showCancel: true,
+            onOk: {
+                Task {
+                    viewModel.showBottomSheet = false
+                    let wId = viewModel.wishlistInfo.id
+                    await viewModel.pickItem(wishlistId: wId)
                 }
             }
         )

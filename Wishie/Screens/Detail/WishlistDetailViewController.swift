@@ -23,6 +23,8 @@ class WishlistDetailViewController: ObservableObject {
         userCreateId: ""
     )
     @Published var showBottomSheet = false
+    @Published var showReserveConfirmation: Bool = false
+    @Published var showDeleteConfirmation: Bool = false
     @Published var joinSucceed: Bool = false
     @Published var joinFailed: Bool = false
     @Published var joinErrorMessage: String = ""
@@ -126,7 +128,46 @@ class WishlistDetailViewController: ObservableObject {
             isShowLoading = false
             joinFailed = true
             joinErrorMessage = "There are something wrong. Please try again."
-            print(error)
+        }
+    }
+
+    func deleteWishlistItem(wishlistId: String) async {
+        do {
+            isShowLoading = true
+            let result = try await wishlistService.deleteWishlistItem(wishlistId: wishlistId, itemId: itemSelected.id)
+            switch result {
+            case .success(_):
+                isShowLoading = false
+                await getWishlistInfo(wishListId: wishlistId)
+            case .failure(let error):
+                isShowLoading = false
+                errorMessage = error.localizedDescription
+                isShowError = true
+            }
+        } catch {
+            isShowLoading = false
+            errorMessage = error.localizedDescription
+            isShowError = true
+        }
+    }
+
+    func setMostDesired(wishlistId: String) async {
+        do {
+            isShowLoading = true
+            let result = try await wishlistService.setMostDesired(wishlistId: wishlistId, itemId: itemSelected.id, isMostDesired: true)
+            switch result {
+            case .success(_):
+                isShowLoading = false
+                await getWishlistInfo(wishListId: wishlistId)
+            case .failure(let error):
+                isShowLoading = false
+                errorMessage = error.localizedDescription
+                isShowError = true
+            }
+        } catch {
+            isShowLoading = false
+            errorMessage = error.localizedDescription
+            isShowError = true
         }
     }
 }

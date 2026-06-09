@@ -15,6 +15,7 @@ struct WishlistItem: Identifiable, Hashable{
     var image: String?
     var pickedUserId: String?
     var isPicked: Bool
+    var isMostDesired: Bool
     var localImage: UIImage?
     var itemLink: String
 
@@ -25,6 +26,7 @@ struct WishlistItem: Identifiable, Hashable{
         image: String? = nil,
         pickedUserId: String? = nil,
         isPicked: Bool = false,
+        isMostDesired: Bool = false,
         localImage: UIImage? = nil,
         itemLink: String = ""
     ) {
@@ -34,6 +36,7 @@ struct WishlistItem: Identifiable, Hashable{
         self.image = image
         self.pickedUserId = pickedUserId
         self.isPicked = isPicked
+        self.isMostDesired = isMostDesired
         self.localImage = localImage
         self.itemLink = itemLink
     }
@@ -60,6 +63,7 @@ extension WishlistItem {
         self.isPicked = dictionary["isPicked"] as? Bool ?? false
         self.pickedUserId = dictionary["pickedUserId"] as? String
         self.itemLink = dictionary["itemLink"] as? String ?? ""
+        self.isMostDesired = dictionary["isMostDesired"] as? Bool ?? false
         self.localImage = nil
     }
 }

@@ -58,10 +58,10 @@ struct WishlistDetailScreen: View {
             } content: {
                 VStack (spacing: 15) {
                     headerContent()
+                        .padding(.horizontal, 15)
+                        .padding(.top, 15)
                     listContent()
                 }
-                .padding(.horizontal, 15)
-                .padding(.top,15)
             }
             if viewModel.wishlistInfo.isUserJoined() == false {
                     WishieButton(
@@ -98,6 +98,20 @@ struct WishlistDetailScreen: View {
             title: "Not have a link",
             message: "This item doesn't have a link yet."
         )
+        .showDialogIfNeeded(
+            $viewModel.showReserveConfirmation,
+            title: "Reserve this gift?",
+            message: "Do you want to select this gift?",
+            showCancel: true,
+            onOk: { Task { viewModel.showBottomSheet = false; let wId = viewModel.wishlistInfo.id; await viewModel.pickItem(wishlistId: wId) } }
+        )
+        .showDialogIfNeeded(
+            $viewModel.showDeleteConfirmation,
+            title: "Delete item?",
+            message: "This action cannot be undone.",
+            showCancel: true,
+            onOk: { Task { viewModel.showBottomSheet = false; let wId = viewModel.wishlistInfo.id; await viewModel.deleteWishlistItem(wishlistId: wId) } }
+        )
         .task {
             guard let wishlistId else { return }
             await viewModel.getWishlistInfo(wishListId: wishlistId)
@@ -110,10 +124,12 @@ struct WishlistDetailScreen: View {
     }
     @ViewBuilder
     func headerContent() -> some View {
+        let pickedCount = viewModel.wishlistInfo.items.filter(\.isPicked).count
+        let totalCount = viewModel.wishlistInfo.items.count
+        let progress = totalCount > 0 ? Double(pickedCount) / Double(totalCount) : 0.0
         VStack(spacing: 15) {
             HStack {
-                let itemCount = viewModel.wishlistInfo.items.count
-                Text("\(itemCount) Items")
+                Text("\(totalCount) Items")
                     .font(.wishies(.regular, 16))
                     .foregroundStyle(.black)
                 
@@ -127,6 +143,14 @@ struct WishlistDetailScreen: View {
                     .font(Font.wishies(.regular, 16))
                     .foregroundStyle(.darkGrey)
             }
+            HStack {
+                GiftProgressView(progress: progress)
+                    .frame(width: 32, height: 32)
+                Text("\(pickedCount) / \(totalCount) gifts selected")
+                    .font(.wishies(.regular, 14))
+                    .foregroundStyle(.darkGrey)
+                Spacer()
+            }
             Text(viewModel.wishlistInfo.description)
                 .font(.wishies(.regular, 15))
                 .multilineTextAlignment(.leading)
@@ -137,7 +161,7 @@ struct WishlistDetailScreen: View {
     
     @ViewBuilder
     func listContent() -> some View {
-        VStack() {
+        List {
             ForEach(viewModel.wishlistInfo.items, id: \.self) { item in
                 HStack {
                     WebImage(url: URL(string: item.image ?? ""), content: { image in
@@ -161,12 +185,18 @@ struct WishlistDetailScreen: View {
                     .frame(width: 80, height: 80)
                     .clipped()
                     .cornerRadius(10)
-                    
+
                     Text(item.name)
                         .font(.wishies(.regular, 15))
                         .foregroundStyle(.black)
-                    
-                    if (item.isPicked) {
+
+                    if item.isMostDesired {
+                        Image(systemName: "star.fill")
+                            .foregroundStyle(.yellow)
+                            .frame(width: 16, height: 16)
+                    }
+
+                    if item.isPicked {
                         Spacer()
                         Image("user")
                             .resizable()
@@ -181,15 +211,28 @@ struct WishlistDetailScreen: View {
                         Color(hex: viewModel.wishlistInfo.theme.primary)
                             .opacity(0.5)
                             .clipShape(RoundedRectangle(cornerRadius: 15))
-                        
                     }
                 }
                 .onTapGesture {
                     viewModel.itemSelected = item
                     viewModel.showBottomSheet = true
                 }
+                .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
+                .listRowBackground(Color.clear)
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    if viewModel.wishlistInfo.isOwner() == true && !item.isPicked {
+                        Button(role: .destructive) {
+                            viewModel.itemSelected = item
+                            viewModel.showDeleteConfirmation = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                }
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
     @ViewBuilder
     func bottomSheet() -> some View {
@@ -363,6 +406,58 @@ struct WishlistDetailScreen: View {
                                 }
                             }
                         }
+                        if !viewModel.itemSelected.isMostDesired && !isEditing {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color(hex: viewModel.wishlistInfo.theme.secondary))
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 45)
+                                HStack {
+                                    Image(systemName: "star.fill")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 25)
+                                        .padding(.leading, 20)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                Text("Mark as Most Desired")
+                                    .font(.wishies(.bold, 15))
+                                    .foregroundStyle(.black)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                            .onTapGesture {
+                                Task {
+                                    await viewModel.setMostDesired(wishlistId: wishlist?.id ?? "")
+                                }
+                                viewModel.showBottomSheet = false
+                            }
+                        }
+                        if !isEditing {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(viewModel.itemSelected.isPicked ? .lightGrey : .wishiePink)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 45)
+                                HStack {
+                                    Image(systemName: "trash")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 25)
+                                        .padding(.leading, 20)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                Text("Delete")
+                                    .font(.wishies(.bold, 15))
+                                    .foregroundStyle(.black)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                            .disabled(viewModel.itemSelected.isPicked)
+                            .onTapGesture {
+                                if !viewModel.itemSelected.isPicked {
+                                    viewModel.showDeleteConfirmation = true
+                                }
+                            }
+                        }
                     }
                 } else {
                     VStack {
@@ -373,6 +468,18 @@ struct WishlistDetailScreen: View {
             }
             .padding()
         }
+        .showDialogIfNeeded(
+            $viewModel.showDeleteConfirmation,
+            title: "Delete Item",
+            message: "Are you sure you want to delete this item?",
+            showCancel: true,
+            onOk: {
+                Task {
+                    viewModel.showBottomSheet = false
+                    await viewModel.deleteWishlistItem(wishlistId: wishlist?.id ?? "")
+                }
+            }
+        )
     }
     @ViewBuilder
     func reserveButton() -> some View {
@@ -397,12 +504,8 @@ struct WishlistDetailScreen: View {
                 .frame(maxWidth: .infinity, alignment: .center)
         }
         .onTapGesture {
-            Task {
-                if (!viewModel.itemSelected.isPicked) {
-                    viewModel.showBottomSheet = false
-                    let wishlistId = viewModel.wishlistInfo.id
-                    await viewModel.pickItem(wishlistId: wishlistId)
-                }
+            if !viewModel.itemSelected.isPicked {
+                viewModel.showReserveConfirmation = true
             }
         }
     }

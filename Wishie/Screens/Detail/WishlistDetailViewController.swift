@@ -77,6 +77,8 @@ class WishlistDetailViewController: ObservableObject {
         for userId in pickedUserIds {
             if let user = try? await authService.getUserInfo(by: userId) {
                 users.append(user)
+            } else {
+                print("❌ Debug: Failed to fetch user with ID: \(userId)")
             }
         }
         pickedUsers = users

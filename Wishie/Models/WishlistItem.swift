@@ -61,7 +61,7 @@ extension WishlistItem {
         self.description = dictionary["description"] as? String ?? ""
         self.image = dictionary["imageUrl"] as? String
         self.isPicked = dictionary["isPicked"] as? Bool ?? false
-        self.pickedUserId = dictionary["pickedUserId"] as? String
+        self.pickedUserId = dictionary["pickedBy"] as? String
         self.itemLink = dictionary["itemLink"] as? String ?? ""
         self.isMostDesired = dictionary["isMostDesired"] as? Bool ?? false
         self.localImage = nil

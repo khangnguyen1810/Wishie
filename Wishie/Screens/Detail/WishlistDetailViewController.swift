@@ -28,9 +28,12 @@ class WishlistDetailViewController: ObservableObject {
     @Published var joinSucceed: Bool = false
     @Published var joinFailed: Bool = false
     @Published var joinErrorMessage: String = ""
+    @Published var pickedUsers: [UserModel] = []
     private var wishlistService: WishlistServiceProtocol
-    init(wishlistService: WishlistServiceProtocol = WishlistService()) {
+    private var authService: AuthenticateServiceProtocol
+    init(wishlistService: WishlistServiceProtocol = WishlistService(), authService: AuthenticateServiceProtocol = AuthenticateService()) {
         self.wishlistService = wishlistService
+        self.authService = authService
     }
     
     func pickItem(wishlistId: String) async {
@@ -60,6 +63,7 @@ class WishlistDetailViewController: ObservableObject {
             isShowLoading = true
             wishlistInfo = try await wishlistService
                 .getWishlist(by: wishListId).0
+            await fetchPickedUsers()
             isShowLoading = false
         } catch {
             isShowLoading = false
@@ -67,8 +71,22 @@ class WishlistDetailViewController: ObservableObject {
         }
     }
     
+    func fetchPickedUsers() async {
+        let pickedUserIds = Set(wishlistInfo.items.compactMap { $0.isPicked ? $0.pickedUserId : nil })
+        var users: [UserModel] = []
+        for userId in pickedUserIds {
+            if let user = try? await authService.getUserInfo(by: userId) {
+                users.append(user)
+            }
+        }
+        pickedUsers = users
+    }
+    
     func setInitialWishlist(_ wishlist: WishlistModel) {
         self.wishlistInfo = wishlist
+        Task {
+            await fetchPickedUsers()
+        }
     }
     
     func editWishlistItem(wishListId: String) async {

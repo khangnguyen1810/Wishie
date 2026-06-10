@@ -16,6 +16,7 @@ protocol AuthenticateServiceProtocol {
     func signUp(_ signUpRequest: SignUpRequest) -> AnyPublisher<FirebaseAuth.AuthDataResult?, Error>
     func resetPassword(_ email: String) -> AnyPublisher<Bool, Error>
     func getUserInfo() async throws -> UserModel?
+    func getUserInfo(by userId: String) async throws -> UserModel?
     func uploadAvatar(image: UIImage, userId: String) async throws -> String
     func updateUserInfo(userId: String, firstName: String, lastName: String, phone: String, dateOfBirth: Date, avatarUrl: String?) async throws
     func updateUserInterests(userId: String, interests: [String]) async throws
@@ -88,6 +89,18 @@ class AuthenticateService: AuthenticateServiceProtocol {
             return nil
         }
         
+        let userDoc = try? await db
+            .collection("users")
+            .document(userId)
+            .getDocument()
+        
+        guard let data = userDoc?.data() else {
+            return nil
+        }
+        return UserModel(dictionary: data)
+    }
+    
+    func getUserInfo(by userId: String) async throws -> UserModel? {
         let userDoc = try? await db
             .collection("users")
             .document(userId)

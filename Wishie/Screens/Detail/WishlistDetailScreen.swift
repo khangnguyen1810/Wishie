@@ -58,10 +58,10 @@ struct WishlistDetailScreen: View {
             } content: {
                 VStack (spacing: 15) {
                     headerContent()
+                        .padding(.horizontal, 15)
+                        .padding(.top, 15)
                     listContent()
                 }
-                .padding(.horizontal, 15)
-                .padding(.top,15)
             }
             if viewModel.wishlistInfo.isUserJoined() == false {
                     WishieButton(
@@ -98,6 +98,36 @@ struct WishlistDetailScreen: View {
             title: "Not have a link",
             message: "This item doesn't have a link yet."
         )
+        .showDialogIfNeeded(
+            $viewModel.showDeleteConfirmation,
+            title: "Delete item?",
+            message: "This action cannot be undone.",
+            showCancel: true,
+            onOk: {
+                Task {
+                    let wId = viewModel.wishlistInfo.id
+                    await viewModel.deleteWishlistItem(wishlistId: wId)
+                }
+            },
+            onCancel: {
+                viewModel.showBottomSheet = true
+            }
+        )
+        .showDialogIfNeeded(
+            $viewModel.showReserveConfirmation,
+            title: "Reserve this gift?",
+            message: "Do you want to select this gift?",
+            showCancel: true,
+            onOk: {
+                Task {
+                    let wId = viewModel.wishlistInfo.id
+                    await viewModel.pickItem(wishlistId: wId)
+                }
+            },
+            onCancel: {
+                viewModel.showBottomSheet = true
+            }
+        )
         .task {
             guard let wishlistId else { return }
             await viewModel.getWishlistInfo(wishListId: wishlistId)
@@ -110,12 +140,21 @@ struct WishlistDetailScreen: View {
     }
     @ViewBuilder
     func headerContent() -> some View {
+        let pickedCount = viewModel.wishlistInfo.items.filter(\.isPicked).count
+        let totalCount = viewModel.wishlistInfo.items.count
+        let progress = totalCount > 0 ? Double(pickedCount) / Double(totalCount) : 0.0
         VStack(spacing: 15) {
             HStack {
-                let itemCount = viewModel.wishlistInfo.items.count
-                Text("\(itemCount) Items")
-                    .font(.wishies(.regular, 16))
-                    .foregroundStyle(.black)
+                HStack(spacing: 4) {
+                    Image(systemName: "gift.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 16, height: 16)
+                        .foregroundStyle(Color(hex: viewModel.wishlistInfo.theme.secondary))
+                    Text("\(totalCount) items")
+                        .font(.wishies(.regular, 16))
+                        .foregroundStyle(.black)
+                }
                 
                 Spacer()
                 Image("date_wishlist")
@@ -127,6 +166,46 @@ struct WishlistDetailScreen: View {
                     .font(Font.wishies(.regular, 16))
                     .foregroundStyle(.darkGrey)
             }
+            HStack(spacing: 0) {
+                HStack(spacing: 15) {
+                    GiftProgressView(progress: progress)
+                        .frame(width: 32, height: 32)
+                    Text("\(pickedCount)/\(totalCount) gifts selected")
+                        .font(.wishies(.regular, 14))
+                        .foregroundStyle(.darkGrey)
+                }
+                Spacer()
+                HStack(spacing: -8) {
+                    ForEach(Array(viewModel.memberUsers.prefix(3)), id: \.self) { user in
+                        ZStack {
+                            Circle()
+                                .fill(Color(hex: viewModel.wishlistInfo.theme.secondary))
+                                .frame(width: 28, height: 28)
+                            Text(String(user.firstName.prefix(1).uppercased()))
+                                .font(.wishies(.bold, 14))
+                                .foregroundStyle(.white)
+                        }
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white, lineWidth: 2)
+                        )
+                    }
+                    if viewModel.memberUsers.count > 3 {
+                        ZStack {
+                            Circle()
+                                .fill(Color(hex: viewModel.wishlistInfo.theme.secondary))
+                                .frame(width: 28, height: 28)
+                            Text("+\(viewModel.memberUsers.count - 3)")
+                                .font(.wishies(.bold, 12))
+                                .foregroundStyle(.white)
+                        }
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white, lineWidth: 2)
+                        )
+                    }
+                }
+            }
             Text(viewModel.wishlistInfo.description)
                 .font(.wishies(.regular, 15))
                 .multilineTextAlignment(.leading)
@@ -137,58 +216,70 @@ struct WishlistDetailScreen: View {
     
     @ViewBuilder
     func listContent() -> some View {
-        VStack() {
-            ForEach(viewModel.wishlistInfo.items, id: \.self) { item in
-                HStack {
-                    WebImage(url: URL(string: item.image ?? ""), content: { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    }, placeholder: {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(viewModel.wishlistInfo.items, id: \.self) { item in
+                    HStack {
+                        WebImage(url: URL(string: item.image ?? ""), content: { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        }, placeholder: {
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(
+                                    Color(hex: viewModel.wishlistInfo.theme.secondary)
+                                )
+                                .frame(
+                                    width: UIScreen.main.bounds.width/4,
+                                    height:  UIScreen.main.bounds.width/4
+                                )
+                                .overlay {
+                                    DotLottieAnimation(fileName: "giftloading", config: AnimationConfig(autoplay: true, loop: true)).view()
+                                        .frame(width: 40)
+                                }
+                        })
+                        .frame(width: 80, height: 80)
+                        .clipped()
+                        .cornerRadius(10)
+
+                        Text(item.name)
+                            .font(.wishies(.regular, 15))
+                            .foregroundStyle(.black)
+
+                        if item.isMostDesired {
+                            Image(systemName: "star.fill")
+                                .foregroundStyle(.yellow)
+                                .frame(width: 16, height: 16)
+                        }
+
+                        if item.isPicked {
+                            Spacer()
+                            Image("user")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 20, height: 20)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(
                         RoundedRectangle(cornerRadius: 15)
-                            .fill(
-                                Color(hex: viewModel.wishlistInfo.theme.secondary)
-                            )
-                            .frame(
-                                width: UIScreen.main.bounds.width/4,
-                                height:  UIScreen.main.bounds.width/4
-                            )
-                            .overlay {
-                                DotLottieAnimation(fileName: "giftloading", config: AnimationConfig(autoplay: true, loop: true)).view()
-                                    .frame(width: 40)
-                            }
-                    })
-                    .frame(width: 80, height: 80)
-                    .clipped()
-                    .cornerRadius(10)
-                    
-                    Text(item.name)
-                        .font(.wishies(.regular, 15))
-                        .foregroundStyle(.black)
-                    
-                    if (item.isPicked) {
-                        Spacer()
-                        Image("user")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 20, height: 20)
+                            .fill(Color.white)
+                    )
+                    .overlay {
+                        if item.isPicked {
+                            Color(hex: viewModel.wishlistInfo.theme.primary)
+                                .opacity(0.5)
+                                .clipShape(RoundedRectangle(cornerRadius: 15))
+                        }
                     }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                .overlay {
-                    if item.isPicked {
-                        Color(hex: viewModel.wishlistInfo.theme.primary)
-                            .opacity(0.5)
-                            .clipShape(RoundedRectangle(cornerRadius: 15))
-                        
+                    .onTapGesture {
+                        viewModel.itemSelected = item
+                        viewModel.showBottomSheet = true
                     }
-                }
-                .onTapGesture {
-                    viewModel.itemSelected = item
-                    viewModel.showBottomSheet = true
                 }
             }
+            .padding(.horizontal, 15)
         }
     }
     @ViewBuilder
@@ -318,9 +409,8 @@ struct WishlistDetailScreen: View {
                                         .editWishlistItem(
                                             wishListId: wishlist?.id ?? ""
                                         )
-                                    viewModel.itemSelected.name = viewModel.editedName
-                                    viewModel.itemSelected.description = viewModel.editedDescription
                                     isEditing = false
+                                    viewModel.showBottomSheet = false
                                 }
                             } else {
                                 isEditing = true
@@ -363,6 +453,61 @@ struct WishlistDetailScreen: View {
                                 }
                             }
                         }
+                        if !viewModel.itemSelected.isMostDesired && !isEditing {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color(hex: viewModel.wishlistInfo.theme.secondary))
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 45)
+                                HStack {
+                                    Image(systemName: "star.fill")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 25)
+                                        .padding(.leading, 20)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                Text("Mark as Most Desired")
+                                    .font(.wishies(.bold, 15))
+                                    .foregroundStyle(.black)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                            .onTapGesture {
+                                Task {
+                                    await viewModel.setMostDesired(wishlistId: wishlist?.id ?? "")
+                                    viewModel.showBottomSheet = false
+                                }
+                            }
+                        }
+                        if !isEditing {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(viewModel.itemSelected.isPicked ? .lightGrey : .wishiePink)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 45)
+                                HStack {
+                                    Image(systemName: "trash")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 25)
+                                        .padding(.leading, 20)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                Text("Delete")
+                                    .font(.wishies(.bold, 15))
+                                    .foregroundStyle(.black)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                            .disabled(viewModel.itemSelected.isPicked)
+                            .onTapGesture {
+                                if !viewModel.itemSelected.isPicked {
+                                    viewModel.showBottomSheet = false
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                        viewModel.showDeleteConfirmation = true
+                                    }
+                                }
+                            }
+                        }
                     }
                 } else {
                     VStack {
@@ -397,11 +542,10 @@ struct WishlistDetailScreen: View {
                 .frame(maxWidth: .infinity, alignment: .center)
         }
         .onTapGesture {
-            Task {
-                if (!viewModel.itemSelected.isPicked) {
-                    viewModel.showBottomSheet = false
-                    let wishlistId = viewModel.wishlistInfo.id
-                    await viewModel.pickItem(wishlistId: wishlistId)
+            if !viewModel.itemSelected.isPicked {
+                viewModel.showBottomSheet = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    viewModel.showReserveConfirmation = true
                 }
             }
         }

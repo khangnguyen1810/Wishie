@@ -19,6 +19,8 @@ protocol WishlistServiceProtocol {
     func updateWishlistItem(wishlistId: String, itemId: String, newName: String?, newDescription: String?, newImage: UIImage?) async throws -> Result<Bool, Error>
     func deleteWishlist(wishlistId: String) async throws -> Result<Bool, Error>
     func leaveWishlist(wishListId: String) async throws -> Result<Bool, Error>
+    func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
+    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<Bool, Error>
 }
 
 class WishlistService: WishlistServiceProtocol {
@@ -337,6 +339,42 @@ class WishlistService: WishlistServiceProtocol {
         }
     }
     
+    func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, any Error> {
+        do {
+            let docRef = db.collection("wishList").document(wishlistId)
+            let snapshot = try await docRef.getDocument()
+            guard let data = snapshot.data(),
+                  let items = data["wishListItems"] as? [[String: Any]] else {
+                throw NSError(domain: "WishlistService", code: 404)
+            }
+            let filteredItems = items.filter { ($0["id"] as? String) != itemId }
+            try await docRef.updateData(["wishListItems": filteredItems])
+            return .success(true)
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<Bool, any Error> {
+        do {
+            let docRef = db.collection("wishList").document(wishlistId)
+            let snapshot = try await docRef.getDocument()
+            guard var items = snapshot.data()?["wishListItems"] as? [[String: Any]] else {
+                throw NSError(domain: "WishlistService", code: 404)
+            }
+            for index in items.indices {
+                if let id = items[index]["id"] as? String, id == itemId {
+                    items[index]["isMostDesired"] = isMostDesired
+                    break
+                }
+            }
+            try await docRef.updateData(["wishListItems": items])
+            return .success(true)
+        } catch {
+            return .failure(error)
+        }
+    }
+
     private func deleteImageStorage(imageUrl: String) async throws {
         guard let range = imageUrl.range(
             of: "/storage/v1/object/public/Wishie/"

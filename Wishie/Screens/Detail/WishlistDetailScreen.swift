@@ -176,13 +176,27 @@ struct WishlistDetailScreen: View {
                 }
                 Spacer()
                 HStack(spacing: -8) {
-                    ForEach(Array(viewModel.pickedUsers.prefix(3)), id: \.self) { user in
+                    ForEach(Array(viewModel.memberUsers.prefix(3)), id: \.self) { user in
                         ZStack {
                             Circle()
                                 .fill(Color(hex: viewModel.wishlistInfo.theme.secondary))
                                 .frame(width: 28, height: 28)
                             Text(String(user.firstName.prefix(1).uppercased()))
                                 .font(.wishies(.bold, 14))
+                                .foregroundStyle(.white)
+                        }
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white, lineWidth: 2)
+                        )
+                    }
+                    if viewModel.memberUsers.count > 3 {
+                        ZStack {
+                            Circle()
+                                .fill(Color(hex: viewModel.wishlistInfo.theme.secondary))
+                                .frame(width: 28, height: 28)
+                            Text("+\(viewModel.memberUsers.count - 3)")
+                                .font(.wishies(.bold, 12))
                                 .foregroundStyle(.white)
                         }
                         .overlay(

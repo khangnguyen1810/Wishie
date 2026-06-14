@@ -21,6 +21,7 @@ protocol WishlistServiceProtocol {
     func leaveWishlist(wishListId: String) async throws -> Result<Bool, Error>
     func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
     func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<Bool, Error>
+    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<Bool, Error>
     func observeWishlist(by id: String, onChange: @escaping (WishlistModel) -> Void, onError: @escaping (Error) -> Void) -> ListenerRegistration
     func observeUserWishlistIds(onChange: @escaping ([String]) -> Void) -> ListenerRegistration?
 }
@@ -129,7 +130,7 @@ class WishlistService: WishlistServiceProtocol {
                 userInfo: [NSLocalizedDescriptionKey: "User not found"]
             )
         }
-        let owner = try UserModel(dictionary: userData)
+        let owner = UserModel(dictionary: userData)
         return (wishlist, owner)
     }
     func joinWishlist(wishListId: String) async throws -> Result<Bool, any Error> {
@@ -316,7 +317,7 @@ class WishlistService: WishlistServiceProtocol {
             }
             let docRef = db.collection("wishList").document(wishListId)
             let snapshot = try await docRef.getDocument()
-            guard var data = snapshot.data(),
+            guard let data = snapshot.data(),
                   var items = data["wishListItems"] as? [[String: Any]] else {
                 throw NSError(domain: "Wishlist Service", code: 404)
             }
@@ -373,6 +374,28 @@ class WishlistService: WishlistServiceProtocol {
                 }
             }
             try await docRef.updateData(["wishListItems": items])
+            return .success(true)
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<Bool, Error> {
+        do {
+            let itemData: [String: Any] = [
+                "id": item.id,
+                "name": item.name,
+                "description": item.description,
+                "imageUrl": item.image ?? "",
+                "isPicked": item.isPicked,
+                "itemLink": item.itemLink,
+                "price": item.price ?? "",
+                "isMostDesired": item.isMostDesired
+            ]
+            let docRef = db.collection("wishList").document(wishlistId)
+            try await docRef.updateData([
+                "wishListItems": FieldValue.arrayUnion([itemData])
+            ])
             return .success(true)
         } catch {
             return .failure(error)

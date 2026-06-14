@@ -40,6 +40,7 @@ class WishlistDetailViewController: ObservableObject {
     @Published var isFetchingMetadata: Bool = false
     @Published var metadataFetchError: String? = nil
     @Published var newItemRemoteImageUrl: String? = nil
+    @Published var newItemPrice: String? = nil
     private var wishlistService: WishlistServiceProtocol
     private var authService: AuthenticateServiceProtocol
     private var productMetadataService: ProductMetadataServiceProtocol
@@ -237,7 +238,8 @@ class WishlistDetailViewController: ObservableObject {
                 name: newItemName,
                 description: newItemDescription,
                 image: imageUrl,
-                itemLink: newItemLink
+                itemLink: newItemLink,
+                price: newItemPrice
             )
             let result = try await wishlistService.addWishlistItem(wishlistId: wishlistId, item: item)
             switch result {
@@ -247,6 +249,7 @@ class WishlistDetailViewController: ObservableObject {
                 newItemImage = nil
                 newItemLink = ""
                 newItemRemoteImageUrl = nil
+                newItemPrice = nil
                 metadataFetchError = nil
                 isShowLoading = false
             case .failure(let error):
@@ -272,6 +275,7 @@ class WishlistDetailViewController: ObservableObject {
             newItemName = ""
             newItemDescription = ""
             newItemRemoteImageUrl = nil
+            newItemPrice = nil
         }
         isFetchingMetadata = false
     }
@@ -281,5 +285,6 @@ class WishlistDetailViewController: ObservableObject {
         newItemDescription = metadata.productDescription
         newItemLink = metadata.productUrl
         newItemRemoteImageUrl = metadata.imageUrl
+        newItemPrice = metadata.price
     }
 }

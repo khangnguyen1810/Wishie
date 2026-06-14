@@ -436,9 +436,11 @@ struct WishlistDetailScreen: View {
                         .font(.wishies(.bold, 15))
                         .foregroundStyle(.black)
                     Spacer()
-                    Text("100.00 - 200.000 VND")
-                        .font(.wishies(.bold, 15))
-                        .foregroundStyle(.darkGrey)
+                    if let price = viewModel.itemSelected.price, !price.isEmpty {
+                        Text(price)
+                            .font(.wishies(.bold, 15))
+                            .foregroundStyle(.darkGrey)
+                    }
                 }
                 Spacer()
                 if wishlist?.isOwner() == true {

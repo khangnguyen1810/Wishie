@@ -29,18 +29,23 @@ class ProductMetadataService: ProductMetadataServiceProtocol {
         return extractMetadata(from: html, originalUrl: urlString)
     }
 
+    private func nonEmpty(_ string: String?) -> String? {
+        guard let s = string?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty else { return nil }
+        return s
+    }
+
     private func extractMetadata(from html: String, originalUrl: String) -> ProductMetadata {
-        let title = extractMetaContent(from: html, property: "og:title")
+        let title = nonEmpty(extractMetaContent(from: html, property: "og:title"))
             ?? extractTitleTag(from: html)
             ?? "Unknown Product"
 
-        let productDescription = extractMetaContent(from: html, property: "og:description")
-            ?? extractMetaName(from: html, name: "description")
+        let productDescription = nonEmpty(extractMetaContent(from: html, property: "og:description"))
+            ?? nonEmpty(extractMetaName(from: html, name: "description"))
             ?? ""
 
-        let imageUrl = extractMetaContent(from: html, property: "og:image")
+        let imageUrl = nonEmpty(extractMetaContent(from: html, property: "og:image"))
 
-        let productUrl = extractMetaContent(from: html, property: "og:url") ?? originalUrl
+        let productUrl = nonEmpty(extractMetaContent(from: html, property: "og:url")) ?? originalUrl
 
         let price: String? = extractJsonLdPrice(from: html)
             ?? extractMetaPrice(from: html)
@@ -156,13 +161,13 @@ class ProductMetadataService: ProductMetadataServiceProtocol {
     }
 
     private func extractMetaPrice(from html: String) -> String? {
-        let amount = extractMetaContent(from: html, property: "product:price:amount")
-            ?? extractMetaContent(from: html, property: "og:price:amount")
-            ?? extractMetaContent(from: html, property: "og:price")
+        let amount = nonEmpty(extractMetaContent(from: html, property: "product:price:amount"))
+            ?? nonEmpty(extractMetaContent(from: html, property: "og:price:amount"))
+            ?? nonEmpty(extractMetaContent(from: html, property: "og:price"))
         guard let amount else { return nil }
 
-        let currency = extractMetaContent(from: html, property: "product:price:currency")
-            ?? extractMetaContent(from: html, property: "og:price:currency")
+        let currency = nonEmpty(extractMetaContent(from: html, property: "product:price:currency"))
+            ?? nonEmpty(extractMetaContent(from: html, property: "og:price:currency"))
 
         if let currency {
             return "\(currency) \(amount)"

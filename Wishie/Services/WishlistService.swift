@@ -21,6 +21,8 @@ protocol WishlistServiceProtocol {
     func leaveWishlist(wishListId: String) async throws -> Result<Bool, Error>
     func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
     func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<Bool, Error>
+    func observeWishlist(by id: String, onChange: @escaping (WishlistModel) -> Void, onError: @escaping (Error) -> Void) -> ListenerRegistration
+    func observeUserWishlistIds(onChange: @escaping ([String]) -> Void) -> ListenerRegistration?
 }
 
 class WishlistService: WishlistServiceProtocol {
@@ -373,6 +375,33 @@ class WishlistService: WishlistServiceProtocol {
         } catch {
             return .failure(error)
         }
+    }
+
+    func observeWishlist(by id: String, onChange: @escaping (WishlistModel) -> Void, onError: @escaping (Error) -> Void) -> ListenerRegistration {
+        return db.collection("wishList").document(id).addSnapshotListener { snapshot, error in
+            if let error = error {
+                onError(error)
+                return
+            }
+            guard let data = snapshot?.data(),
+                  let wishlist = try? WishlistModel(dictionary: data) else { return }
+            onChange(wishlist)
+        }
+    }
+
+    func observeUserWishlistIds(onChange: @escaping ([String]) -> Void) -> ListenerRegistration? {
+        guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else {
+            return nil
+        }
+        return db
+            .collection(WishieConstants.firebaseUserPath)
+            .document(userId)
+            .collection(WishieConstants.firebaseWishlistPath)
+            .order(by: "joinedAt")
+            .addSnapshotListener { snapshot, _ in
+                guard let documents = snapshot?.documents else { return }
+                onChange(documents.map { $0.documentID })
+            }
     }
 
     private func deleteImageStorage(imageUrl: String) async throws {

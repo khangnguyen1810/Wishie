@@ -129,8 +129,9 @@ struct WishlistDetailScreen: View {
             }
         )
         .task {
-            guard let wishlistId else { return }
-            await viewModel.getWishlistInfo(wishListId: wishlistId)
+            let id = wishlistId ?? wishlist?.id
+            guard let id else { return }
+            viewModel.startObservingWishlist(wishlistId: id, showInitialLoading: wishlist == nil)
         }
         .onAppear(perform: {
             guard let wishlist else { return }

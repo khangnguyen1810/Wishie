@@ -42,7 +42,9 @@ class WishlistService: WishlistServiceProtocol {
                         "name": $0.name,
                         "description": $0.description,
                         "imageUrl": $0.image ?? "",
-                        "isPicked": $0.isPicked
+                        "isPicked": $0.isPicked,
+                        "itemLink": $0.itemLink,
+                        "price": $0.price ?? ""
                     ]
                 },
                 "members": [

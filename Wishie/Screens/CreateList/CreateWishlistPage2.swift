@@ -9,6 +9,9 @@ import SwiftUI
 
 struct CreateWishlistPage2: View {
     @EnvironmentObject var createWishlistViewModel: CreateWishlistViewModel
+    @State private var showAddItemOptionSheet: Bool = false
+    @State private var showPasteLinkSheet: Bool = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Add your gift ideas")
@@ -42,19 +45,37 @@ struct CreateWishlistPage2: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.lightYellow1)
                 .onTapGesture {
-                    createWishlistViewModel.items.append(WishlistItem())
+                    showAddItemOptionSheet = true
                 }
                 .padding(.bottom, 100)
             }
             .listStyle(.plain)
             .scrollIndicators(.hidden)
         }
+        .sheet(isPresented: $showAddItemOptionSheet) {
+            AddItemOptionSheet(
+                onPasteLink: {
+                    showAddItemOptionSheet = false
+                    showPasteLinkSheet = true
+                },
+                onManual: {
+                    createWishlistViewModel.items.append(WishlistItem())
+                    showAddItemOptionSheet = false
+                }
+            )
+            .presentationDetents([.height(280)])
+        }
+        .sheet(isPresented: $showPasteLinkSheet) {
+            PasteLinkSheet()
+                .environmentObject(createWishlistViewModel)
+                .presentationDetents([.large])
+        }
     }
 }
 
 struct WishlistItemCard: View {
     private enum CreateWishlistItemField: Hashable {
-        case name, description, itemLink
+        case name, description, itemLink, price
     }
 
     @Binding var item: WishlistItem
@@ -79,6 +100,12 @@ struct WishlistItemCard: View {
                             .scaledToFill()
                             .frame(maxWidth: .infinity, minHeight: 180)
                             .clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    } else if let remoteUrl = item.image, !remoteUrl.isEmpty {
+                        WishieWebImage(url: remoteUrl)
+                            .frame(maxWidth: .infinity, minHeight: 180)
+                            .clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     } else {
                         VStack(spacing: 8) {
                             Image("upload")
@@ -122,6 +149,19 @@ struct WishlistItemCard: View {
                     .background(.lightYellow)
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .focused($focusedField, equals: .itemLink)
+                TextField(
+                    "Price (optional)",
+                    text: Binding(
+                        get: { item.price ?? "" },
+                        set: { item.price = $0.isEmpty ? nil : $0 }
+                    )
+                )
+                .font(.wishies(.regular, 15))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(.lightYellow)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .focused($focusedField, equals: .price)
             }
         }
         .padding(14)

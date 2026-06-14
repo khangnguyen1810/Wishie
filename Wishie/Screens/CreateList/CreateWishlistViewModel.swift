@@ -14,10 +14,14 @@ class CreateWishlistViewModel: ObservableObject {
     @Published var dueDate: Date = Date()
     @Published var items: [WishlistItem] = []
     @Published var selectedTheme: GradientTheme?
+    @Published var isFetchingMetadata: Bool = false
+    @Published var metadataFetchError: String? = nil
     private var createWishListService: WishlistServiceProtocol
-    
-    init (createWishListService: WishlistServiceProtocol = WishlistService()) {
+    private var productMetadataService: ProductMetadataServiceProtocol
+
+    init(createWishListService: WishlistServiceProtocol = WishlistService(), productMetadataService: ProductMetadataServiceProtocol = ProductMetadataService()) {
         self.createWishListService = createWishListService
+        self.productMetadataService = productMetadataService
     }
     func saveItem() async -> Result<String, Error>{
         do {
@@ -45,6 +49,32 @@ class CreateWishlistViewModel: ObservableObject {
         } catch {
             return .failure(error)
         }
+    }
+
+    @MainActor
+    func fetchProductMetadata(from urlString: String) async -> Result<ProductMetadata, Error> {
+        isFetchingMetadata = true
+        metadataFetchError = nil
+        do {
+            let metadata = try await productMetadataService.fetchMetadata(from: urlString)
+            isFetchingMetadata = false
+            return .success(metadata)
+        } catch {
+            isFetchingMetadata = false
+            metadataFetchError = error.localizedDescription
+            return .failure(error)
+        }
+    }
+
+    func addItemFromMetadata(_ metadata: ProductMetadata) {
+        let item = WishlistItem(
+            name: metadata.title,
+            description: metadata.productDescription,
+            image: metadata.imageUrl,
+            itemLink: metadata.productUrl,
+            price: metadata.price
+        )
+        items.append(item)
     }
 }
 

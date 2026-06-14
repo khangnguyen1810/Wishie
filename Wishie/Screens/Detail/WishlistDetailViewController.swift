@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import FirebaseFirestore
 
 @MainActor
 class WishlistDetailViewController: ObservableObject {
@@ -31,9 +32,32 @@ class WishlistDetailViewController: ObservableObject {
     @Published var memberUsers: [UserModel] = []
     private var wishlistService: WishlistServiceProtocol
     private var authService: AuthenticateServiceProtocol
+    private var wishlistListener: ListenerRegistration?
     init(wishlistService: WishlistServiceProtocol = WishlistService(), authService: AuthenticateServiceProtocol = AuthenticateService()) {
         self.wishlistService = wishlistService
         self.authService = authService
+    }
+
+    deinit {
+        wishlistListener?.remove()
+    }
+
+    func startObservingWishlist(wishlistId: String, showInitialLoading: Bool = false) {
+        isShowLoading = showInitialLoading
+        wishlistListener?.remove()
+        wishlistListener = wishlistService.observeWishlist(by: wishlistId, onChange: { [weak self] updatedWishlist in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.wishlistInfo = updatedWishlist
+                self.isShowLoading = false
+                await self.fetchMemberUsers()
+            }
+        }, onError: { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.isShowLoading = false
+            }
+        })
     }
     
     func pickItem(wishlistId: String) async {
@@ -46,7 +70,6 @@ class WishlistDetailViewController: ObservableObject {
             case .success(_):
                 isShowLoading = false
                 isChoosed = true
-                await getWishlistInfo(wishListId: wishlistId)
             case .failure(let failure):
                 isShowLoading = false
                 errorMessage = failure.localizedDescription
@@ -67,7 +90,8 @@ class WishlistDetailViewController: ObservableObject {
             isShowLoading = false
         } catch {
             isShowLoading = false
-            print(error)
+            errorMessage = error.localizedDescription
+            isShowError = true
         }
     }
     
@@ -104,14 +128,15 @@ class WishlistDetailViewController: ObservableObject {
             switch result {
             case .success(_):
                 isShowLoading = false
-                await getWishlistInfo(wishListId: wishListId)
             case .failure(let failure):
                 isShowLoading = false
-                print(failure.localizedDescription)
+                errorMessage = failure.localizedDescription
+                isShowError = true
             }
         } catch {
             isShowLoading = false
-            print(error)
+            errorMessage = error.localizedDescription
+            isShowError = true
         }
     }
     func openProductLink() {
@@ -156,7 +181,6 @@ class WishlistDetailViewController: ObservableObject {
             switch result {
             case .success(_):
                 isShowLoading = false
-                await getWishlistInfo(wishListId: wishlistId)
             case .failure(let error):
                 isShowLoading = false
                 errorMessage = error.localizedDescription
@@ -176,7 +200,6 @@ class WishlistDetailViewController: ObservableObject {
             switch result {
             case .success(_):
                 isShowLoading = false
-                await getWishlistInfo(wishListId: wishlistId)
             case .failure(let error):
                 isShowLoading = false
                 errorMessage = error.localizedDescription

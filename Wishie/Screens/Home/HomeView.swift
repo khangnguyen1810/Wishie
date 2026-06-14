@@ -241,11 +241,7 @@ struct HomeView: View {
             }
             .task {
                 await authViewModel.getUserInfo()
-                if (
-                    homeViewModel.myWishlists.isEmpty && homeViewModel.myFriendWishlists.isEmpty
-                ) {
-                    await homeViewModel.getListWishlist()
-                }
+                homeViewModel.startObservingWishlists()
             }
         }
         .sheet(item: $activeSheet) { type in

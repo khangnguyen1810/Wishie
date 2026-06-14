@@ -30,12 +30,24 @@ class WishlistDetailViewController: ObservableObject {
     @Published var joinFailed: Bool = false
     @Published var joinErrorMessage: String = ""
     @Published var memberUsers: [UserModel] = []
+    @Published var showAddItemOptionSheet: Bool = false
+    @Published var showAddItemManualSheet: Bool = false
+    @Published var showAddItemPasteLinkSheet: Bool = false
+    @Published var newItemName: String = ""
+    @Published var newItemDescription: String = ""
+    @Published var newItemImage: UIImage? = nil
+    @Published var newItemLink: String = ""
+    @Published var isFetchingMetadata: Bool = false
+    @Published var metadataFetchError: String? = nil
+    @Published var newItemRemoteImageUrl: String? = nil
     private var wishlistService: WishlistServiceProtocol
     private var authService: AuthenticateServiceProtocol
+    private var productMetadataService: ProductMetadataServiceProtocol
     private var wishlistListener: ListenerRegistration?
-    init(wishlistService: WishlistServiceProtocol = WishlistService(), authService: AuthenticateServiceProtocol = AuthenticateService()) {
+    init(wishlistService: WishlistServiceProtocol = WishlistService(), authService: AuthenticateServiceProtocol = AuthenticateService(), productMetadataService: ProductMetadataServiceProtocol = ProductMetadataService()) {
         self.wishlistService = wishlistService
         self.authService = authService
+        self.productMetadataService = productMetadataService
     }
 
     deinit {
@@ -210,5 +222,64 @@ class WishlistDetailViewController: ObservableObject {
             errorMessage = error.localizedDescription
             isShowError = true
         }
+    }
+
+    func addNewWishlistItem(wishlistId: String) async {
+        isShowLoading = true
+        do {
+            var imageUrl: String? = nil
+            if let localImage = newItemImage {
+                imageUrl = try await wishlistService.upload(image: localImage, fileName: UUID().uuidString)
+            } else if let remoteUrl = newItemRemoteImageUrl {
+                imageUrl = remoteUrl
+            }
+            let item = WishlistItem(
+                name: newItemName,
+                description: newItemDescription,
+                image: imageUrl,
+                itemLink: newItemLink
+            )
+            let result = try await wishlistService.addWishlistItem(wishlistId: wishlistId, item: item)
+            switch result {
+            case .success(_):
+                newItemName = ""
+                newItemDescription = ""
+                newItemImage = nil
+                newItemLink = ""
+                newItemRemoteImageUrl = nil
+                metadataFetchError = nil
+                isShowLoading = false
+            case .failure(let error):
+                isShowLoading = false
+                errorMessage = error.localizedDescription
+                isShowError = true
+            }
+        } catch {
+            isShowLoading = false
+            errorMessage = error.localizedDescription
+            isShowError = true
+        }
+    }
+
+    func fetchProductMetadataForNewItem(from urlString: String) async {
+        isFetchingMetadata = true
+        metadataFetchError = nil
+        do {
+            let metadata = try await productMetadataService.fetchMetadata(from: urlString)
+            setNewItemFromMetadata(metadata)
+        } catch {
+            metadataFetchError = error.localizedDescription
+            newItemName = ""
+            newItemDescription = ""
+            newItemRemoteImageUrl = nil
+        }
+        isFetchingMetadata = false
+    }
+
+    func setNewItemFromMetadata(_ metadata: ProductMetadata) {
+        newItemName = metadata.title
+        newItemDescription = metadata.productDescription
+        newItemLink = metadata.productUrl
+        newItemRemoteImageUrl = metadata.imageUrl
     }
 }

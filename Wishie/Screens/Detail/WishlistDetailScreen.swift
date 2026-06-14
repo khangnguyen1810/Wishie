@@ -76,6 +76,22 @@ struct WishlistDetailScreen: View {
                                            }
                     }
                 }
+            if viewModel.wishlistInfo.isOwner() {
+                Button {
+                    viewModel.showAddItemOptionSheet = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.black)
+                        .frame(width: 50, height: 50)
+                        .background(Color(hex: viewModel.wishlistInfo.theme.secondary))
+                        .clipShape(Circle())
+                        .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                }
+                .padding(.bottom, 24)
+                .padding(.trailing, 20)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+            }
         }
         .sheet(isPresented: $viewModel.showBottomSheet) {
             bottomSheet()
@@ -87,6 +103,51 @@ struct WishlistDetailScreen: View {
                 ShareSheet(items: [qrImage])
             }
         })
+        .sheet(isPresented: $viewModel.showAddItemOptionSheet) {
+            AddItemOptionSheet(
+                onPasteLink: {
+                    viewModel.showAddItemOptionSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        viewModel.showAddItemPasteLinkSheet = true
+                    }
+                },
+                onManual: {
+                    viewModel.showAddItemOptionSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        viewModel.showAddItemManualSheet = true
+                    }
+                }
+            )
+            .presentationDetents([.height(280)])
+        }
+        .sheet(
+            isPresented: $viewModel.showAddItemManualSheet,
+            onDismiss: {
+                viewModel.newItemName = ""
+                viewModel.newItemDescription = ""
+                viewModel.newItemImage = nil
+                viewModel.newItemLink = ""
+                viewModel.newItemRemoteImageUrl = nil
+                viewModel.metadataFetchError = nil
+            }
+        ) {
+            AddItemManualDetailSheet(viewModel: viewModel, wishlistId: wishlist?.id ?? wishlistId ?? "")
+                .presentationDetents([.large])
+        }
+        .sheet(
+            isPresented: $viewModel.showAddItemPasteLinkSheet,
+            onDismiss: {
+                viewModel.newItemName = ""
+                viewModel.newItemDescription = ""
+                viewModel.newItemImage = nil
+                viewModel.newItemLink = ""
+                viewModel.newItemRemoteImageUrl = nil
+                viewModel.metadataFetchError = nil
+            }
+        ) {
+            AddItemPasteLinkDetailSheet(viewModel: viewModel, wishlistId: wishlist?.id ?? wishlistId ?? "")
+                .presentationDetents([.large])
+        }
         .showFullScreenDialog($viewModel.isShowLoading)
         .showDialogIfNeeded(
             $viewModel.isShowError,

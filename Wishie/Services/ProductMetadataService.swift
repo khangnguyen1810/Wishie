@@ -42,19 +42,8 @@ class ProductMetadataService: ProductMetadataServiceProtocol {
 
         let productUrl = extractMetaContent(from: html, property: "og:url") ?? originalUrl
 
-        let price: String? = {
-            let amount = extractMetaContent(from: html, property: "product:price:amount")
-                ?? extractMetaContent(from: html, property: "og:price:amount")
-            guard let amount else { return nil }
-
-            let currency = extractMetaContent(from: html, property: "product:price:currency")
-                ?? extractMetaContent(from: html, property: "og:price:currency")
-
-            if let currency {
-                return "\(currency) \(amount)"
-            }
-            return amount
-        }()
+        let price: String? = extractJsonLdPrice(from: html)
+            ?? extractMetaPrice(from: html)
 
         return ProductMetadata(
             title: title,
@@ -109,5 +98,75 @@ class ProductMetadataService: ProductMetadataServiceProtocol {
             return String(html[captureRange]).trimmingCharacters(in: .whitespacesAndNewlines)
         }
         return nil
+    }
+
+    private func extractJsonLdPrice(from html: String) -> String? {
+        guard let regex = try? NSRegularExpression(
+            pattern: "<script[^>]+type=[\"']application/ld\\+json[\"'][^>]*>(.*?)</script>",
+            options: [.caseInsensitive, .dotMatchesLineSeparators]
+        ) else { return nil }
+
+        let range = NSRange(html.startIndex..., in: html)
+        let matches = regex.matches(in: html, options: [], range: range)
+
+        for match in matches {
+            guard let captureRange = Range(match.range(at: 1), in: html) else { continue }
+            let jsonString = String(html[captureRange])
+            guard let data = jsonString.data(using: .utf8),
+                  let json = try? JSONSerialization.jsonObject(with: data) else { continue }
+
+            if let price = extractPriceFromJsonLdObject(json) {
+                return price
+            }
+        }
+        return nil
+    }
+
+    private func extractPriceFromJsonLdObject(_ object: Any) -> String? {
+        if let array = object as? [[String: Any]] {
+            for item in array {
+                if let price = extractPriceFromJsonLdObject(item) { return price }
+            }
+            return nil
+        }
+
+        guard let dict = object as? [String: Any] else { return nil }
+
+        if let offerRaw = dict["offers"] {
+            if let offer = offerRaw as? [String: Any],
+               let price = offer["price"],
+               let currency = offer["priceCurrency"] as? String {
+                return "\(currency) \(price)"
+            }
+            if let offers = offerRaw as? [[String: Any]],
+               let first = offers.first,
+               let price = first["price"],
+               let currency = first["priceCurrency"] as? String {
+                return "\(currency) \(price)"
+            }
+        }
+
+        if let graph = dict["@graph"] as? [[String: Any]] {
+            for node in graph {
+                if let price = extractPriceFromJsonLdObject(node) { return price }
+            }
+        }
+
+        return nil
+    }
+
+    private func extractMetaPrice(from html: String) -> String? {
+        let amount = extractMetaContent(from: html, property: "product:price:amount")
+            ?? extractMetaContent(from: html, property: "og:price:amount")
+            ?? extractMetaContent(from: html, property: "og:price")
+        guard let amount else { return nil }
+
+        let currency = extractMetaContent(from: html, property: "product:price:currency")
+            ?? extractMetaContent(from: html, property: "og:price:currency")
+
+        if let currency {
+            return "\(currency) \(amount)"
+        }
+        return amount
     }
 }

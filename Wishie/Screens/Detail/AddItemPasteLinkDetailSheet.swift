@@ -1,4 +1,5 @@
 import SwiftUI
+import DotLottie
 
 struct AddItemPasteLinkDetailSheet: View {
     @ObservedObject var viewModel: WishlistDetailViewController
@@ -47,8 +48,16 @@ struct AddItemPasteLinkDetailSheet: View {
             .padding(.bottom, 16)
 
             if viewModel.isFetchingMetadata {
-                ProgressView("Fetching product info...")
-                    .frame(maxWidth: .infinity)
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Color.lightYellow)
+                    .frame(
+                        width: UIScreen.main.bounds.width/4,
+                        height:  UIScreen.main.bounds.width/4
+                    )
+                    .overlay {
+                        DotLottieAnimation(fileName: "giftloading", config: AnimationConfig(autoplay: true, loop: true)).view()
+                            .frame(width: 80)
+                    }
                     .padding(.vertical, 16)
             }
 
@@ -95,12 +104,28 @@ struct AddItemPasteLinkDetailSheet: View {
             WishieButton(title: "Add to wishlist", enabled: !viewModel.newItemName.trimmingCharacters(in: .whitespaces).isEmpty && viewModel.metadataFetchError == nil) {
                 Task {
                     await viewModel.addNewWishlistItem(wishlistId: wishlistId)
-                    dismiss()
+                    if !viewModel.showDuplicateItemDialog {
+                        dismiss()
+                    }
                 }
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
+        .overlay(
+            DialogView(
+                isShowDialog: $viewModel.showDuplicateItemDialog,
+                errorTitle: "Item Already Exists",
+                errorMessage: "This gift is already in your wishlist.",
+                showCancel: false,
+                onConfirm: {
+                    DispatchQueue.main.async {
+                        urlInput = ""
+                        viewModel.newItemName = ""
+                    }
+                }
+            )
+        )
     }
 }

@@ -41,6 +41,7 @@ class WishlistDetailViewController: ObservableObject {
     @Published var metadataFetchError: String? = nil
     @Published var newItemRemoteImageUrl: String? = nil
     @Published var newItemPrice: String? = nil
+    @Published var showDuplicateItemDialog: Bool = false
     private var wishlistService: WishlistServiceProtocol
     private var authService: AuthenticateServiceProtocol
     private var productMetadataService: ProductMetadataServiceProtocol
@@ -226,6 +227,12 @@ class WishlistDetailViewController: ObservableObject {
     }
 
     func addNewWishlistItem(wishlistId: String) async {
+        if !newItemLink.isEmpty && checkIfItemExists(withLink: newItemLink) {
+            showDuplicateItemDialog = true
+            isShowLoading = false
+            return
+        }
+        
         isShowLoading = true
         do {
             var imageUrl: String? = nil
@@ -278,6 +285,14 @@ class WishlistDetailViewController: ObservableObject {
             newItemPrice = nil
         }
         isFetchingMetadata = false
+    }
+    
+    func checkIfItemExists(withLink link: String) -> Bool {
+        let normalizedLink = link.trimmingCharacters(in: .whitespaces).lowercased()
+        return wishlistInfo.items.contains { item in
+            let itemLink = item.itemLink.trimmingCharacters(in: .whitespaces).lowercased()
+            return !itemLink.isEmpty && itemLink == normalizedLink
+        }
     }
 
     func setNewItemFromMetadata(_ metadata: ProductMetadata) {

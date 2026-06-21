@@ -5,6 +5,7 @@ struct PasteLinkSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var urlInput: String = ""
     @State private var fetchedMetadata: ProductMetadata? = nil
+    @State private var keyboardHeight: CGFloat = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -99,6 +100,8 @@ struct PasteLinkSheet: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
         }
+        .padding(.bottom, keyboardHeight)
+        .keyboardHeight($keyboardHeight)
         .presentationDetents([.large])
     }
 

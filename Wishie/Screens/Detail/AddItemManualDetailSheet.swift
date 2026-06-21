@@ -4,6 +4,7 @@ struct AddItemManualDetailSheet: View {
     @ObservedObject var viewModel: WishlistDetailViewController
     let wishlistId: String
     @Environment(\.dismiss) private var dismiss
+    @State private var keyboardHeight: CGFloat = 0
 
     var body: some View {
         VStack(spacing: 0) {

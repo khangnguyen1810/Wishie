@@ -11,6 +11,7 @@ struct CreateWishlistPage2: View {
     @EnvironmentObject var createWishlistViewModel: CreateWishlistViewModel
     @State private var showAddItemOptionSheet: Bool = false
     @State private var showPasteLinkSheet: Bool = false
+    @State private var keyboardHeight: CGFloat = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -51,7 +52,10 @@ struct CreateWishlistPage2: View {
             }
             .listStyle(.plain)
             .scrollIndicators(.hidden)
+            .safeAreaInset(edge: .bottom) { Color.clear.frame(height: keyboardHeight) }
+            .scrollDismissesKeyboard(.interactively)
         }
+        .keyboardHeight($keyboardHeight)
         .sheet(isPresented: $showAddItemOptionSheet) {
             AddItemOptionSheet(
                 onPasteLink: {

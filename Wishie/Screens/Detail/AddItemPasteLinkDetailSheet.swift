@@ -7,6 +7,7 @@ struct AddItemPasteLinkDetailSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var urlInput: String = ""
+    @State private var keyboardHeight: CGFloat = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -32,11 +33,11 @@ struct AddItemPasteLinkDetailSheet: View {
                     .padding(.vertical, 10)
                     .background(Color.lightYellow)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-
                 Button {
                     Task {
                         await viewModel.fetchProductMetadataForNewItem(from: urlInput.trimmingCharacters(in: .whitespaces))
                     }
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                 } label: {
                     Text("Fetch")
                         .font(.wishies(.bold, 15))

@@ -13,9 +13,16 @@ final class WebViewMetadataExtractor: NSObject, WKNavigationDelegate {
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
 
-            let webView = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+            let webView = WKWebView(frame: CGRect(x: -1, y: -1, width: 1, height: 1), configuration: WKWebViewConfiguration())
             webView.navigationDelegate = self
+            webView.isHidden = true
             self.webView = webView
+
+            let keyWindow = UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }
+                .first { $0.isKeyWindow }
+            keyWindow?.addSubview(webView)
 
             webView.load(URLRequest(url: url))
 
@@ -34,10 +41,14 @@ final class WebViewMetadataExtractor: NSObject, WKNavigationDelegate {
 
         guard let webView = self.webView, let continuation = self.continuation else { return }
         self.continuation = nil
+        self.webView = nil
+        webView.navigationDelegate = nil
+
         let timedOut = isTimedOut
         let originalUrl = webView.url?.absoluteString ?? ""
 
-        webView.evaluateJavaScript(extractionScript) { result, error in
+        webView.evaluateJavaScript(extractionScript) { [webView] result, error in
+            webView.removeFromSuperview()
             if let error = error {
                 continuation.resume(throwing: error)
             } else {
@@ -49,9 +60,6 @@ final class WebViewMetadataExtractor: NSObject, WKNavigationDelegate {
                 }
             }
         }
-
-        webView.navigationDelegate = nil
-        self.webView = nil
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -65,6 +73,7 @@ final class WebViewMetadataExtractor: NSObject, WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         timeoutTask?.cancel()
         timeoutTask = nil
+        webView.removeFromSuperview()
         continuation?.resume(throwing: error)
         continuation = nil
         webView.navigationDelegate = nil
@@ -74,6 +83,7 @@ final class WebViewMetadataExtractor: NSObject, WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         timeoutTask?.cancel()
         timeoutTask = nil
+        webView.removeFromSuperview()
         continuation?.resume(throwing: error)
         continuation = nil
         webView.navigationDelegate = nil

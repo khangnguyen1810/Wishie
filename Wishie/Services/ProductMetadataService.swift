@@ -11,6 +11,9 @@ class ProductMetadataService: ProductMetadataServiceProtocol {
         guard let url = URL(string: urlString) else {
             throw URLError(.badURL)
         }
+        guard url.scheme == "https" || url.scheme == "http" else {
+            throw URLError(.badURL)
+        }
         return try await WebViewMetadataExtractor().extract(from: url)
     }
 }

@@ -97,9 +97,58 @@ final class WebViewMetadataExtractor: NSObject, WKNavigationDelegate {
             var image = document.querySelector('meta[property="og:image"]')?.content || '';
             var description = document.querySelector('meta[property="og:description"]')?.content || '';
             var url = document.querySelector('meta[property="og:url"]')?.content || window.location.href || '';
+
+            var price = '';
+
             var priceAmount = document.querySelector('meta[property="product:price:amount"]')?.content || '';
             var priceCurrency = document.querySelector('meta[property="product:price:currency"]')?.content || '';
-            var price = (priceAmount && priceCurrency) ? (priceCurrency + ' ' + priceAmount) : '';
+            if (priceAmount && priceCurrency) {
+                price = priceCurrency + ' ' + priceAmount;
+            }
+
+            if (!price) {
+                var ldScripts = document.querySelectorAll('script[type="application/ld+json"]');
+                for (var i = 0; i < ldScripts.length && !price; i++) {
+                    try {
+                        var data = JSON.parse(ldScripts[i].textContent);
+                        var items = data['@graph'] ? data['@graph'] : [data];
+                        for (var j = 0; j < items.length && !price; j++) {
+                            var item = items[j];
+                            if (item['@type'] === 'Product' && item.offers) {
+                                var offer = Array.isArray(item.offers) ? item.offers[0] : item.offers;
+                                if (offer && offer.price !== undefined) {
+                                    price = offer.priceCurrency ? offer.priceCurrency + ' ' + offer.price : String(offer.price);
+                                }
+                            }
+                        }
+                    } catch(e) {}
+                }
+            }
+
+            if (!price) {
+                var priceSelectors = [
+                    '[class*="pdp-price"][class*="color_orange"]',
+                    '[class*="pdp-price"][class*="size_xl"]',
+                    '[class*="pdp-price"]',
+                    '[class*="product-price"][class*="current"]',
+                    '[class*="selling-price"]',
+                    '[class*="sale-price"]',
+                    '[class*="current-price"]',
+                    '[class*="discounted-price"]',
+                    '[data-price]',
+                    '.price-box .price'
+                ];
+                for (var k = 0; k < priceSelectors.length && !price; k++) {
+                    var el = document.querySelector(priceSelectors[k]);
+                    if (el) {
+                        var text = (el.innerText || el.textContent || '').trim();
+                        if (text && /[\\d]/.test(text)) {
+                            price = text;
+                        }
+                    }
+                }
+            }
+
             return { title: title, description: description, image: image, url: url, price: price };
         })();
         """

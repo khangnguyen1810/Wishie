@@ -33,6 +33,7 @@ class WishlistDetailViewController: ObservableObject {
     @Published var showAddItemOptionSheet: Bool = false
     @Published var showAddItemManualSheet: Bool = false
     @Published var showAddItemPasteLinkSheet: Bool = false
+    @Published var showEditItemSheet: Bool = false
     @Published var newItemName: String = ""
     @Published var newItemDescription: String = ""
     @Published var newItemImage: UIImage? = nil
@@ -135,9 +136,9 @@ class WishlistDetailViewController: ObservableObject {
                 .updateWishlistItem(
                     wishlistId: wishListId,
                     itemId: itemSelected.id,
-                    newName: editedName,
-                    newDescription: editedDescription,
-                    newImage: selectedImage
+                    newName: newItemName,
+                    newDescription: newItemDescription,
+                    newImage: newItemImage
                 )
             switch result {
             case .success(_):
@@ -207,10 +208,10 @@ class WishlistDetailViewController: ObservableObject {
         }
     }
 
-    func setMostDesired(wishlistId: String) async {
+    func setDesired(wishlistId: String, isDesired: Bool) async {
         do {
             isShowLoading = true
-            let result = try await wishlistService.setMostDesired(wishlistId: wishlistId, itemId: itemSelected.id, isMostDesired: true)
+            let result = try await wishlistService.setMostDesired(wishlistId: wishlistId, itemId: itemSelected.id, isMostDesired: isDesired)
             switch result {
             case .success(_):
                 isShowLoading = false

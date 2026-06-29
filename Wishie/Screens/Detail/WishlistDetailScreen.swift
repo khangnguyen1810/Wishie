@@ -131,7 +131,7 @@ struct WishlistDetailScreen: View {
                 viewModel.metadataFetchError = nil
             }
         ) {
-            AddItemManualDetailSheet(viewModel: viewModel, wishlistId: wishlist?.id ?? wishlistId ?? "")
+            WishItemDetailView(viewModel: viewModel, wishlistId: wishlist?.id ?? wishlistId ?? "", isEdit: false)
                 .presentationDetents([.large])
         }
         .sheet(
@@ -146,6 +146,21 @@ struct WishlistDetailScreen: View {
             }
         ) {
             AddItemPasteLinkDetailSheet(viewModel: viewModel, wishlistId: wishlist?.id ?? wishlistId ?? "")
+                .presentationDetents([.large])
+        }
+        .sheet(
+            isPresented: $viewModel.showEditItemSheet,
+            onDismiss: {
+                viewModel.newItemName = ""
+                viewModel.newItemDescription = ""
+                viewModel.newItemImage = nil
+                viewModel.newItemLink = ""
+                viewModel.newItemRemoteImageUrl = nil
+                viewModel.newItemPrice = nil
+                viewModel.metadataFetchError = nil
+            }
+        ) {
+            WishItemDetailView(viewModel: viewModel, wishlistId: wishlist?.id ?? wishlistId ?? "", isEdit: true)
                 .presentationDetents([.large])
         }
         .showFullScreenDialog($viewModel.isShowLoading)
@@ -386,37 +401,7 @@ struct WishlistDetailScreen: View {
                             .cornerRadius(10)
                         }
                     }
-                    .overlay(alignment: .topTrailing) {
-                        if isEditing {
-                            ImagePickerBox(
-                                height: 100,
-                                selectedImage: $viewModel.selectedImage) {
-                                    Image("edit_icon")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .foregroundStyle(
-                                            Color(
-                                                hex: viewModel.wishlistInfo.theme.secondary
-                                            )
-                                        )
-                                        .frame(width: 16, height: 16)
-                                        .padding(6)
-                                        .background(Color(hex: viewModel.wishlistInfo.theme.primary))
-                                        .clipShape(Circle())
-                                        .padding(4)
-                                }
-                        }
-                    }
                     VStack {
-                        if isEditing {
-                            TextField("Item name", text: $viewModel.editedName)
-                                .textFieldStyle(.plain)
-                                .font(.wishies(.bold, 15))
-                            
-                            TextField("Description", text: $viewModel.editedDescription)
-                                .textFieldStyle(.plain)
-                                .font(.wishies(.regular, 15))
-                        } else {
                             Text(viewModel.itemSelected.name)
                                 .font(.wishies(.bold, 15))
                                 .foregroundStyle(.black)
@@ -426,7 +411,7 @@ struct WishlistDetailScreen: View {
                                 .foregroundStyle(.darkGrey)
                                 .multilineTextAlignment(.leading)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                        }
+                        
                     }
                     
                 }
@@ -452,72 +437,24 @@ struct WishlistDetailScreen: View {
                                 )
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 45)
-                            HStack {
-                                Image(isEditing ? "save_icon" : "create_new_icon")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 25)
-                                    .padding(.leading, 20)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(isEditing ? "Save" : "Edit this item")
+                            
+                            Text("Edit this item")
                                 .font(.wishies(.bold, 15))
                                 .foregroundStyle(.black)
                                 .frame(maxWidth: .infinity, alignment: .center)
                         }
                         .onTapGesture {
-                            if isEditing {
-                                //save item
-                                Task {
-                                    await viewModel
-                                        .editWishlistItem(
-                                            wishListId: wishlist?.id ?? ""
-                                        )
-                                    isEditing = false
-                                    viewModel.showBottomSheet = false
-                                }
-                            } else {
-                                isEditing = true
-                                viewModel.editedName = viewModel.itemSelected.name
-                                viewModel.editedDescription = viewModel.itemSelected.description
+                            viewModel.newItemName = viewModel.itemSelected.name
+                            viewModel.newItemDescription = viewModel.itemSelected.description
+                            viewModel.newItemLink = viewModel.itemSelected.itemLink
+                            viewModel.newItemRemoteImageUrl = viewModel.itemSelected.image
+                            viewModel.newItemPrice = viewModel.itemSelected.price
+                            viewModel.showBottomSheet = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                viewModel.showEditItemSheet = true
                             }
                         }
-                        if isEditing {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(
-                                        .wishiePink
-                                    )
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 45)
-                                HStack {
-                                    Image("back_icon")
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 25)
-                                        .padding(.leading, 20)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                Text("Cancel")
-                                    .font(.wishies(.bold, 15))
-                                    .foregroundStyle(.black)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                            }
-                            .onTapGesture {
-                                isEditing = false
-                            }
-                            
-                            .onTapGesture {
-                                Task {
-                                    if (!viewModel.itemSelected.isPicked) {
-                                        viewModel.showBottomSheet = false
-                                        let wishlistId = viewModel.wishlistInfo.id
-                                        await viewModel.pickItem(wishlistId: wishlistId)
-                                    }
-                                }
-                            }
-                        }
-                        if !viewModel.itemSelected.isMostDesired && !isEditing {
+                       
                             ZStack {
                                 RoundedRectangle(cornerRadius: 15)
                                     .fill(Color(hex: viewModel.wishlistInfo.theme.secondary))
@@ -531,32 +468,27 @@ struct WishlistDetailScreen: View {
                                         .padding(.leading, 20)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                Text("Mark as Most Desired")
+                                Text(viewModel.itemSelected.isMostDesired ? "Remove most desired" : "Mark as Most Desired")
                                     .font(.wishies(.bold, 15))
                                     .foregroundStyle(.black)
                                     .frame(maxWidth: .infinity, alignment: .center)
                             }
                             .onTapGesture {
                                 Task {
-                                    await viewModel.setMostDesired(wishlistId: wishlist?.id ?? "")
+                                    await viewModel.setDesired(
+                                        wishlistId: wishlist?.id ?? "",
+                                        isDesired: viewModel.itemSelected.isMostDesired ? false : true
+                                    )
                                     viewModel.showBottomSheet = false
                                 }
                             }
-                        }
-                        if !isEditing {
+                        
+                        
                             ZStack {
                                 RoundedRectangle(cornerRadius: 15)
                                     .fill(viewModel.itemSelected.isPicked ? .lightGrey : .wishiePink)
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 45)
-                                HStack {
-                                    Image(systemName: "trash")
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 25)
-                                        .padding(.leading, 20)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
                                 Text("Delete")
                                     .font(.wishies(.bold, 15))
                                     .foregroundStyle(.black)
@@ -571,7 +503,7 @@ struct WishlistDetailScreen: View {
                                     }
                                 }
                             }
-                        }
+                        
                     }
                 } else {
                     VStack {
@@ -592,14 +524,7 @@ struct WishlistDetailScreen: View {
                 )
                 .frame(maxWidth: .infinity)
                 .frame(height: 45)
-            HStack {
-                Image("reserve_item")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 25)
-                    .padding(.leading, 20)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            
             Text("Reserve")
                 .font(.wishies(.bold, 15))
                 .foregroundStyle(.black)
@@ -623,13 +548,7 @@ struct WishlistDetailScreen: View {
                 )
                 .frame(maxWidth: .infinity)
                 .frame(height: 45)
-            HStack {
-                Image("link_item")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 25)
-                    .padding(.leading, 20)
-            }
+            
             .frame(maxWidth: .infinity, alignment: .leading)
             Text("Link")
                 .font(.wishies(.bold, 15))

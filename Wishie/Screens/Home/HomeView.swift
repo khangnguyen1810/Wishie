@@ -332,14 +332,6 @@ struct HomeView: View {
                 label: selectedTab == .myList ? "Wishlists" : "Joined",
                 icon: "list.star"
             )
-            Divider()
-                .frame(height: 28)
-                .background(Color(hex: "#F1D790").opacity(0.8))
-            summaryStatItem(
-                value: "\(pickedGifts)/\(totalGifts)",
-                label: "Gifts Picked",
-                icon: "gift.fill"
-            )
             nearestEventSection()
         }
         .padding(.horizontal, 16)

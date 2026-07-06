@@ -46,7 +46,12 @@ struct WishlistModel: Identifiable, Hashable {
        return members[userId] == .owner
     }
     var theme: GradientTheme {
-        GradientTheme(rawValue: themeColor ?? "sunset") ?? .sunset
+        get {
+            GradientTheme(rawValue: themeColor ?? "sunset") ?? .sunset
+        }
+        set {
+            themeColor = newValue.rawValue
+        }
     }
     func getItemsRemaining() -> Int {
         let itemPickedCount = items.lazy.filter({ $0.isPicked }).count

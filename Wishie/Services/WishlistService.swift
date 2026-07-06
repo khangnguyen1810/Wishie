@@ -16,7 +16,7 @@ protocol WishlistServiceProtocol {
     func joinWishlist(wishListId: String) async throws  -> Result<Bool, Error>
     func getUserWishlists() async throws -> Result<[(WishlistModel, UserModel)], Error>
     func pickItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
-    func updateWishlistItem(wishlistId: String, itemId: String, newName: String?, newDescription: String?, newImage: UIImage?) async throws -> Result<Bool, Error>
+    func updateWishlistItem(wishlistId: String, itemId: String, newName: String?, newDescription: String?, newImage: UIImage?, newPrice: String?) async throws -> Result<Bool, Error>
     func deleteWishlist(wishlistId: String) async throws -> Result<Bool, Error>
     func leaveWishlist(wishListId: String) async throws -> Result<Bool, Error>
     func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
@@ -238,7 +238,8 @@ class WishlistService: WishlistServiceProtocol {
         itemId: String,
         newName: String?,
         newDescription: String?,
-        newImage: UIImage?
+        newImage: UIImage?,
+        newPrice: String?
     ) async throws -> Result<Bool, any Error> {
         do {
             let docRef = db.collection("wishList")
@@ -265,6 +266,9 @@ class WishlistService: WishlistServiceProtocol {
                         let fileName = UUID().uuidString
                         let newUrl = try await upload(image: newImage, fileName: fileName)
                         items[index]["imageUrl"] = newUrl
+                    }
+                    if let newPrice {
+                        items[index]["price"] = newPrice
                     }
                     break
                 }

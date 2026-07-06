@@ -39,7 +39,7 @@ struct WishlistDetailScreen: View {
     }
     var wishlistId: String?
     var isFromInfo: Bool = false
-       
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             StickyHeaderView(
@@ -64,18 +64,18 @@ struct WishlistDetailScreen: View {
                 }
             }
             if viewModel.wishlistInfo.isUserJoined() == false {
-                    WishieButton(
-                        title: "Join wishlist",
-                        enabled: true,
-                        height: 50,
-                        horizontalPadding: 15
-                    ) {
-                        Task {
-                            await viewModel
-                                .joinWishlist(wishListId: wishlistId ?? "")
-                                           }
+                WishieButton(
+                    title: "Join wishlist",
+                    enabled: true,
+                    height: 50,
+                    horizontalPadding: 15
+                ) {
+                    Task {
+                        await viewModel
+                            .joinWishlist(wishListId: wishlistId ?? "")
                     }
                 }
+            }
             if viewModel.wishlistInfo.isOwner() {
                 Button {
                     viewModel.showAddItemOptionSheet = true
@@ -131,7 +131,8 @@ struct WishlistDetailScreen: View {
                 viewModel.metadataFetchError = nil
             }
         ) {
-            AddItemManualDetailSheet(viewModel: viewModel, wishlistId: wishlist?.id ?? wishlistId ?? "")
+            WishItemDetailView(viewModel: viewModel, wishlistId: wishlist?.id ?? wishlistId ?? "", isEdit: false)
+                .environmentObject(viewModel)
                 .presentationDetents([.large])
         }
         .sheet(
@@ -146,6 +147,22 @@ struct WishlistDetailScreen: View {
             }
         ) {
             AddItemPasteLinkDetailSheet(viewModel: viewModel, wishlistId: wishlist?.id ?? wishlistId ?? "")
+                .presentationDetents([.large])
+        }
+        .sheet(
+            isPresented: $viewModel.showEditItemSheet,
+            onDismiss: {
+                viewModel.newItemName = ""
+                viewModel.newItemDescription = ""
+                viewModel.newItemImage = nil
+                viewModel.newItemLink = ""
+                viewModel.newItemRemoteImageUrl = nil
+                viewModel.newItemPrice = ""
+                viewModel.metadataFetchError = nil
+            }
+        ) {
+            WishItemDetailView(viewModel: viewModel, wishlistId: wishlist?.id ?? wishlistId ?? "", isEdit: true, wishItem: viewModel.itemSelected)
+                .environmentObject(viewModel)
                 .presentationDetents([.large])
         }
         .showFullScreenDialog($viewModel.isShowLoading)
@@ -303,17 +320,17 @@ struct WishlistDetailScreen: View {
                         .frame(width: 80, height: 80)
                         .clipped()
                         .cornerRadius(10)
-
+                        
                         Text(item.name)
                             .font(.wishies(.regular, 15))
                             .foregroundStyle(.black)
-
+                        
                         if item.isMostDesired {
                             Image(systemName: "star.fill")
                                 .foregroundStyle(.yellow)
                                 .frame(width: 16, height: 16)
                         }
-
+                        
                         if item.isPicked {
                             Spacer()
                             Image("user")
@@ -386,47 +403,17 @@ struct WishlistDetailScreen: View {
                             .cornerRadius(10)
                         }
                     }
-                    .overlay(alignment: .topTrailing) {
-                        if isEditing {
-                            ImagePickerBox(
-                                height: 100,
-                                selectedImage: $viewModel.selectedImage) {
-                                    Image("edit_icon")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .foregroundStyle(
-                                            Color(
-                                                hex: viewModel.wishlistInfo.theme.secondary
-                                            )
-                                        )
-                                        .frame(width: 16, height: 16)
-                                        .padding(6)
-                                        .background(Color(hex: viewModel.wishlistInfo.theme.primary))
-                                        .clipShape(Circle())
-                                        .padding(4)
-                                }
-                        }
-                    }
                     VStack {
-                        if isEditing {
-                            TextField("Item name", text: $viewModel.editedName)
-                                .textFieldStyle(.plain)
-                                .font(.wishies(.bold, 15))
-                            
-                            TextField("Description", text: $viewModel.editedDescription)
-                                .textFieldStyle(.plain)
-                                .font(.wishies(.regular, 15))
-                        } else {
-                            Text(viewModel.itemSelected.name)
-                                .font(.wishies(.bold, 15))
-                                .foregroundStyle(.black)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(viewModel.itemSelected.description)
-                                .font(.wishies(.regular, 15))
-                                .foregroundStyle(.darkGrey)
-                                .multilineTextAlignment(.leading)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
+                        Text(viewModel.itemSelected.name)
+                            .font(.wishies(.bold, 15))
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text(viewModel.itemSelected.description)
+                            .font(.wishies(.regular, 15))
+                            .foregroundStyle(.darkGrey)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
                     }
                     
                 }
@@ -445,133 +432,12 @@ struct WishlistDetailScreen: View {
                 Spacer()
                 if wishlist?.isOwner() == true {
                     VStack {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(
-                                    Color(hex: viewModel.wishlistInfo.theme.secondary)
-                                )
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 45)
-                            HStack {
-                                Image(isEditing ? "save_icon" : "create_new_icon")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 25)
-                                    .padding(.leading, 20)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(isEditing ? "Save" : "Edit this item")
-                                .font(.wishies(.bold, 15))
-                                .foregroundStyle(.black)
-                                .frame(maxWidth: .infinity, alignment: .center)
+                        HStack {
+                            editButton()
+                            markDesireButton()
                         }
-                        .onTapGesture {
-                            if isEditing {
-                                //save item
-                                Task {
-                                    await viewModel
-                                        .editWishlistItem(
-                                            wishListId: wishlist?.id ?? ""
-                                        )
-                                    isEditing = false
-                                    viewModel.showBottomSheet = false
-                                }
-                            } else {
-                                isEditing = true
-                                viewModel.editedName = viewModel.itemSelected.name
-                                viewModel.editedDescription = viewModel.itemSelected.description
-                            }
-                        }
-                        if isEditing {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(
-                                        .wishiePink
-                                    )
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 45)
-                                HStack {
-                                    Image("back_icon")
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 25)
-                                        .padding(.leading, 20)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                Text("Cancel")
-                                    .font(.wishies(.bold, 15))
-                                    .foregroundStyle(.black)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                            }
-                            .onTapGesture {
-                                isEditing = false
-                            }
-                            
-                            .onTapGesture {
-                                Task {
-                                    if (!viewModel.itemSelected.isPicked) {
-                                        viewModel.showBottomSheet = false
-                                        let wishlistId = viewModel.wishlistInfo.id
-                                        await viewModel.pickItem(wishlistId: wishlistId)
-                                    }
-                                }
-                            }
-                        }
-                        if !viewModel.itemSelected.isMostDesired && !isEditing {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(Color(hex: viewModel.wishlistInfo.theme.secondary))
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 45)
-                                HStack {
-                                    Image(systemName: "star.fill")
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 25)
-                                        .padding(.leading, 20)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                Text("Mark as Most Desired")
-                                    .font(.wishies(.bold, 15))
-                                    .foregroundStyle(.black)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                            }
-                            .onTapGesture {
-                                Task {
-                                    await viewModel.setMostDesired(wishlistId: wishlist?.id ?? "")
-                                    viewModel.showBottomSheet = false
-                                }
-                            }
-                        }
-                        if !isEditing {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(viewModel.itemSelected.isPicked ? .lightGrey : .wishiePink)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 45)
-                                HStack {
-                                    Image(systemName: "trash")
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 25)
-                                        .padding(.leading, 20)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                Text("Delete")
-                                    .font(.wishies(.bold, 15))
-                                    .foregroundStyle(.black)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                            }
-                            .disabled(viewModel.itemSelected.isPicked)
-                            .onTapGesture {
-                                if !viewModel.itemSelected.isPicked {
-                                    viewModel.showBottomSheet = false
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                        viewModel.showDeleteConfirmation = true
-                                    }
-                                }
-                            }
-                        }
+                        linkButton()
+                        deleteButton()
                     }
                 } else {
                     VStack {
@@ -581,31 +447,15 @@ struct WishlistDetailScreen: View {
                 }
             }
             .padding()
+            .padding(.top,30)
         }
     }
     @ViewBuilder
     func reserveButton() -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 15)
-                .fill(
-                    viewModel.itemSelected.isPicked ? .lightGrey : .wishiePink
-                )
-                .frame(maxWidth: .infinity)
-                .frame(height: 45)
-            HStack {
-                Image("reserve_item")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 25)
-                    .padding(.leading, 20)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Text("Reserve")
-                .font(.wishies(.bold, 15))
-                .foregroundStyle(.black)
-                .frame(maxWidth: .infinity, alignment: .center)
-        }
-        .onTapGesture {
+        bottomSheetButton(
+            title: "Reserve",
+            fill: viewModel.itemSelected.isPicked ? .lightGrey : .wishiePink
+        ) {
             if !viewModel.itemSelected.isPicked {
                 viewModel.showBottomSheet = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -616,28 +466,92 @@ struct WishlistDetailScreen: View {
     }
     @ViewBuilder
     func linkButton() -> some View {
+        bottomSheetButton(
+            title: "Link",
+            fill: Color(hex: viewModel.wishlistInfo.theme.secondary),
+            action:  {
+                viewModel.openProductLink()
+            }
+        )
+    }
+    
+    @ViewBuilder
+    func deleteButton() -> some View {
+        bottomSheetButton(
+            title: "Delete",
+            fill: viewModel.itemSelected.isPicked ? .lightGrey : .wishiePink
+        ) {
+            if !viewModel.itemSelected.isPicked {
+                viewModel.showBottomSheet = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    viewModel.showDeleteConfirmation = true
+                }
+            }
+        }
+        .disabled(viewModel.itemSelected.isPicked)
+    }
+    
+    @ViewBuilder
+    func markDesireButton() -> some View {
+        bottomSheetButton(
+            title: viewModel.itemSelected.isMostDesired ? "Remove most desired" : "Mark as Most Desired",
+            fill: Color(hex: viewModel.wishlistInfo.theme.secondary)
+        ) {
+            Task {
+                await viewModel.setDesired(
+                    wishlistId: wishlist?.id ?? "",
+                    isDesired: viewModel.itemSelected.isMostDesired ? false : true
+                )
+                viewModel.showBottomSheet = false
+            }
+        }
+    }
+    
+    @ViewBuilder
+    func editButton() -> some View {
+        Button {
+            let itemSelected = viewModel.itemSelected
+            viewModel.newItemName = itemSelected.name
+            viewModel.newItemRemoteImageUrl = itemSelected.image
+            viewModel.newItemLink = itemSelected.itemLink
+            viewModel.newItemDescription = itemSelected.description
+            viewModel.newItemPrice = itemSelected.price ?? ""
+            viewModel.showBottomSheet = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                viewModel.showEditItemSheet = true
+            }
+        } label: {
+            ZStack {
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Color(hex: viewModel.wishlistInfo.theme.secondary))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 45)
+                Text("Edit this item")
+                    .font(.wishies(.bold, 15))
+                    .foregroundStyle(.black)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    func bottomSheetButton(
+        title: String,
+        fill: Color,
+        action: @escaping () -> Void
+    ) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 15)
-                .fill(
-                    Color(hex: viewModel.wishlistInfo.theme.secondary)
-                )
+                .fill(fill)
                 .frame(maxWidth: .infinity)
                 .frame(height: 45)
-            HStack {
-                Image("link_item")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 25)
-                    .padding(.leading, 20)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Text("Link")
+            Text(title)
                 .font(.wishies(.bold, 15))
                 .foregroundStyle(.black)
                 .frame(maxWidth: .infinity, alignment: .center)
         }
         .onTapGesture {
-            viewModel.openProductLink()
+            action()
         }
     }
 }

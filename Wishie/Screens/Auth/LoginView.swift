@@ -117,10 +117,7 @@ struct LoginView: View {
                     .frame(width: UIScreen.main.bounds.width/3,height: 2)
             }
             Button(action: {
-                // Login
-                viewModel.isShowError = true
-                viewModel.errorTitle = "Apple login is not supported"
-                viewModel.errorMessage = "This feature is currently not supported on app"
+                viewModel.loginWithApple()
             }, label: {
                 ZStack {
                     RoundedRectangle(cornerRadius: 15)

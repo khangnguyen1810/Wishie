@@ -148,9 +148,7 @@ struct SignUpView: View {
                     .frame(width: UIScreen.main.bounds.width/3,height: 2)
             }
             Button(action: {
-                authVM.isShowError = true
-                authVM.errorTitle = "Apple login is not supported"
-                authVM.errorMessage = "This feature is currently not supported on app"
+                authVM.loginWithApple()
             }, label: {
                 ZStack {
                     RoundedRectangle(cornerRadius: 15)

@@ -10,7 +10,7 @@ Wire up real functionality behind the "Login with Google" button on `LoginView` 
 - Firestore user docs (`UserModel`) hold `firstName`, `lastName`, `email`, `phone`, `dateOfBirth`, `avatarUrl`, `interests`, `hasCompletedInterestsSetup`.
 - App uses pure SwiftUI lifecycle (`WishieApp.swift`, `@main`, no `AppDelegate`/`SceneDelegate`, no existing `.onOpenURL` handler).
 - SPM packages already in the project: `firebase-ios-sdk` (Auth, Core, Firestore), `supabase-swift`, `dotlottie-ios`, `SDWebImageSwiftUI`.
-- `GoogleService-Info.plist` currently has no `CLIENT_ID` key — Google Sign-In hasn't been enabled as a provider in the Firebase console yet for this project. This must be fixed before this feature can build/run correctly (see Manual Prerequisites).
+- `GoogleService-Info.plist` now has `CLIENT_ID`/`REVERSED_CLIENT_ID` (Google Sign-In was enabled as a Firebase provider and the plist re-downloaded as part of prior work on this branch), so that prerequisite is already satisfied.
 - `RootNavigationCoordinator` derives app state from `authViewModel.isLoggedIn` + `hasCompletedInterestsSetup`; new users (regardless of auth method) land on the interests-setup screen until that flag is set. This is the same convergence point the Apple sign-in design (`2026-07-07-sign-in-with-apple-design.md`) uses.
 
 ## Components
@@ -102,7 +102,7 @@ Google sign-in and email sign-in converge on the same post-auth path (`isLoggedI
 
 ## Manual Prerequisites (outside this codebase)
 
-1. **Firebase Console → Authentication → Sign-in method**: enable Google as a provider. Re-download `GoogleService-Info.plist` (will then contain `CLIENT_ID`) and replace the copy in the repo root.
+1. ~~Firebase Console → Authentication → Sign-in method: enable Google as a provider, re-download `GoogleService-Info.plist`~~ — already done (see Context).
 2. **Firebase Console → Authentication → Settings → User account linking**: confirm set to "Create multiple accounts for each identity" (per the account-conflict decision above; should already be set this way from the Apple sign-in work).
 3. **Xcode**: add the `GoogleSignIn-ios` SPM package to the target if not already resolved automatically from the `project.pbxproj` change.
 

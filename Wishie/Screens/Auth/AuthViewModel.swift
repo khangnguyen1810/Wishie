@@ -8,9 +8,11 @@
 import Foundation
 import Combine
 import FirebaseAuth
+import AuthenticationServices
 final class AuthViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let authService: AuthenticateServiceProtocol
+    private let appleSignInManager: AppleSignInManager
     @Published var email: String = ""
     @Published var password: String = ""
     @Published var isLoggedIn: Bool = false
@@ -24,8 +26,9 @@ final class AuthViewModel: ObservableObject {
     @Published var isSentEmail: Bool = false
     @Published var forgotenEmail: String = ""
     @Published var userInfoError: String = ""
-    init(authService: AuthenticateServiceProtocol = AuthenticateService()) {
+    init(authService: AuthenticateServiceProtocol = AuthenticateService(), appleSignInManager: AppleSignInManager = AppleSignInManager()) {
         self.authService = authService
+        self.appleSignInManager = appleSignInManager
         checkToken()
     }
     func checkToken() {
@@ -107,7 +110,47 @@ final class AuthViewModel: ObservableObject {
                 Task { await self.getUserInfo() }
             }
             .store(in: &cancellables)
-        
+
+    }
+    func loginWithApple() {
+        self.isShowProgress = true
+        Task {
+            do {
+                let (idToken, rawNonce, fullName) = try await appleSignInManager.startSignInWithAppleFlow()
+                await MainActor.run {
+                    authService.signInWithApple(idToken: idToken, rawNonce: rawNonce, fullName: fullName)
+                        .receive(on: DispatchQueue.main)
+                        .sink { [weak self] completion in
+                            guard let self else { return }
+                            self.isShowProgress = false
+                            switch completion {
+                            case .finished:
+                                break
+                            case .failure(let error):
+                                self.isShowError = true
+                                self.errorTitle = "Login Failed"
+                                self.errorMessage = error.localizedDescription
+                            }
+                        } receiveValue: { [weak self] credential in
+                            guard let self, let user = credential?.user else { return }
+                            UserDefaults.standard.setValue(user.uid, forKey: self.userid)
+                            self.isLoggedIn = true
+                            Task { await self.getUserInfo() }
+                        }
+                        .store(in: &cancellables)
+                }
+            } catch {
+                await MainActor.run {
+                    self.isShowProgress = false
+                    if let authError = error as? ASAuthorizationError, authError.code == .canceled {
+                        return
+                    }
+                    self.isShowError = true
+                    self.errorTitle = "Login Failed"
+                    self.errorMessage = error.localizedDescription
+                }
+            }
+        }
     }
     func logOut() {
         self.isShowProgress = true

@@ -72,6 +72,7 @@ extension AppleSignInManager: ASAuthorizationControllerDelegate {
                 userInfo: [NSLocalizedDescriptionKey: "Invalid Apple ID credential."]
             ))
             continuation = nil
+            currentNonce = nil
             return
         }
         guard let nonce = currentNonce else {
@@ -81,6 +82,7 @@ extension AppleSignInManager: ASAuthorizationControllerDelegate {
                 userInfo: [NSLocalizedDescriptionKey: "Invalid state: no login request was sent."]
             ))
             continuation = nil
+            currentNonce = nil
             return
         }
         guard let appleIDToken = appleIDCredential.identityToken else {
@@ -90,6 +92,7 @@ extension AppleSignInManager: ASAuthorizationControllerDelegate {
                 userInfo: [NSLocalizedDescriptionKey: "Unable to fetch identity token."]
             ))
             continuation = nil
+            currentNonce = nil
             return
         }
         guard let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
@@ -99,15 +102,18 @@ extension AppleSignInManager: ASAuthorizationControllerDelegate {
                 userInfo: [NSLocalizedDescriptionKey: "Unable to serialize token string from data."]
             ))
             continuation = nil
+            currentNonce = nil
             return
         }
         continuation?.resume(returning: (idToken: idTokenString, rawNonce: nonce, fullName: appleIDCredential.fullName))
         continuation = nil
+        currentNonce = nil
     }
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
         continuation?.resume(throwing: error)
         continuation = nil
+        currentNonce = nil
     }
 }
 

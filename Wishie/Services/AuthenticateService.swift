@@ -85,26 +85,33 @@ class AuthenticateService: AuthenticateServiceProtocol {
                     promise(.failure(NSError(domain: "SignInWithAppleError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Authentication result is nil."])))
                     return
                 }
-                guard result.additionalUserInfo?.isNewUser == true else {
-                    promise(.success(result))
-                    return
-                }
                 let user = result.user
-                let userData: [String: Any] = [
-                    "uid": user.uid,
-                    "firstName": fullName?.givenName ?? "",
-                    "lastName": fullName?.familyName ?? "",
-                    "email": user.email ?? "",
-                    "phone": "",
-                    "dateOfBirth": Timestamp(date: Date()),
-                    "createAt": FieldValue.serverTimestamp()
-                ]
-                self.db.collection("users").document(user.uid).setData(userData) { error in
+                let userDocRef = self.db.collection("users").document(user.uid)
+                userDocRef.getDocument { snapshot, error in
                     if let error {
                         promise(.failure(error))
                         return
                     }
-                    promise(.success(result))
+                    guard snapshot?.exists != true else {
+                        promise(.success(result))
+                        return
+                    }
+                    let userData: [String: Any] = [
+                        "uid": user.uid,
+                        "firstName": fullName?.givenName ?? "",
+                        "lastName": fullName?.familyName ?? "",
+                        "email": user.email ?? "",
+                        "phone": "",
+                        "dateOfBirth": Timestamp(date: Date()),
+                        "createAt": FieldValue.serverTimestamp()
+                    ]
+                    userDocRef.setData(userData) { error in
+                        if let error {
+                            promise(.failure(error))
+                            return
+                        }
+                        promise(.success(result))
+                    }
                 }
             }
         }

@@ -8,10 +8,11 @@
 import Foundation
 import SwiftUI
 enum WishieFont: String {
-    case regular = "Fredoka-Regular"
-    case medium = "Fredoka-Medium"
-    case bold = "Fredoka-Bold"
-    case light = "Fredoka-Light"
+    case regular = "Nunito-Regular"
+    case medium = "Nunito-Medium"
+    case bold = "Nunito-Bold"
+    case light = "Nunito-Light"
+    case italic = "Nunito-Italic"
 }
 
 extension Font {

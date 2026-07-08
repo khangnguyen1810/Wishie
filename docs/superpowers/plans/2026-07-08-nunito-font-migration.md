@@ -41,6 +41,10 @@
 - Track (already on disk, untracked by git): `Wishie/Resources/Fonts/Nunito-Regular.ttf`,
   `Wishie/Resources/Fonts/Nunito-Medium.ttf`, `Wishie/Resources/Fonts/Nunito-Bold.ttf`,
   `Wishie/Resources/Fonts/Nunito-Light.ttf`, `Wishie/Resources/Fonts/Nunito-Italic.ttf`
+- Commit (already modified in the working tree, unstaged): `Wishie/Resources/Fonts/OFL.txt`
+  (its copyright line was already hand-edited to Nunito's — `Copyright 2014 The Nunito
+  Project Authors` — verify this with `git diff Wishie/Resources/Fonts/OFL.txt` before
+  staging; do not re-edit its contents)
 
 **Interfaces:**
 - Consumes: nothing (first task).
@@ -185,7 +189,9 @@ Expected: `** BUILD SUCCEEDED **`, with no compiler errors referencing
 - [ ] **Step 6: Commit**
 
 The five Nunito `.ttf` files already sit in `Wishie/Resources/Fonts/` but
-are untracked — stage them alongside the code changes:
+are untracked, and `Wishie/Resources/Fonts/OFL.txt` already has an unstaged
+modification (its copyright line was hand-edited to Nunito's) — stage all
+of it alongside the code changes:
 
 ```bash
 git add Wishie/Resources/WishieCustomFont.swift Wishie/Info.plist \
@@ -194,6 +200,7 @@ git add Wishie/Resources/WishieCustomFont.swift Wishie/Info.plist \
   Wishie/Resources/Fonts/Nunito-Bold.ttf \
   Wishie/Resources/Fonts/Nunito-Light.ttf \
   Wishie/Resources/Fonts/Nunito-Italic.ttf \
+  Wishie/Resources/Fonts/OFL.txt \
   Wishie/Screens/Auth/LoginView.swift Wishie/Screens/Auth/SignUpView.swift \
   Wishie/Screens/Home/HomeItemViewCell.swift \
   Wishie/Screens/CreateList/CreateWishlistPage2.swift \

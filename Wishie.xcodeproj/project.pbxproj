@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		228084BE2E9D4D14003AAEC4 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 228084BD2E9D4D14003AAEC4 /* GoogleService-Info.plist */; };
 		22CB1A152EA1476000FAE2D7 /* DotLottie in Frameworks */ = {isa = PBXBuildFile; productRef = 22CB1A142EA1476000FAE2D7 /* DotLottie */; };
 		F03ED6E82FBB755500157DF9 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F03ED6E72FBB755500157DF9 /* FirebaseAuth */; };
 		F03ED6EA2FBB755500157DF9 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = F03ED6E92FBB755500157DF9 /* FirebaseCore */; };
@@ -15,6 +14,8 @@
 		F08C489B2EF3041E00DC87DC /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = F08C489A2EF3041E00DC87DC /* Storage */; };
 		F08C489F2EF305A500DC87DC /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = F08C489E2EF305A500DC87DC /* Supabase */; };
 		F08C48A52EF31AE500DC87DC /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = F08C48A42EF31AE500DC87DC /* Auth */; };
+		F0BB19D02FFD638000A45D4C /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F0BB19CF2FFD638000A45D4C /* GoogleService-Info.plist */; };
+		F0BB1A9E2FFDFE1800A45D4C /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F0BB1A9D2FFDFE1800A45D4C /* GoogleSignIn */; };
 		F0BE20C22F6FB94800D043F5 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = F0BE20C12F6FB94800D043F5 /* SDWebImageSwiftUI */; };
 /* End PBXBuildFile section */
 
@@ -52,7 +53,7 @@
 		2257D0E32E922161009D268F /* Wishie.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wishie.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2257D0F12E922166009D268F /* WishieTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WishieTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2257D0FB2E922166009D268F /* WishieUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WishieUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		228084BD2E9D4D14003AAEC4 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		F0BB19CF2FFD638000A45D4C /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -99,6 +100,7 @@
 				F03ED6EC2FBB755500157DF9 /* FirebaseFirestore in Frameworks */,
 				22CB1A152EA1476000FAE2D7 /* DotLottie in Frameworks */,
 				F08C489B2EF3041E00DC87DC /* Storage in Frameworks */,
+				F0BB1A9E2FFDFE1800A45D4C /* GoogleSignIn in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -133,7 +135,7 @@
 				2257D0F42E922166009D268F /* WishieTests */,
 				2257D0FE2E922166009D268F /* WishieUITests */,
 				2257D0E42E922161009D268F /* Products */,
-				228084BD2E9D4D14003AAEC4 /* GoogleService-Info.plist */,
+				F0BB19CF2FFD638000A45D4C /* GoogleService-Info.plist */,
 				22015C7F2EAFBDE6009E7E05 /* Frameworks */,
 			);
 			sourceTree = "<group>";
@@ -177,6 +179,7 @@
 				F03ED6E72FBB755500157DF9 /* FirebaseAuth */,
 				F03ED6E92FBB755500157DF9 /* FirebaseCore */,
 				F03ED6EB2FBB755500157DF9 /* FirebaseFirestore */,
+				F0BB1A9D2FFDFE1800A45D4C /* GoogleSignIn */,
 			);
 			productName = Wishie;
 			productReference = 2257D0E32E922161009D268F /* Wishie.app */;
@@ -265,6 +268,7 @@
 				F08C48992EF3041E00DC87DC /* XCRemoteSwiftPackageReference "supabase-swift" */,
 				F0BE20C02F6FB94800D043F5 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
 				F03ED6E62FBB755500157DF9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				F0BB1A9C2FFDFE1800A45D4C /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2257D0E42E922161009D268F /* Products */;
@@ -283,7 +287,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				228084BE2E9D4D14003AAEC4 /* GoogleService-Info.plist in Resources */,
+				F0BB19D02FFD638000A45D4C /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -701,6 +705,14 @@
 				minimumVersion = 2.5.1;
 			};
 		};
+		F0BB1A9C2FFDFE1800A45D4C /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.2.0;
+			};
+		};
 		F0BE20C02F6FB94800D043F5 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SDWebImage/SDWebImageSwiftUI.git";
@@ -746,6 +758,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F08C48992EF3041E00DC87DC /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Auth;
+		};
+		F0BB1A9D2FFDFE1800A45D4C /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F0BB1A9C2FFDFE1800A45D4C /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
 		};
 		F0BE20C12F6FB94800D043F5 /* SDWebImageSwiftUI */ = {
 			isa = XCSwiftPackageProductDependency;

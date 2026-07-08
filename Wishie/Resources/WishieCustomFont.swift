@@ -2,16 +2,17 @@
 //  WishieCustomFont.swift
 //  Wishie
 //
-//  Created by Nguyễn Khang Hữu on 5/10/25.
+//  Created by Nguyễn Khang Hữu on 5/10/25.
 //
 
 import Foundation
 import SwiftUI
 enum WishieFont: String {
-    case regular = "WorkSans-Regular"
-    case bold = "WorkSans-Bold"
-    case light = "WorkSans-Light"
-    case italic = "WorkSans-Italic"
+    case regular = "Nunito-Regular"
+    case medium = "Nunito-Medium"
+    case bold = "Nunito-Bold"
+    case light = "Nunito-Light"
+    case italic = "Nunito-Italic"
 }
 
 extension Font {

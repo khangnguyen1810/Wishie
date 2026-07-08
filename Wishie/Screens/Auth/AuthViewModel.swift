@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 import FirebaseAuth
+import UIKit
 final class AuthViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let authService: AuthenticateServiceProtocol
@@ -15,6 +16,8 @@ final class AuthViewModel: ObservableObject {
     @Published var password: String = ""
     @Published var isLoggedIn: Bool = false
     private let userid = "userid"
+    private let googleSignInErrorDomain = "com.google.GIDSignIn"
+    private let googleSignInCanceledCode = -5 // GIDSignInError.Code.canceled's raw value
     @Published var isShowError: Bool = false
     @Published var errorTitle: String = ""
     @Published var errorMessage: String = ""
@@ -107,8 +110,39 @@ final class AuthViewModel: ObservableObject {
                 Task { await self.getUserInfo() }
             }
             .store(in: &cancellables)
-        
+
     }
+
+    func loginWithGoogle(presentingViewController: UIViewController) {
+        self.isShowProgress = true
+        authService.loginWithGoogle(presentingViewController: presentingViewController)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] completion in
+                guard let self else { return }
+                self.isShowProgress = false
+                switch completion {
+                case .finished:
+                    break
+                case .failure(let error):
+                    let nsError = error as NSError
+                    if nsError.domain == self.googleSignInErrorDomain, nsError.code == self.googleSignInCanceledCode {
+                        return
+                    }
+                    self.isShowError = true
+                    self.errorTitle = "Google Login Failed"
+                    self.errorMessage = error.localizedDescription
+                }
+            } receiveValue: { [weak self] credential in
+                guard let self,
+                      let user = credential?.user
+                else { return }
+                UserDefaults.standard.setValue(user.uid, forKey: userid)
+                isLoggedIn = true
+                Task { await self.getUserInfo() }
+            }
+            .store(in: &cancellables)
+    }
+
     func logOut() {
         self.isShowProgress = true
         UserDefaults.standard.removeObject(forKey: userid)

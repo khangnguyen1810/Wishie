@@ -174,6 +174,31 @@ struct SignUpView: View {
                 }
             })
             .padding(.vertical, 10)
+            Button(action: {
+                guard let presentingViewController = UIApplication.topViewController() else { return }
+                authVM.loginWithGoogle(presentingViewController: presentingViewController)
+            }, label: {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .shadow(color: .black.opacity(0.2), radius: 4, x:0, y: 5)
+                    HStack {
+                        Image("google_icon")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 20)
+                            .padding(.leading, 20)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Login with Google")
+                        .font(.wishies(.bold, 20))
+                        .foregroundStyle(.black)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+            })
+            .padding(.vertical, 10)
             Spacer()
         }
         .padding([.horizontal,.bottom], 20)

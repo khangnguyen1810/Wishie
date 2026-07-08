@@ -117,29 +117,26 @@ struct LoginView: View {
                     .frame(width: UIScreen.main.bounds.width/3,height: 2)
             }
             Button(action: {
-                // Login
-                viewModel.isShowError = true
-                viewModel.errorTitle = "Apple login is not supported"
-                viewModel.errorMessage = "This feature is currently not supported on app"
+                guard let presentingViewController = UIApplication.topViewController() else { return }
+                viewModel.loginWithGoogle(presentingViewController: presentingViewController)
             }, label: {
                 ZStack {
                     RoundedRectangle(cornerRadius: 15)
-                        .fill(.black)
+                        .fill(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .shadow(color: .black.opacity(0.2), radius: 4, x:0, y: 5)
                     HStack {
-                        Image(systemName: "apple.logo")
+                        Image("google_icon")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .foregroundStyle(.white)
                             .frame(width: 20)
                             .padding(.leading, 20)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    Text("Login with Apple")
+                    Text("Login with Google")
                         .font(.wishies(.bold, 20))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.black)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
             })

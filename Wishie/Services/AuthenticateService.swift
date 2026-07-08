@@ -10,10 +10,12 @@ import UIKit
 import FirebaseAuth
 import FirebaseFirestore
 import Supabase
+import GoogleSignIn
 import Combine
 protocol AuthenticateServiceProtocol {
     func login(_ email: String, _ password: String) -> AnyPublisher<AuthDataResult?, Error>
     func signUp(_ signUpRequest: SignUpRequest) -> AnyPublisher<FirebaseAuth.AuthDataResult?, Error>
+    func loginWithGoogle(presentingViewController: UIViewController) -> AnyPublisher<AuthDataResult?, Error>
     func resetPassword(_ email: String) -> AnyPublisher<Bool, Error>
     func getUserInfo() async throws -> UserModel?
     func getUserInfo(by userId: String) async throws -> UserModel?
@@ -70,6 +72,59 @@ class AuthenticateService: AuthenticateServiceProtocol {
             }
         }
         .eraseToAnyPublisher()
+    }
+    func loginWithGoogle(presentingViewController: UIViewController) -> AnyPublisher<AuthDataResult?, Error> {
+        return Future<AuthDataResult?, Error> { [weak self] promise in
+            guard let self else { return }
+            GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController) { signInResult, error in
+                if let error {
+                    promise(.failure(error))
+                    return
+                }
+                guard let googleUser = signInResult?.user,
+                      let idToken = googleUser.idToken?.tokenString else {
+                    promise(.failure(NSError(domain: "GoogleSignInError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Missing Google ID token."])))
+                    return
+                }
+                let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: googleUser.accessToken.tokenString)
+                self.auth.signIn(with: credential) { result, error in
+                    if let error {
+                        promise(.failure(error))
+                        return
+                    }
+                    guard let result else {
+                        promise(.failure(NSError(domain: "GoogleSignInError", code: -2, userInfo: [NSLocalizedDescriptionKey: "Authentication result is nil."])))
+                        return
+                    }
+                    Task {
+                        do {
+                            try await self.createGoogleUserDocumentIfNeeded(for: result.user, profile: googleUser.profile)
+                            promise(.success(result))
+                        } catch {
+                            promise(.failure(error))
+                        }
+                    }
+                }
+            }
+        }
+        .eraseToAnyPublisher()
+    }
+
+    private func createGoogleUserDocumentIfNeeded(for user: FirebaseAuth.User, profile: GIDProfileData?) async throws {
+        let userRef = db.collection(WishieConstants.firebaseUserPath).document(user.uid)
+        let snapshot = try await userRef.getDocument()
+        guard !snapshot.exists else { return }
+        let userData: [String: Any] = [
+            "uid": user.uid,
+            "firstName": profile?.givenName ?? "",
+            "lastName": profile?.familyName ?? "",
+            "email": user.email ?? "",
+            "phone": "",
+            "dateOfBirth": Timestamp(date: Date()),
+            "hasCompletedInterestsSetup": false,
+            "createAt": FieldValue.serverTimestamp()
+        ]
+        try await userRef.setData(userData)
     }
     func resetPassword(_ email: String) -> AnyPublisher<Bool, Error> {
         return Future<Bool, Error> { [weak self] promise in

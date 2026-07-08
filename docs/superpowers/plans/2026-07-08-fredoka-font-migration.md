@@ -43,6 +43,9 @@ build target; no `.pbxproj` edits needed to add or remove font files).
 - Modify: `Wishie/Screens/Home/HomeItemViewCell.swift:92`
 - Modify: `Wishie/Screens/CreateList/CreateWishlistPage2.swift:138`
 - Modify: `Wishie/Screens/Detail/WishItemDetailView.swift:79`
+- Track (already on disk, untracked by git): `Wishie/Resources/Fonts/Fredoka-Regular.ttf`,
+  `Wishie/Resources/Fonts/Fredoka-Medium.ttf`, `Wishie/Resources/Fonts/Fredoka-Bold.ttf`,
+  `Wishie/Resources/Fonts/Fredoka-Light.ttf`
 
 **Interfaces:**
 - Consumes: nothing (first task).
@@ -189,8 +192,17 @@ Expected: `** BUILD SUCCEEDED **`, with no compiler errors referencing
 
 - [ ] **Step 6: Commit**
 
+The four Fredoka `.ttf` files already sit in `Wishie/Resources/Fonts/` but
+are untracked (`git status` shows them as untracked files) — stage them
+alongside the code changes so the new font assets actually ship with the
+commit:
+
 ```bash
 git add Wishie/Resources/WishieCustomFont.swift Wishie/Info.plist \
+  Wishie/Resources/Fonts/Fredoka-Regular.ttf \
+  Wishie/Resources/Fonts/Fredoka-Medium.ttf \
+  Wishie/Resources/Fonts/Fredoka-Bold.ttf \
+  Wishie/Resources/Fonts/Fredoka-Light.ttf \
   Wishie/Screens/Auth/LoginView.swift Wishie/Screens/Auth/SignUpView.swift \
   Wishie/Screens/Home/HomeItemViewCell.swift \
   Wishie/Screens/CreateList/CreateWishlistPage2.swift \

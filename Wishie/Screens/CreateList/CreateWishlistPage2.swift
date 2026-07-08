@@ -135,7 +135,7 @@ struct WishlistItemCard: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .focused($focusedField, equals: .name)
                 TextField("About this item...", text: $item.description, axis: .vertical)
-                    .font(.wishies(.italic, 14))
+                    .font(.wishies(.regular, 14).italic())
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .frame(height: 74, alignment: .topLeading)

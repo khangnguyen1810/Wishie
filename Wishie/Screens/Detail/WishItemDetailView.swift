@@ -76,7 +76,7 @@ struct WishItemDetailView: View {
                     .padding(.bottom, 12)
                 
                 TextField("About this item...", text: $viewModel.newItemDescription, axis: .vertical)
-                    .font(.wishies(.italic, 14))
+                    .font(.wishies(.regular, 14).italic())
                     .lineLimit(2...4)
                     .frame(height: 74, alignment: .topLeading)
                     .padding(.horizontal, 12)

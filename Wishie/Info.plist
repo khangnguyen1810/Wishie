@@ -20,10 +20,10 @@
 	<string>We need access to your photo library to scan QR codes from images.</string>
 	<key>UIAppFonts</key>
 	<array>
-		<string>WorkSans-Regular.ttf</string>
-		<string>WorkSans-Light.ttf</string>
-		<string>WorkSans-Italic.ttf</string>
-		<string>WorkSans-Bold.ttf</string>
+		<string>Fredoka-Regular.ttf</string>
+		<string>Fredoka-Medium.ttf</string>
+		<string>Fredoka-Bold.ttf</string>
+		<string>Fredoka-Light.ttf</string>
 	</array>
 </dict>
 </plist>

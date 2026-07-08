@@ -89,7 +89,7 @@ struct HomeItemViewCell: View {
             headerRow
             if !item.0.description.isEmpty {
                 Text(item.0.description)
-                    .font(.wishies(.italic, 13))
+                    .font(.wishies(.regular, 13).italic())
                     .foregroundStyle(Color.black.opacity(0.65))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .multilineTextAlignment(.leading)

@@ -143,7 +143,7 @@ struct SignUpView: View {
                 Rectangle()
                     .frame(width: UIScreen.main.bounds.width/3,height: 2)
                 Text("or")
-                    .font(.wishies(.italic, 15))
+                    .font(.wishies(.regular, 15).italic())
                 Rectangle()
                     .frame(width: UIScreen.main.bounds.width/3,height: 2)
             }

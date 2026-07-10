@@ -59,7 +59,8 @@ struct OnboardingView: View {
                     ZStack {
                         RoundedRectangle(cornerRadius: 15)
                             .fill(.lightYellow)
-                            .frame(width: .infinity, height: 60)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 60)
                         Text("Continue")
                             .font(.wishies(.bold, 20))
                             .foregroundStyle(.black)

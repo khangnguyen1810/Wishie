@@ -364,6 +364,7 @@ struct HomeView: View {
             tabItem(title: "My list", tab: .myList)
             tabItem(title: "Friend's list", tab: .friendsList)
         }
+        .frame(height: 44)
         .padding(5)
         .background {
             Capsule()
@@ -488,10 +489,9 @@ struct HomeView: View {
                         )
                         .frame(width: 44, height: 44)
                         .shadow(color: Color(hex: "#F4667A").opacity(0.35), radius: 8, x: 0, y: 4)
-                    Image("add")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(Color.white)
                 }
                 .rotationEffect(.degrees(6))
                 .anchorPreference(key: CoachMarkBoundsKey.self, value: .bounds) { ["homeAddButton": $0] }

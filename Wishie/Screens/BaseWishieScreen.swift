@@ -8,24 +8,28 @@
 import SwiftUI
 
 struct BaseWishieScreen<
+    Background: View,
     TopBar: View,
     Content: View
 >: View {
-    
+
+    let background: Background
     let topBar: TopBar
     let content: Content
-    
+
     init(
+        @ViewBuilder background: () -> Background = { Color.lightYellow1 },
         @ViewBuilder topBar: () -> TopBar,
         @ViewBuilder content: () -> Content
     ) {
+        self.background = background()
         self.topBar = topBar()
         self.content = content()
     }
-    
+
     var body: some View {
         ZStack(alignment: .top) {
-            Color.lightYellow1.ignoresSafeArea()
+            background.ignoresSafeArea()
             VStack {
                 topBar
                 content
@@ -41,11 +45,11 @@ struct TopAppBar<
     Center: View,
     Trailing: View
 >: View {
-    
+
     let leading: Leading
     let center: Center
     let trailing: Trailing
-    
+
     init(
         @ViewBuilder leading: () -> Leading = { EmptyView()},
         @ViewBuilder center: () -> Center = { EmptyView()},
@@ -55,7 +59,7 @@ struct TopAppBar<
         self.center = center()
         self.trailing = trailing()
     }
-    
+
     var body: some View {
         ZStack {
             HStack {
@@ -68,4 +72,3 @@ struct TopAppBar<
         }
     }
 }
-

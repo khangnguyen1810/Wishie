@@ -20,3 +20,15 @@ extension Font {
         return .custom(weight.rawValue, size: size)
     }
 }
+
+enum WishieDisplayFont: String {
+    case semiBold = "Baloo2-SemiBold"
+    case bold = "Baloo2-Bold"
+    case extraBold = "Baloo2-ExtraBold"
+}
+
+extension Font {
+    static func wishiesDisplay(_ weight: WishieDisplayFont, _ size: CGFloat) -> Font {
+        return .custom(weight.rawValue, size: size)
+    }
+}

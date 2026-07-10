@@ -139,7 +139,7 @@ struct HomeView: View {
                             } else {
                                 switch selectedTab {
                                 case .myList:
-                                    ForEach(homeViewModel.myWishlists, id: \.self.0) { wishlist in
+                                    ForEach(Array(homeViewModel.myWishlists.enumerated()), id: \.element.0) { index, wishlist in
                                         ZStack {
                                             NavigationLink {
                                                 WishlistDetailScreen(
@@ -155,11 +155,19 @@ struct HomeView: View {
                                             }
                                             .opacity(0)
                                             HomeItemViewCell(item: wishlist)
+                                                .rotationEffect(.degrees(index % 2 == 0 ? -1 : 1.5))
                                         }
+                                        .opacity(homeAppeared ? 1 : 0)
+                                        .offset(y: homeAppeared ? 0 : 26)
+                                        .animation(
+                                            .timingCurve(0.22, 1, 0.36, 1, duration: 0.5)
+                                                .delay(0.36 + Double(min(index, 6)) * 0.08),
+                                            value: homeAppeared
+                                        )
                                         .contentShape(Rectangle())
                                         .matchedTransitionSource(id: wishlist.0.id, in: animation)
                                         .listRowSeparator(.hidden)
-                                        .listRowInsets(EdgeInsets())
+                                        .listRowInsets(EdgeInsets(top: 14, leading: 0, bottom: 14, trailing: 0))
                                         .listRowBackground(Color.clear)
                                         .swipeActions {
                                             Button {
@@ -172,7 +180,7 @@ struct HomeView: View {
                                         }
                                     }
                                 case .friendsList:
-                                    ForEach(homeViewModel.myFriendWishlists, id: \.self.0) { wishlist in
+                                    ForEach(Array(homeViewModel.myFriendWishlists.enumerated()), id: \.element.0) { index, wishlist in
                                         ZStack {
                                             NavigationLink {
                                                 WishlistDetailScreen(
@@ -188,11 +196,19 @@ struct HomeView: View {
                                             }
                                             .opacity(0)
                                             HomeItemViewCell(item: wishlist)
+                                                .rotationEffect(.degrees(index % 2 == 0 ? -1 : 1.5))
                                         }
+                                        .opacity(homeAppeared ? 1 : 0)
+                                        .offset(y: homeAppeared ? 0 : 26)
+                                        .animation(
+                                            .timingCurve(0.22, 1, 0.36, 1, duration: 0.5)
+                                                .delay(0.36 + Double(min(index, 6)) * 0.08),
+                                            value: homeAppeared
+                                        )
                                         .contentShape(Rectangle())
                                         .matchedTransitionSource(id: wishlist.0.id, in: animation)
                                         .listRowSeparator(.hidden)
-                                        .listRowInsets(EdgeInsets())
+                                        .listRowInsets(EdgeInsets(top: 14, leading: 0, bottom: 14, trailing: 0))
                                         .listRowBackground(Color.clear)
                                         .swipeActions {
                                             Button {
@@ -207,7 +223,7 @@ struct HomeView: View {
                                 }
                             }
                         }
-                        .listRowSpacing(10)
+                        .listRowSpacing(6)
                         .listStyle(.plain)
                         .scrollContentBackground(.hidden)
                         .background(Color.clear)

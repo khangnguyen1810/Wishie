@@ -50,6 +50,10 @@ struct HomeItemViewCell: View {
         .frame(maxWidth: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: 22))
         .shadow(color: Color(hex: item.0.theme.secondary).opacity(0.45), radius: 12, x: 0, y: 6)
+        .overlay(alignment: .topTrailing) {
+            statusBadge
+                .offset(x: -14, y: -14)
+        }
     }
 
     @ViewBuilder
@@ -84,13 +88,60 @@ struct HomeItemViewCell: View {
     }
 
     @ViewBuilder
+    private var statusBadge: some View {
+        if daysRemaining == 0 {
+            badgeLabel(
+                text: "🎉 TODAY",
+                background: Color(hex: "#FFE9A8"),
+                foreground: Color(hex: "#8C5A17"),
+                rotation: 8,
+                hasBorder: true
+            )
+        } else if isOverDue {
+            badgeLabel(
+                text: "⏰ OVERDUE",
+                background: .white,
+                foreground: Color(hex: "#B85C3E"),
+                rotation: -6,
+                hasBorder: false
+            )
+        } else {
+            badgeLabel(
+                text: "\(daysRemaining)d left",
+                background: .white,
+                foreground: isUrgent ? Color.wishiePink : Color(hex: item.0.theme.secondary),
+                rotation: 6,
+                hasBorder: false
+            )
+        }
+    }
+
+    @ViewBuilder
+    private func badgeLabel(text: String, background: Color, foreground: Color, rotation: Double, hasBorder: Bool) -> some View {
+        Text(text)
+            .font(.wishiesDisplay(.extraBold, 12))
+            .foregroundStyle(foreground)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(
+                Capsule()
+                    .fill(background)
+                    .overlay(
+                        Capsule().stroke(Color.white, lineWidth: hasBorder ? 2 : 0)
+                    )
+            )
+            .shadow(color: .black.opacity(0.12), radius: 6, x: 0, y: 3)
+            .rotationEffect(.degrees(rotation))
+    }
+
+    @ViewBuilder
     private var contentLayer: some View {
         VStack(alignment: .leading, spacing: 12) {
             headerRow
             if !item.0.description.isEmpty {
                 Text(item.0.description)
                     .font(.wishies(.italic, 13))
-                    .foregroundStyle(Color.black.opacity(0.65))
+                    .foregroundStyle(Color.white.opacity(0.85))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
@@ -98,6 +149,7 @@ struct HomeItemViewCell: View {
             footerRow
         }
         .padding(16)
+        .padding(.top, 6)
     }
 
     @ViewBuilder
@@ -105,31 +157,30 @@ struct HomeItemViewCell: View {
         HStack(alignment: .top, spacing: 8) {
             VStack(alignment: .leading, spacing: 5) {
                 Text(item.0.name)
-                    .foregroundStyle(Color.black)
+                    .foregroundStyle(Color.white)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                    .font(.wishies(.bold, 18))
+                    .font(.wishiesDisplay(.extraBold, 19))
                 HStack(spacing: 4) {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(Color.wishiePink)
+                    Text("📅")
+                        .font(.system(size: 11))
                     Text(item.0.dueDate.toShortDateString())
-                        .font(.wishies(.regular, 11))
-                        .foregroundStyle(Color.black.opacity(0.65))
+                        .font(.wishiesDisplay(.semiBold, 13))
+                        .foregroundStyle(Color.white.opacity(0.9))
                 }
             }
             Spacer()
             VStack(spacing: 3) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.55))
-                        .frame(width: 38, height: 38)
-                        .overlay(Circle().stroke(Color.white.opacity(0.9), lineWidth: 1.5))
+                        .fill(Color.white.opacity(0.35))
+                        .frame(width: 46, height: 46)
+                        .overlay(Circle().stroke(Color.white, lineWidth: 3))
                     avatarView
                 }
                 Text(item.1.firstName.isEmpty ? "—" : item.1.firstName)
-                    .font(.wishies(.regular, 10))
-                    .foregroundStyle(Color.black.opacity(0.6))
+                    .font(.wishiesDisplay(.bold, 10))
+                    .foregroundStyle(Color.white.opacity(0.85))
                     .lineLimit(1)
                     .frame(maxWidth: 48)
             }
@@ -137,53 +188,33 @@ struct HomeItemViewCell: View {
     }
 
     @ViewBuilder
+    private var progressBar: some View {
+        ZStack(alignment: .leading) {
+            Capsule().fill(Color.white.opacity(0.3))
+            GeometryReader { geo in
+                Capsule()
+                    .fill(Color.white)
+                    .frame(width: geo.size.width * max(0, min(1, progress)))
+            }
+        }
+        .frame(height: 10)
+    }
+
+    @ViewBuilder
     private var footerRow: some View {
-        HStack(alignment: .center, spacing: 8) {
+        HStack(alignment: .center, spacing: 10) {
+            progressBar
             HStack(spacing: 5) {
-                Image(systemName: "gift.fill")
-                    .font(.system(size: 10))
-                    .foregroundStyle(Color.wishiePink)
-                Text(item.0.items.count > 0 ? "\(itemPicked.count)/\(item.0.items.count) gifts" : "No gifts yet")
-                    .font(.wishies(.regular, 12))
-                    .foregroundStyle(Color.black.opacity(0.75))
+                Text("🎁")
+                    .font(.system(size: 11))
+                Text(item.0.items.count > 0 ? "\(itemPicked.count)/\(item.0.items.count)" : "No gifts yet")
+                    .font(.wishiesDisplay(.extraBold, 12))
+                    .foregroundStyle(Color.white)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(Capsule().fill(Color.white.opacity(0.5)))
-
-            HStack(spacing: 4) {
-                Image(systemName: daysRemaining == 0 ? "star.fill" : "clock.fill")
-                    .font(.system(size: 10))
-                    .foregroundStyle(isUrgent ? Color.wishiePink : Color.black.opacity(0.5))
-                Text(daysRemaining == -1 ? "Overdue": (daysRemaining == 0 ? "Today!" : "\(daysRemaining)d left"))
-                    .font(.wishies(.bold, 11))
-                    .foregroundStyle(isUrgent ? Color.wishiePink : (isOverDue ? Color.lightGrey : Color.black.opacity(0.65)))
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(Capsule().fill(Color.white.opacity(0.5)))
-
-            Spacer()
-
-            ZStack {
-                Circle()
-                    .stroke(Color.white.opacity(0.3), lineWidth: 4)
-                Circle()
-                    .trim(from: 0, to: progress)
-                    .stroke(
-                        LinearGradient(
-                            colors: [Color.wishiePink, Color.lightYellow1],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                Text("\(Int(progress * 100))%")
-                    .font(.wishies(.bold, 11))
-                    .foregroundStyle(Color.black.opacity(0.75))
-            }
-            .frame(width: 48, height: 48)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Capsule().fill(Color.white.opacity(0.28)))
+            .fixedSize()
         }
     }
 }

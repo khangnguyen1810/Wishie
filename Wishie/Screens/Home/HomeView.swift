@@ -386,70 +386,52 @@ struct HomeView: View {
 
     @ViewBuilder
     func summaryCard() -> some View {
-        HStack(spacing: 0) {
-            summaryStatItem(
+        HStack(spacing: 10) {
+            statTile(
                 value: "\(currentWishlists.count)",
                 label: selectedTab == .myList ? "Wishlists" : "Joined",
-                icon: "list.star"
+                background: Color(hex: "#6FE3D0"),
+                rotation: -2,
+                delay: 0.24
             )
-            nearestEventSection()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity)
-        .background {
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Color.white.opacity(0.55))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18)
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color(hex: "#F9C46B"), Color(hex: "#FEF3D7").opacity(0.6)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.5
-                        )
+            if let nearest = nearestDueDate {
+                let days = max(0, Calendar.current.dateComponents(
+                    [.day],
+                    from: Calendar.current.startOfDay(for: Date()),
+                    to: Calendar.current.startOfDay(for: nearest)
+                ).day ?? 0)
+                statTile(
+                    value: days == 0 ? "Today!" : "🎉 \(days)d",
+                    label: "Next Event",
+                    background: Color(hex: "#B79CF2"),
+                    rotation: 2,
+                    delay: 0.30
                 )
-        }
-        .shadow(color: Color(hex: "#F1D790").opacity(0.3), radius: 8, x: 0, y: 3)
-    }
-
-    @ViewBuilder
-    private func nearestEventSection() -> some View {
-        if let nearest = nearestDueDate {
-            let days = max(0, Calendar.current.dateComponents(
-                [.day],
-                from: Calendar.current.startOfDay(for: Date()),
-                to: Calendar.current.startOfDay(for: nearest)
-            ).day ?? 0)
-            Divider()
-                .frame(height: 28)
-                .background(Color(hex: "#F1D790").opacity(0.8))
-            summaryStatItem(
-                value: days == 0 ? "Today!" : "\(days)d",
-                label: "Next Event",
-                icon: "party.popper.fill"
-            )
-        }
-    }
-
-    @ViewBuilder
-    private func summaryStatItem(value: String, label: String, icon: String) -> some View {
-        VStack(spacing: 5) {
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.wishiePink)
-                Text(value)
-                    .font(.wishies(.bold, 15))
-                    .foregroundStyle(Color.black)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func statTile(value: String, label: String, background: Color, rotation: Double, delay: Double) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.wishiesDisplay(.extraBold, 22))
+                .foregroundStyle(Color.white)
             Text(label)
-                .font(.wishies(.regular, 11))
-                .foregroundStyle(Color.darkGrey)
+                .font(.wishiesDisplay(.bold, 12))
+                .foregroundStyle(Color.white.opacity(0.85))
         }
         .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(background)
+                .shadow(color: background.opacity(0.35), radius: 10, x: 0, y: 5)
+        )
+        .rotationEffect(.degrees(rotation))
+        .opacity(homeAppeared ? 1 : 0)
+        .offset(y: homeAppeared ? 0 : 26)
+        .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.5).delay(delay), value: homeAppeared)
     }
 
     @ViewBuilder

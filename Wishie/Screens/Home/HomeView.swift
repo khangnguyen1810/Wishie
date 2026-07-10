@@ -126,7 +126,7 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         summaryCard()
-                            .padding(.bottom, 12)
+                            .padding(.bottom, 5)
                         List {
                             if !hasSeenHomeTutorial {
                                 HomeItemViewCell(item: exampleWishlistForTutorial)
@@ -225,6 +225,7 @@ struct HomeView: View {
                         }
                         .listRowSpacing(6)
                         .listStyle(.plain)
+                        .scrollIndicators(.hidden)
                         .scrollContentBackground(.hidden)
                         .background(Color.clear)
                         .refreshable {

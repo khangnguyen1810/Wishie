@@ -72,7 +72,7 @@ struct WishieDisplayFontTests {
 Run:
 ```bash
 xcodebuild test -project Wishie.xcodeproj -scheme Wishie \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.0' \
   -only-testing:WishieTests/WishieDisplayFontTests 2>&1 | tail -40
 ```
 Expected: all 3 tests **FAIL** (`UIFont(name:...) != nil` is false — the font isn't bundled/registered yet).
@@ -173,7 +173,7 @@ Replace with:
 Run:
 ```bash
 xcodebuild test -project Wishie.xcodeproj -scheme Wishie \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.0' \
   -only-testing:WishieTests/WishieDisplayFontTests 2>&1 | tail -40
 ```
 Expected: all 3 tests **PASS**.
@@ -183,7 +183,7 @@ Expected: all 3 tests **PASS**.
 Run:
 ```bash
 xcodebuild build -project Wishie.xcodeproj -scheme Wishie \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' 2>&1 | tail -40
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.0' 2>&1 | tail -40
 ```
 Expected: `** BUILD SUCCEEDED **`.
 
@@ -324,7 +324,7 @@ with:
 Run:
 ```bash
 xcodebuild build -project Wishie.xcodeproj -scheme Wishie \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' 2>&1 | tail -40
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.0' 2>&1 | tail -40
 ```
 Expected: `** BUILD SUCCEEDED **`.
 
@@ -547,7 +547,7 @@ Replace with:
 Run:
 ```bash
 xcodebuild build -project Wishie.xcodeproj -scheme Wishie \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' 2>&1 | tail -40
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.0' 2>&1 | tail -40
 ```
 Expected: `** BUILD SUCCEEDED **`.
 
@@ -824,7 +824,7 @@ struct HomeItemViewCell: View {
 Run:
 ```bash
 xcodebuild build -project Wishie.xcodeproj -scheme Wishie \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' 2>&1 | tail -40
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.0' 2>&1 | tail -40
 ```
 Expected: `** BUILD SUCCEEDED **`.
 
@@ -1150,7 +1150,7 @@ Replace with:
 Run:
 ```bash
 xcodebuild build -project Wishie.xcodeproj -scheme Wishie \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' 2>&1 | tail -40
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.0' 2>&1 | tail -40
 ```
 Expected: `** BUILD SUCCEEDED **`.
 
@@ -1305,7 +1305,7 @@ Replace with:
 Run:
 ```bash
 xcodebuild build -project Wishie.xcodeproj -scheme Wishie \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' 2>&1 | tail -40
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.0' 2>&1 | tail -40
 ```
 Expected: `** BUILD SUCCEEDED **`.
 
@@ -1520,7 +1520,7 @@ Replace with:
 Run:
 ```bash
 xcodebuild build -project Wishie.xcodeproj -scheme Wishie \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' 2>&1 | tail -40
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.0' 2>&1 | tail -40
 ```
 Expected: `** BUILD SUCCEEDED **`.
 
@@ -1725,7 +1725,7 @@ Replace with:
 Run:
 ```bash
 xcodebuild build -project Wishie.xcodeproj -scheme Wishie \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' 2>&1 | tail -40
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.0' 2>&1 | tail -40
 ```
 Expected: `** BUILD SUCCEEDED **`.
 
@@ -1749,21 +1749,21 @@ git commit -m "style: restyle Home empty state and bottom sheet to the new palet
 - [ ] **Step 1: Boot the simulator and install the app**
 
 ```bash
-xcrun simctl boot "iPhone 16 Pro" 2>/dev/null || true
+xcrun simctl boot "iPhone 17 Pro" 2>/dev/null || true
 xcodebuild -project Wishie.xcodeproj -scheme Wishie \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.0' \
   -derivedDataPath /tmp/wishie-build build 2>&1 | tail -20
 open -a Simulator
-xcrun simctl install "iPhone 16 Pro" \
+xcrun simctl install "iPhone 17 Pro" \
   /tmp/wishie-build/Build/Products/Debug-iphonesimulator/Wishie.app
-xcrun simctl launch "iPhone 16 Pro" $(defaults read \
+xcrun simctl launch "iPhone 17 Pro" $(defaults read \
   /tmp/wishie-build/Build/Products/Debug-iphonesimulator/Wishie.app/Info.plist \
   CFBundleIdentifier)
 ```
 
 - [ ] **Step 2: Check console for missing-font warnings**
 
-Run: `xcrun simctl spawn "iPhone 16 Pro" log stream --level debug --predicate 'processImagePath contains "Wishie"' &`
+Run: `xcrun simctl spawn "iPhone 17 Pro" log stream --level debug --predicate 'processImagePath contains "Wishie"' &`
 then watch for ~10 seconds while the app is running, then stop it (Ctrl-C).
 Expected: no `CTFontManager` font-registration errors or warnings about a
 font named `Baloo2-*` failing to load.

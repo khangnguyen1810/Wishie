@@ -560,7 +560,7 @@ struct HomeView: View {
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(
                             LinearGradient(
-                                colors: [Color(hex: "#F9C46B"), Color(hex: "#FEF3D7")],
+                                colors: [Color(hex: "#FF9A76"), Color(hex: "#FEF3D7")],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             ),
@@ -574,7 +574,7 @@ struct HomeView: View {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(
                             LinearGradient(
-                                colors: [Color(hex: "#F9C46B"), Color(hex: "#F1D790")],
+                                colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -612,7 +612,7 @@ struct HomeView: View {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [Color(hex: "#FEF3D7"), Color(hex: "#F9C46B")],
+                            colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -636,7 +636,7 @@ struct HomeView: View {
             WishieButton(
                 title: buttonTitle,
                 enabled: true,
-                filColor: Color(hex: "#F1D790"),
+                filColor: Color(hex: "#FF9A76"),
                 width: 220,
                 height: 48
             ) {

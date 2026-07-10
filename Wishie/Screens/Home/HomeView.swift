@@ -28,6 +28,7 @@ struct HomeView: View {
     @State private var showLeaveConfirm = false
     @AppStorage(WishieConstants.hasSeenHomeTutorial) private var hasSeenHomeTutorial: Bool = false
     @State private var celebrationFloat: Bool = false
+    @State private var homeAppeared: Bool = false
     enum HomeTab {
         case myList
         case friendsList
@@ -99,15 +100,10 @@ struct HomeView: View {
                 },
                 content: {
                     tabSelector
-                        .frame(height: 44)
-                        .background {
-                            Capsule()
-                                .fill(Color.white.opacity(0.4))
-                                .overlay(
-                                    Capsule().stroke(Color(hex: "#F1D790").opacity(0.6), lineWidth: 1)
-                                )
-                        }
                         .animation(.spring(response: 0.25, dampingFraction: 0.8), value: selectedTab)
+                        .opacity(homeAppeared ? 1 : 0)
+                        .offset(y: homeAppeared ? 0 : 26)
+                        .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.5).delay(0.18), value: homeAppeared)
                         .padding(.bottom, 14)
                     if isEmpty {
                         contentUnavailable(
@@ -249,6 +245,10 @@ struct HomeView: View {
             }
             .onAppear {
                 celebrationFloat = true
+                homeAppeared = true
+            }
+            .onDisappear {
+                homeAppeared = false
             }
         }
         .sheet(item: $activeSheet) { type in
@@ -348,6 +348,15 @@ struct HomeView: View {
             tabItem(title: "My list", tab: .myList)
             tabItem(title: "Friend's list", tab: .friendsList)
         }
+        .padding(5)
+        .background {
+            Capsule()
+                .fill(Color.white)
+                .overlay(
+                    Capsule().stroke(Color(hex: "#E9D8AC"), lineWidth: 1)
+                )
+                .shadow(color: Color(hex: "#B48C3C").opacity(0.08), radius: 8, x: 0, y: 3)
+        }
         .anchorPreference(key: CoachMarkBoundsKey.self, value: .bounds) { ["homeTabSelector": $0] }
     }
 
@@ -358,17 +367,18 @@ struct HomeView: View {
                 Capsule()
                     .fill(
                         LinearGradient(
-                            colors: [Color(hex: "#F9C46B"), Color(hex: "#FEF3D7")],
+                            colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
+                    .shadow(color: Color(hex: "#F4667A").opacity(0.3), radius: 8, x: 0, y: 3)
                     .matchedGeometryEffect(id: "TAB", in: animation)
             }
             Text(title)
-                .font(.wishies(.bold, 15))
-                .foregroundStyle(selectedTab == tab ? .black : Color.darkGrey)
-                .padding(.vertical, 10)
+                .font(.wishiesDisplay(.bold, 15))
+                .foregroundStyle(selectedTab == tab ? .white : Color(hex: "#A5875A"))
+                .padding(.vertical, 11)
                 .frame(maxWidth: .infinity)
         }
         .onTapGesture { selectedTab = tab }
@@ -446,47 +456,60 @@ struct HomeView: View {
     func topAppBar() -> some View {
         TopAppBar {
             VStack(alignment: .leading, spacing: 3) {
-                Text(authViewModel.userInfo.firstName.isEmpty
-                     ? "Hey there! \u{1F381}"
-                     : "Hey, \(authViewModel.userInfo.firstName)! \u{1F389}")
-                    .font(.wishies(.bold, 22))
-                    .foregroundColor(.black)
-                Text("Your celebrations await \u{2728}")
-                    .font(.wishies(.regular, 13))
-                    .foregroundStyle(Color.darkGrey)
+                HStack(spacing: 8) {
+                    Text(authViewModel.userInfo.firstName.isEmpty
+                         ? "Hey there!"
+                         : "Hey, \(authViewModel.userInfo.firstName)!")
+                        .font(.wishiesDisplay(.extraBold, 28))
+                        .foregroundColor(Color(hex: "#5B3F0F"))
+                    Text("🎉")
+                        .font(.system(size: 24))
+                        .offset(y: celebrationFloat ? -6 : 0)
+                        .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: celebrationFloat)
+                }
+                .opacity(homeAppeared ? 1 : 0)
+                .offset(y: homeAppeared ? 0 : 26)
+                .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.5).delay(0.05), value: homeAppeared)
+                Text("Your celebrations await ✨")
+                    .font(.wishies(.medium, 13))
+                    .foregroundStyle(Color(hex: "#9A7A3E"))
+                    .opacity(homeAppeared ? 1 : 0)
+                    .offset(y: homeAppeared ? 0 : 26)
+                    .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.5).delay(0.12), value: homeAppeared)
             }
         } trailing: {
             HStack(spacing: 10) {
                 ZStack {
-                    Circle()
+                    RoundedRectangle(cornerRadius: 14)
                         .fill(
                             LinearGradient(
-                                colors: [Color(hex: "#F9C46B"), Color(hex: "#F1D790")],
+                                colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 42, height: 42)
-                        .shadow(color: Color(hex: "#F9C46B").opacity(0.45), radius: 6, x: 0, y: 3)
+                        .frame(width: 44, height: 44)
+                        .shadow(color: Color(hex: "#F4667A").opacity(0.35), radius: 8, x: 0, y: 4)
                     Image("add")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
                 }
+                .rotationEffect(.degrees(6))
                 .anchorPreference(key: CoachMarkBoundsKey.self, value: .bounds) { ["homeAddButton": $0] }
                 .onTapGesture { activeSheet = .add }
                 ZStack {
                     Circle()
                         .fill(Color.white.opacity(0.7))
-                        .frame(width: 42, height: 42)
+                        .frame(width: 44, height: 44)
                         .overlay(
                             Circle().stroke(
                                 LinearGradient(
-                                    colors: [Color(hex: "#F9C46B"), Color(hex: "#FEF3D7")],
+                                    colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
-                                lineWidth: 1.5
+                                lineWidth: 2
                             )
                         )
                     Image("user")

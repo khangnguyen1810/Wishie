@@ -27,6 +27,8 @@ struct HomeView: View {
     @State private var showDeleteConfirm = false
     @State private var showLeaveConfirm = false
     @AppStorage(WishieConstants.hasSeenHomeTutorial) private var hasSeenHomeTutorial: Bool = false
+    @State private var celebrationFloat: Bool = false
+    @State private var homeAppeared: Bool = false
     enum HomeTab {
         case myList
         case friendsList
@@ -90,20 +92,18 @@ struct HomeView: View {
     var body: some View {
         NavigationStack(path: $path) {
             BaseWishieScreen(
+                background: {
+                    homeBackground
+                },
                 topBar: {
                     topAppBar()
                 },
                 content: {
                     tabSelector
-                        .frame(height: 44)
-                        .background {
-                            Capsule()
-                                .fill(Color.white.opacity(0.4))
-                                .overlay(
-                                    Capsule().stroke(Color(hex: "#F1D790").opacity(0.6), lineWidth: 1)
-                                )
-                        }
                         .animation(.spring(response: 0.25, dampingFraction: 0.8), value: selectedTab)
+                        .opacity(homeAppeared ? 1 : 0)
+                        .offset(y: homeAppeared ? 0 : 26)
+                        .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.5).delay(0.18), value: homeAppeared)
                         .padding(.bottom, 14)
                     if isEmpty {
                         contentUnavailable(
@@ -126,7 +126,7 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         summaryCard()
-                            .padding(.bottom, 12)
+                            .padding(.bottom, 5)
                         List {
                             if !hasSeenHomeTutorial {
                                 HomeItemViewCell(item: exampleWishlistForTutorial)
@@ -139,7 +139,7 @@ struct HomeView: View {
                             } else {
                                 switch selectedTab {
                                 case .myList:
-                                    ForEach(homeViewModel.myWishlists, id: \.self.0) { wishlist in
+                                    ForEach(Array(homeViewModel.myWishlists.enumerated()), id: \.element.0) { index, wishlist in
                                         ZStack {
                                             NavigationLink {
                                                 WishlistDetailScreen(
@@ -155,11 +155,19 @@ struct HomeView: View {
                                             }
                                             .opacity(0)
                                             HomeItemViewCell(item: wishlist)
+                                                .rotationEffect(.degrees(index % 2 == 0 ? -1 : 1.5))
                                         }
+                                        .opacity(homeAppeared ? 1 : 0)
+                                        .offset(y: homeAppeared ? 0 : 26)
+                                        .animation(
+                                            .timingCurve(0.22, 1, 0.36, 1, duration: 0.5)
+                                                .delay(0.36 + Double(min(index, 6)) * 0.08),
+                                            value: homeAppeared
+                                        )
                                         .contentShape(Rectangle())
                                         .matchedTransitionSource(id: wishlist.0.id, in: animation)
                                         .listRowSeparator(.hidden)
-                                        .listRowInsets(EdgeInsets())
+                                        .listRowInsets(EdgeInsets(top: 14, leading: 0, bottom: 14, trailing: 0))
                                         .listRowBackground(Color.clear)
                                         .swipeActions {
                                             Button {
@@ -172,7 +180,7 @@ struct HomeView: View {
                                         }
                                     }
                                 case .friendsList:
-                                    ForEach(homeViewModel.myFriendWishlists, id: \.self.0) { wishlist in
+                                    ForEach(Array(homeViewModel.myFriendWishlists.enumerated()), id: \.element.0) { index, wishlist in
                                         ZStack {
                                             NavigationLink {
                                                 WishlistDetailScreen(
@@ -188,11 +196,19 @@ struct HomeView: View {
                                             }
                                             .opacity(0)
                                             HomeItemViewCell(item: wishlist)
+                                                .rotationEffect(.degrees(index % 2 == 0 ? -1 : 1.5))
                                         }
+                                        .opacity(homeAppeared ? 1 : 0)
+                                        .offset(y: homeAppeared ? 0 : 26)
+                                        .animation(
+                                            .timingCurve(0.22, 1, 0.36, 1, duration: 0.5)
+                                                .delay(0.36 + Double(min(index, 6)) * 0.08),
+                                            value: homeAppeared
+                                        )
                                         .contentShape(Rectangle())
                                         .matchedTransitionSource(id: wishlist.0.id, in: animation)
                                         .listRowSeparator(.hidden)
-                                        .listRowInsets(EdgeInsets())
+                                        .listRowInsets(EdgeInsets(top: 14, leading: 0, bottom: 14, trailing: 0))
                                         .listRowBackground(Color.clear)
                                         .swipeActions {
                                             Button {
@@ -207,8 +223,9 @@ struct HomeView: View {
                                 }
                             }
                         }
-                        .listRowSpacing(10)
+                        .listRowSpacing(6)
                         .listStyle(.plain)
+                        .scrollIndicators(.hidden)
                         .scrollContentBackground(.hidden)
                         .background(Color.clear)
                         .refreshable {
@@ -242,6 +259,13 @@ struct HomeView: View {
             .task {
                 await authViewModel.getUserInfo()
                 homeViewModel.startObservingWishlists()
+            }
+            .onAppear {
+                celebrationFloat = true
+                homeAppeared = true
+            }
+            .onDisappear {
+                homeAppeared = false
             }
         }
         .sheet(item: $activeSheet) { type in
@@ -293,10 +317,63 @@ struct HomeView: View {
         .showFullScreenDialog($homeViewModel.isGettingList)
     }
 
+    @ViewBuilder
+    private var homeBackground: some View {
+        ZStack {
+            LinearGradient(
+                colors: [Color(hex: "#FFF8E8"), Color(hex: "#FBEACB")],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [Color(hex: "#D4AF6A").opacity(0.28), .clear],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 85
+                    )
+                )
+                .frame(width: 170, height: 170)
+                .offset(x: 100, y: -340)
+            RoundedRectangle(cornerRadius: 3)
+                .fill(Color(hex: "#6FE3D0").opacity(0.8))
+                .frame(width: 10, height: 10)
+                .rotationEffect(.degrees(20))
+                .offset(x: -140, y: -300)
+            Circle()
+                .fill(Color(hex: "#F4667A").opacity(0.7))
+                .frame(width: 8, height: 8)
+                .offset(x: 140, y: -270)
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color(hex: "#B79CF2").opacity(0.75))
+                .frame(width: 9, height: 9)
+                .rotationEffect(.degrees(-15))
+                .offset(x: 95, y: -330)
+            Circle()
+                .fill(Color(hex: "#E7B65A").opacity(0.7))
+                .frame(width: 7, height: 7)
+                .offset(x: -120, y: -200)
+                .offset(y: celebrationFloat ? -6 : 0)
+                .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: celebrationFloat)
+        }
+        .allowsHitTesting(false)
+    }
+
     private var tabSelector: some View {
         HStack(spacing: 0) {
             tabItem(title: "My list", tab: .myList)
             tabItem(title: "Friend's list", tab: .friendsList)
+        }
+        .frame(height: 44)
+        .padding(5)
+        .background {
+            Capsule()
+                .fill(Color.white)
+                .overlay(
+                    Capsule().stroke(Color(hex: "#E9D8AC"), lineWidth: 1)
+                )
+                .shadow(color: Color(hex: "#B48C3C").opacity(0.08), radius: 8, x: 0, y: 3)
         }
         .anchorPreference(key: CoachMarkBoundsKey.self, value: .bounds) { ["homeTabSelector": $0] }
     }
@@ -308,17 +385,18 @@ struct HomeView: View {
                 Capsule()
                     .fill(
                         LinearGradient(
-                            colors: [Color(hex: "#F9C46B"), Color(hex: "#FEF3D7")],
+                            colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
+                    .shadow(color: Color(hex: "#F4667A").opacity(0.3), radius: 8, x: 0, y: 3)
                     .matchedGeometryEffect(id: "TAB", in: animation)
             }
             Text(title)
-                .font(.wishies(.bold, 15))
-                .foregroundStyle(selectedTab == tab ? .black : Color.darkGrey)
-                .padding(.vertical, 10)
+                .font(.wishiesDisplay(.bold, 15))
+                .foregroundStyle(selectedTab == tab ? .white : Color(hex: "#A5875A"))
+                .padding(.vertical, 11)
                 .frame(maxWidth: .infinity)
         }
         .onTapGesture { selectedTab = tab }
@@ -326,117 +404,111 @@ struct HomeView: View {
 
     @ViewBuilder
     func summaryCard() -> some View {
-        HStack(spacing: 0) {
-            summaryStatItem(
+        HStack(spacing: 10) {
+            statTile(
                 value: "\(currentWishlists.count)",
                 label: selectedTab == .myList ? "Wishlists" : "Joined",
-                icon: "list.star"
+                background: Color(hex: "#6FE3D0"),
+                rotation: -2,
+                delay: 0.24
             )
-            nearestEventSection()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity)
-        .background {
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Color.white.opacity(0.55))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18)
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color(hex: "#F9C46B"), Color(hex: "#FEF3D7").opacity(0.6)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.5
-                        )
+            if let nearest = nearestDueDate {
+                let days = max(0, Calendar.current.dateComponents(
+                    [.day],
+                    from: Calendar.current.startOfDay(for: Date()),
+                    to: Calendar.current.startOfDay(for: nearest)
+                ).day ?? 0)
+                statTile(
+                    value: days == 0 ? "Today!" : "🎉 \(days)d",
+                    label: "Next Event",
+                    background: Color(hex: "#B79CF2"),
+                    rotation: 2,
+                    delay: 0.30
                 )
-        }
-        .shadow(color: Color(hex: "#F1D790").opacity(0.3), radius: 8, x: 0, y: 3)
-    }
-
-    @ViewBuilder
-    private func nearestEventSection() -> some View {
-        if let nearest = nearestDueDate {
-            let days = max(0, Calendar.current.dateComponents(
-                [.day],
-                from: Calendar.current.startOfDay(for: Date()),
-                to: Calendar.current.startOfDay(for: nearest)
-            ).day ?? 0)
-            Divider()
-                .frame(height: 28)
-                .background(Color(hex: "#F1D790").opacity(0.8))
-            summaryStatItem(
-                value: days == 0 ? "Today!" : "\(days)d",
-                label: "Next Event",
-                icon: "party.popper.fill"
-            )
-        }
-    }
-
-    @ViewBuilder
-    private func summaryStatItem(value: String, label: String, icon: String) -> some View {
-        VStack(spacing: 5) {
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.wishiePink)
-                Text(value)
-                    .font(.wishies(.bold, 15))
-                    .foregroundStyle(Color.black)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func statTile(value: String, label: String, background: Color, rotation: Double, delay: Double) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.wishiesDisplay(.extraBold, 22))
+                .foregroundStyle(Color.white)
             Text(label)
-                .font(.wishies(.regular, 11))
-                .foregroundStyle(Color.darkGrey)
+                .font(.wishiesDisplay(.bold, 12))
+                .foregroundStyle(Color.white.opacity(0.85))
         }
         .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(background)
+                .shadow(color: background.opacity(0.35), radius: 10, x: 0, y: 5)
+        )
+        .rotationEffect(.degrees(rotation))
+        .opacity(homeAppeared ? 1 : 0)
+        .offset(y: homeAppeared ? 0 : 26)
+        .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.5).delay(delay), value: homeAppeared)
     }
 
     @ViewBuilder
     func topAppBar() -> some View {
         TopAppBar {
             VStack(alignment: .leading, spacing: 3) {
-                Text(authViewModel.userInfo.firstName.isEmpty
-                     ? "Hey there! \u{1F381}"
-                     : "Hey, \(authViewModel.userInfo.firstName)! \u{1F389}")
-                    .font(.wishies(.bold, 22))
-                    .foregroundColor(.black)
-                Text("Your celebrations await \u{2728}")
-                    .font(.wishies(.regular, 13))
-                    .foregroundStyle(Color.darkGrey)
+                HStack(spacing: 8) {
+                    Text(authViewModel.userInfo.firstName.isEmpty
+                         ? "Hey there!"
+                         : "Hey, \(authViewModel.userInfo.firstName)!")
+                        .font(.wishiesDisplay(.extraBold, 28))
+                        .foregroundColor(Color(hex: "#5B3F0F"))
+                    Text("🎉")
+                        .font(.system(size: 24))
+                        .offset(y: celebrationFloat ? -6 : 0)
+                        .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: celebrationFloat)
+                }
+                .opacity(homeAppeared ? 1 : 0)
+                .offset(y: homeAppeared ? 0 : 26)
+                .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.5).delay(0.05), value: homeAppeared)
+                Text("Your celebrations await ✨")
+                    .font(.wishies(.medium, 13))
+                    .foregroundStyle(Color(hex: "#9A7A3E"))
+                    .opacity(homeAppeared ? 1 : 0)
+                    .offset(y: homeAppeared ? 0 : 26)
+                    .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.5).delay(0.12), value: homeAppeared)
             }
         } trailing: {
             HStack(spacing: 10) {
                 ZStack {
-                    Circle()
+                    RoundedRectangle(cornerRadius: 14)
                         .fill(
                             LinearGradient(
-                                colors: [Color(hex: "#F9C46B"), Color(hex: "#F1D790")],
+                                colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 42, height: 42)
-                        .shadow(color: Color(hex: "#F9C46B").opacity(0.45), radius: 6, x: 0, y: 3)
-                    Image("add")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
+                        .frame(width: 44, height: 44)
+                        .shadow(color: Color(hex: "#F4667A").opacity(0.35), radius: 8, x: 0, y: 4)
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(Color.white)
                 }
+                .rotationEffect(.degrees(6))
                 .anchorPreference(key: CoachMarkBoundsKey.self, value: .bounds) { ["homeAddButton": $0] }
                 .onTapGesture { activeSheet = .add }
                 ZStack {
                     Circle()
                         .fill(Color.white.opacity(0.7))
-                        .frame(width: 42, height: 42)
+                        .frame(width: 44, height: 44)
                         .overlay(
                             Circle().stroke(
                                 LinearGradient(
-                                    colors: [Color(hex: "#F9C46B"), Color(hex: "#FEF3D7")],
+                                    colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
-                                lineWidth: 1.5
+                                lineWidth: 2
                             )
                         )
                     Image("user")
@@ -489,7 +561,7 @@ struct HomeView: View {
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(
                             LinearGradient(
-                                colors: [Color(hex: "#F9C46B"), Color(hex: "#FEF3D7")],
+                                colors: [Color(hex: "#FF9A76"), Color(hex: "#FEF3D7")],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             ),
@@ -503,7 +575,7 @@ struct HomeView: View {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(
                             LinearGradient(
-                                colors: [Color(hex: "#F9C46B"), Color(hex: "#F1D790")],
+                                colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -541,7 +613,7 @@ struct HomeView: View {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [Color(hex: "#FEF3D7"), Color(hex: "#F9C46B")],
+                            colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -565,7 +637,7 @@ struct HomeView: View {
             WishieButton(
                 title: buttonTitle,
                 enabled: true,
-                filColor: Color(hex: "#F1D790"),
+                filColor: Color(hex: "#FF9A76"),
                 width: 220,
                 height: 48
             ) {

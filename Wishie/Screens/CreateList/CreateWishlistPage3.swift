@@ -42,11 +42,16 @@ struct CreateWishlistPage3: View {
             ScrollView {
                 LazyVGrid(columns: column, spacing: 15) {
                     ForEach(GradientTheme.allCases, id: \.self) { theme in
-                        Image(theme.imageName)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                            .shadow(color: .lightYellow ,radius: 1, x: -5, y: 5)
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(hex: theme.primary), Color(hex: theme.secondary)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .aspectRatio(1, contentMode: .fit)
+                            .shadow(color: .lightYellow, radius: 1, x: -5, y: 5)
                             .overlay {
                                 RoundedRectangle(cornerRadius: 10)
                                     .stroke(

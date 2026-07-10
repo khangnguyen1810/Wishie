@@ -14,25 +14,25 @@ enum GradientTheme: String, CaseIterable {
     var primary: String {
         switch self {
         case .sunset:
-            return "#FEF3D7"
+            return "#FF9A76"
         case .ocean:
-            return "#cbf1f5"
+            return "#6FE3D0"
         case .forest:
-            return "#bcd9a2"
+            return "#8DE0A0"
         case .purpleDream:
-            return "F4EEFF"
+            return "#B79CF2"
         }
     }
     var secondary: String {
         switch self {
         case .sunset:
-            return "#F1D790"
+            return "#F4667A"
         case .ocean:
-            return "#71c9ce"
+            return "#38B7B0"
         case .forest:
-            return "91C788"
+            return "#3FAE72"
         case .purpleDream:
-            return "#dcd6f7"
+            return "#9C7BE0"
         }
     }
     var imageName: String {

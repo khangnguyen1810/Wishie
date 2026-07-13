@@ -219,6 +219,8 @@ struct HomeView: View {
                     WishlistQRCodeView(wishlistId: id)
                 case .wishListInfoScreen(wishlistId: let id):
                     WishListInformationView(wishlistId: id, path: $path)
+                case .editWishlistInfo(wishlistId: let id):
+                    EditWishlistInfoScreen(wishlistId: id, path: $path)
                 case .wishListDetailScreen(wishlistId: let id, isFromInfo: let isFromInfo):
                     WishlistDetailScreen(
                         navigationPath: $path,

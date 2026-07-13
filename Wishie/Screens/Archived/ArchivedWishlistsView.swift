@@ -32,10 +32,26 @@ struct ArchivedWishlistsView: View {
             }
         } content: {
             if viewModel.archivedWishlists.isEmpty {
-                VStack(spacing: 12) {
+                VStack(spacing: 20) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 110, height: 110)
+                        Image("gift_img")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 64, height: 64)
+                    }
                     Text("No archived wishlists yet")
-                        .font(.wishies(.bold, 18))
-                        .foregroundStyle(.black)
+                        .font(.wishies(.bold, 20))
+                        .foregroundStyle(Color.black)
+                        .multilineTextAlignment(.center)
                     Text("Wishlists you archive from Home will show up here.")
                         .font(.wishies(.regular, 14))
                         .foregroundStyle(.darkGrey)

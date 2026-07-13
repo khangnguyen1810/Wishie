@@ -127,20 +127,17 @@ struct HomeView: View {
                     } else {
                         summaryCard()
                             .padding(.bottom, 5)
-                        List {
-                            if !hasSeenHomeTutorial {
-                                HomeItemViewCell(item: exampleWishlistForTutorial)
-                                    .listRowSeparator(.hidden)
-                                    .listRowInsets(EdgeInsets())
-                                    .listRowBackground(Color.clear)
-                                    .anchorPreference(key: CoachMarkBoundsKey.self, value: .bounds) { ["homeExampleItem": $0] }
-                                    .allowsHitTesting(false)
-                                    .opacity(0.95)
-                            } else {
-                                switch selectedTab {
-                                case .myList:
-                                    ForEach(Array(homeViewModel.myWishlists.enumerated()), id: \.element.0) { index, wishlist in
-                                        ZStack {
+                        ScrollView {
+                            LazyVStack(spacing: 6) {
+                                if !hasSeenHomeTutorial {
+                                    HomeItemViewCell(item: exampleWishlistForTutorial)
+                                        .anchorPreference(key: CoachMarkBoundsKey.self, value: .bounds) { ["homeExampleItem": $0] }
+                                        .allowsHitTesting(false)
+                                        .opacity(0.95)
+                                } else {
+                                    switch selectedTab {
+                                    case .myList:
+                                        ForEach(Array(homeViewModel.myWishlists.enumerated()), id: \.element.0) { index, wishlist in
                                             NavigationLink {
                                                 WishlistDetailScreen(
                                                     navigationPath: $path,
@@ -151,37 +148,40 @@ struct HomeView: View {
                                                     .zoom(sourceID: wishlist.0.id, in: animation)
                                                 )
                                             } label: {
-                                                EmptyView()
+                                                HomeItemViewCell(item: wishlist)
+                                                    .rotationEffect(.degrees(index % 2 == 0 ? -1 : 1.5))
                                             }
-                                            .opacity(0)
-                                            HomeItemViewCell(item: wishlist)
-                                                .rotationEffect(.degrees(index % 2 == 0 ? -1 : 1.5))
-                                        }
-                                        .opacity(homeAppeared ? 1 : 0)
-                                        .offset(y: homeAppeared ? 0 : 26)
-                                        .animation(
-                                            .timingCurve(0.22, 1, 0.36, 1, duration: 0.5)
-                                                .delay(0.36 + Double(min(index, 6)) * 0.08),
-                                            value: homeAppeared
-                                        )
-                                        .contentShape(Rectangle())
-                                        .matchedTransitionSource(id: wishlist.0.id, in: animation)
-                                        .listRowSeparator(.hidden)
-                                        .listRowInsets(EdgeInsets(top: 14, leading: 0, bottom: 14, trailing: 0))
-                                        .listRowBackground(Color.clear)
-                                        .swipeActions {
-                                            Button {
-                                                selectedWishlist = wishlist
-                                                showDeleteConfirm = true
-                                            } label: {
-                                                Label("Delete wishlist", systemImage: "trash")
+                                            .buttonStyle(.plain)
+                                            .padding(.vertical, 14)
+                                            .opacity(homeAppeared ? 1 : 0)
+                                            .offset(y: homeAppeared ? 0 : 26)
+                                            .animation(
+                                                .timingCurve(0.22, 1, 0.36, 1, duration: 0.5)
+                                                    .delay(0.36 + Double(min(index, 6)) * 0.08),
+                                                value: homeAppeared
+                                            )
+                                            .matchedTransitionSource(id: wishlist.0.id, in: animation)
+                                            .contextMenu {
+                                                Button {
+                                                    path.append(Route.editWishlistInfo(wishlistId: wishlist.0.id))
+                                                } label: {
+                                                    Label("Change info", systemImage: "pencil")
+                                                }
+                                                Button {
+                                                    Task { await homeViewModel.archiveWishlist(wishlistId: wishlist.0.id) }
+                                                } label: {
+                                                    Label("Archive", systemImage: "archivebox")
+                                                }
+                                                Button(role: .destructive) {
+                                                    selectedWishlist = wishlist
+                                                    showDeleteConfirm = true
+                                                } label: {
+                                                    Label("Delete", systemImage: "trash")
+                                                }
                                             }
-                                            .tint(.wishiePink)
                                         }
-                                    }
-                                case .friendsList:
-                                    ForEach(Array(homeViewModel.myFriendWishlists.enumerated()), id: \.element.0) { index, wishlist in
-                                        ZStack {
+                                    case .friendsList:
+                                        ForEach(Array(homeViewModel.myFriendWishlists.enumerated()), id: \.element.0) { index, wishlist in
                                             NavigationLink {
                                                 WishlistDetailScreen(
                                                     navigationPath: $path,
@@ -192,42 +192,33 @@ struct HomeView: View {
                                                     .zoom(sourceID: wishlist.0.id, in: animation)
                                                 )
                                             } label: {
-                                                EmptyView()
+                                                HomeItemViewCell(item: wishlist)
+                                                    .rotationEffect(.degrees(index % 2 == 0 ? -1 : 1.5))
                                             }
-                                            .opacity(0)
-                                            HomeItemViewCell(item: wishlist)
-                                                .rotationEffect(.degrees(index % 2 == 0 ? -1 : 1.5))
-                                        }
-                                        .opacity(homeAppeared ? 1 : 0)
-                                        .offset(y: homeAppeared ? 0 : 26)
-                                        .animation(
-                                            .timingCurve(0.22, 1, 0.36, 1, duration: 0.5)
-                                                .delay(0.36 + Double(min(index, 6)) * 0.08),
-                                            value: homeAppeared
-                                        )
-                                        .contentShape(Rectangle())
-                                        .matchedTransitionSource(id: wishlist.0.id, in: animation)
-                                        .listRowSeparator(.hidden)
-                                        .listRowInsets(EdgeInsets(top: 14, leading: 0, bottom: 14, trailing: 0))
-                                        .listRowBackground(Color.clear)
-                                        .swipeActions {
-                                            Button {
-                                                selectedWishlist = wishlist
-                                                showLeaveConfirm = true
-                                            } label: {
-                                                Label("Leave Wishlist", systemImage: "trash")
+                                            .buttonStyle(.plain)
+                                            .padding(.vertical, 14)
+                                            .opacity(homeAppeared ? 1 : 0)
+                                            .offset(y: homeAppeared ? 0 : 26)
+                                            .animation(
+                                                .timingCurve(0.22, 1, 0.36, 1, duration: 0.5)
+                                                    .delay(0.36 + Double(min(index, 6)) * 0.08),
+                                                value: homeAppeared
+                                            )
+                                            .matchedTransitionSource(id: wishlist.0.id, in: animation)
+                                            .contextMenu {
+                                                Button(role: .destructive) {
+                                                    selectedWishlist = wishlist
+                                                    showLeaveConfirm = true
+                                                } label: {
+                                                    Label("Leave", systemImage: "rectangle.portrait.and.arrow.right")
+                                                }
                                             }
-                                            .tint(.wishiePink)
                                         }
                                     }
                                 }
                             }
                         }
-                        .listRowSpacing(6)
-                        .listStyle(.plain)
                         .scrollIndicators(.hidden)
-                        .scrollContentBackground(.hidden)
-                        .background(Color.clear)
                         .refreshable {
                             await homeViewModel.getListWishlist()
                         }
@@ -246,6 +237,8 @@ struct HomeView: View {
                     WishlistQRCodeView(wishlistId: id)
                 case .wishListInfoScreen(wishlistId: let id):
                     WishListInformationView(wishlistId: id, path: $path)
+                case .editWishlistInfo(wishlistId: let id):
+                    EditWishlistInfoScreen(wishlistId: id)
                 case .wishListDetailScreen(wishlistId: let id, isFromInfo: let isFromInfo):
                     WishlistDetailScreen(
                         navigationPath: $path,

@@ -18,6 +18,8 @@ protocol WishlistServiceProtocol {
     func pickItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
     func updateWishlistItem(wishlistId: String, itemId: String, newName: String?, newDescription: String?, newImage: UIImage?, newPrice: String?) async throws -> Result<Bool, Error>
     func deleteWishlist(wishlistId: String) async throws -> Result<Bool, Error>
+    func updateWishlistInfo(wishlistId: String, name: String, description: String, dueDate: Date, themeColor: String?) async throws -> Result<Bool, Error>
+    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<Bool, Error>
     func leaveWishlist(wishListId: String) async throws -> Result<Bool, Error>
     func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
     func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<Bool, Error>
@@ -313,7 +315,40 @@ class WishlistService: WishlistServiceProtocol {
             return .failure(error)
         }
     }
-    
+
+    func updateWishlistInfo(
+        wishlistId: String,
+        name: String,
+        description: String,
+        dueDate: Date,
+        themeColor: String?
+    ) async throws -> Result<Bool, any Error> {
+        do {
+            let docRef = db.collection("wishList").document(wishlistId)
+            try await docRef.updateData([
+                "wishListName": name,
+                "description": description,
+                "dueDate": Timestamp(date: dueDate),
+                "colorTheme": themeColor ?? ""
+            ])
+            return .success(true)
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<Bool, any Error> {
+        do {
+            let docRef = db.collection("wishList").document(wishlistId)
+            try await docRef.updateData([
+                "isArchived": isArchived
+            ])
+            return .success(true)
+        } catch {
+            return .failure(error)
+        }
+    }
+
     func leaveWishlist(wishListId: String) async throws -> Result<Bool, any Error> {
         do {
             guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else {

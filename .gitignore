@@ -27,3 +27,7 @@ Podfile.lock
 # Environment
 .env
 .env.local
+
+# Agent tooling (local scratch state, not project source)
+.claude/
+.superpowers/

@@ -18,4 +18,5 @@ enum Route: Hashable {
     case editInterests
     case editWishItem(wishlistId: String, isEdit: Bool, wishItem: WishlistItem)
     case editWishlistInfo(wishlistId: String)
+    case archivedWishlists
 }

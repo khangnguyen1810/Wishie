@@ -68,6 +68,10 @@ struct ProfileView: View {
                             .onTapGesture {
                                 path.append(Route.editInterests)
                             }
+                            profileInfoRow(label: "Archived wishlists", value: "")
+                                .onTapGesture {
+                                    path.append(Route.archivedWishlists)
+                                }
                         }
                     }
                     .padding(.vertical, 10)
@@ -90,6 +94,8 @@ struct ProfileView: View {
                     EditProfileView(userModel: authViewModel.userInfo, viewModel: editViewModel)
                 case .editInterests:
                     InterestsSelectionView(isOnboarding: false)
+                case .archivedWishlists:
+                    ArchivedWishlistsView()
                 default:
                     EmptyView()
                 }

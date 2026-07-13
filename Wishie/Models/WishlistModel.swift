@@ -22,6 +22,7 @@ struct WishlistModel: Identifiable, Hashable {
     var themeColor: String?
     var userCreateId: String
     let members: [String: WishlistRole]
+    var isArchived: Bool
     
     init(
         id: String = UUID().uuidString,
@@ -31,7 +32,8 @@ struct WishlistModel: Identifiable, Hashable {
         items: [WishlistItem] = [],
         themeColor :String? = nil,
         userCreateId: String,
-        members: [String: WishlistRole] = [:]) {
+        members: [String: WishlistRole] = [:],
+        isArchived: Bool = false) {
             self.id = id
             self.name = name
             self.description = description
@@ -40,6 +42,7 @@ struct WishlistModel: Identifiable, Hashable {
             self.userCreateId = userCreateId
             self.themeColor = themeColor
             self.members = members
+            self.isArchived = isArchived
         }
    func isOwner() -> Bool {
        guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else { return false }
@@ -85,6 +88,7 @@ extension WishlistModel {
         self.userCreateId = userCreateId
         self.dueDate = (dictionary["dueDate"] as? Timestamp)?.dateValue() ?? Date()
         self.themeColor = dictionary["colorTheme"] as? String
+        self.isArchived = dictionary["isArchived"] as? Bool ?? false
         if let membersDict = dictionary["members"] as? [String: String] {
             self.members = membersDict.compactMapValues { WishlistRole(rawValue: $0) }
         } else {

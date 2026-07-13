@@ -37,11 +37,11 @@ class HomeViewModel: ObservableObject {
                 guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else { return }
                    
                    self.myWishlists = list.filter {
-                       $0.0.members[userId] == .owner
+                       $0.0.members[userId] == .owner && !$0.0.isArchived
                    }
-                   
+
                    self.myFriendWishlists = list.filter {
-                       $0.0.members[userId] == .member
+                       $0.0.members[userId] == .member && !$0.0.isArchived
                    }
             case .failure(let error):
                 isGettingList = false
@@ -71,8 +71,8 @@ class HomeViewModel: ObservableObject {
             case .success(let list):
                 isGettingList = false
                 guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else { return }
-                self.myWishlists = list.filter { $0.0.members[userId] == .owner }
-                self.myFriendWishlists = list.filter { $0.0.members[userId] == .member }
+                self.myWishlists = list.filter { $0.0.members[userId] == .owner && !$0.0.isArchived }
+                self.myFriendWishlists = list.filter { $0.0.members[userId] == .member && !$0.0.isArchived }
             case .failure(let error):
                 isGettingList = false
                 self.errorMessage = error.localizedDescription
@@ -110,6 +110,32 @@ class HomeViewModel: ObservableObject {
     func leaveWishlist(wishlistId: String) async {
         do {
             let result = try await service.leaveWishlist(wishListId:  wishlistId)
+            switch result {
+            case .success(let success):
+                await getListWishlist()
+            case .failure(let failure):
+                self.errorMessage = failure.localizedDescription
+            }
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
+    }
+    func archiveWishlist(wishlistId: String) async {
+        do {
+            let result = try await service.setArchived(wishlistId: wishlistId, isArchived: true)
+            switch result {
+            case .success(let success):
+                await getListWishlist()
+            case .failure(let failure):
+                self.errorMessage = failure.localizedDescription
+            }
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
+    }
+    func unarchiveWishlist(wishlistId: String) async {
+        do {
+            let result = try await service.setArchived(wishlistId: wishlistId, isArchived: false)
             switch result {
             case .success(let success):
                 await getListWishlist()

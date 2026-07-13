@@ -161,9 +161,23 @@ struct HomeView: View {
                                                 value: homeAppeared
                                             )
                                             .matchedTransitionSource(id: wishlist.0.id, in: animation)
-                                            .swipeToDelete(tint: .wishiePink, label: "Delete") {
-                                                selectedWishlist = wishlist
-                                                showDeleteConfirm = true
+                                            .contextMenu {
+                                                Button {
+                                                    path.append(Route.editWishlistInfo(wishlistId: wishlist.0.id))
+                                                } label: {
+                                                    Label("Change info", systemImage: "pencil")
+                                                }
+                                                Button {
+                                                    Task { await homeViewModel.archiveWishlist(wishlistId: wishlist.0.id) }
+                                                } label: {
+                                                    Label("Archive", systemImage: "archivebox")
+                                                }
+                                                Button(role: .destructive) {
+                                                    selectedWishlist = wishlist
+                                                    showDeleteConfirm = true
+                                                } label: {
+                                                    Label("Delete", systemImage: "trash")
+                                                }
                                             }
                                         }
                                     case .friendsList:
@@ -191,9 +205,13 @@ struct HomeView: View {
                                                 value: homeAppeared
                                             )
                                             .matchedTransitionSource(id: wishlist.0.id, in: animation)
-                                            .swipeToDelete(tint: .wishiePink, label: "Leave") {
-                                                selectedWishlist = wishlist
-                                                showLeaveConfirm = true
+                                            .contextMenu {
+                                                Button(role: .destructive) {
+                                                    selectedWishlist = wishlist
+                                                    showLeaveConfirm = true
+                                                } label: {
+                                                    Label("Leave", systemImage: "rectangle.portrait.and.arrow.right")
+                                                }
                                             }
                                         }
                                     }

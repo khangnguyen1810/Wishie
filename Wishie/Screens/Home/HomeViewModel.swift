@@ -133,17 +133,4 @@ class HomeViewModel: ObservableObject {
             self.errorMessage = error.localizedDescription
         }
     }
-    func unarchiveWishlist(wishlistId: String) async {
-        do {
-            let result = try await service.setArchived(wishlistId: wishlistId, isArchived: false)
-            switch result {
-            case .success(let success):
-                await getListWishlist()
-            case .failure(let failure):
-                self.errorMessage = failure.localizedDescription
-            }
-        } catch {
-            self.errorMessage = error.localizedDescription
-        }
-    }
 }

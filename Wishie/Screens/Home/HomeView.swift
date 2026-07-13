@@ -238,7 +238,7 @@ struct HomeView: View {
                 case .wishListInfoScreen(wishlistId: let id):
                     WishListInformationView(wishlistId: id, path: $path)
                 case .editWishlistInfo(wishlistId: let id):
-                    EditWishlistInfoScreen(wishlistId: id, path: $path)
+                    EditWishlistInfoScreen(wishlistId: id)
                 case .wishListDetailScreen(wishlistId: let id, isFromInfo: let isFromInfo):
                     WishlistDetailScreen(
                         navigationPath: $path,

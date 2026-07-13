@@ -7,7 +7,6 @@ import SwiftUI
 
 struct EditWishlistInfoScreen: View {
     let wishlistId: String
-    @Binding var path: NavigationPath
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = EditWishlistInfoViewModel()
     @FocusState private var focusedField: Field?
@@ -115,7 +114,6 @@ struct EditWishlistInfoScreen: View {
 
 #Preview {
     EditWishlistInfoScreen(
-        wishlistId: "136D375B-7015-4C9A-97BE-830C5C46F24A",
-        path: .constant(NavigationPath())
+        wishlistId: "136D375B-7015-4C9A-97BE-830C5C46F24A"
     )
 }

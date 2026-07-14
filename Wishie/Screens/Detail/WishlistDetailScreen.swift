@@ -39,7 +39,7 @@ struct WishlistDetailScreen: View {
     }
     var wishlistId: String?
     var isFromInfo: Bool = false
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
             StickyHeaderView(
@@ -56,12 +56,17 @@ struct WishlistDetailScreen: View {
                     dismiss()
                 }
             } content: {
-                VStack (spacing: 15) {
+                VStack (spacing: 20) {
                     headerContent()
                         .padding(.horizontal, 15)
                         .padding(.top, 15)
+                    if let mostDesiredItem = viewModel.currentMostDesiredItem {
+                        mostDesiredSection(item: mostDesiredItem)
+                            .padding(.horizontal, 15)
+                    }
                     listContent()
                 }
+                .padding(.bottom, 100)
             }
             if viewModel.wishlistInfo.isUserJoined() == false {
                 WishieButton(
@@ -192,6 +197,23 @@ struct WishlistDetailScreen: View {
             }
         )
         .showDialogIfNeeded(
+            $viewModel.showReplaceMostDesiredConfirmation,
+            title: "Replace most desired?",
+            message: "\"\(viewModel.currentMostDesiredItem?.name ?? "")\" is currently your most desired gift. Marking \"\(viewModel.itemSelected.name)\" will replace it.",
+            showCancel: true,
+            onOk: {
+                Task {
+                    await viewModel.setDesired(
+                        wishlistId: viewModel.wishlistInfo.id,
+                        isDesired: true
+                    )
+                }
+            },
+            onCancel: {
+                viewModel.showBottomSheet = true
+            }
+        )
+        .showDialogIfNeeded(
             $viewModel.showReserveConfirmation,
             title: "Reserve this gift?",
             message: "Do you want to select this gift?",
@@ -224,17 +246,14 @@ struct WishlistDetailScreen: View {
         let progress = totalCount > 0 ? Double(pickedCount) / Double(totalCount) : 0.0
         VStack(spacing: 15) {
             HStack {
-                HStack(spacing: 4) {
-                    Image(systemName: "gift.fill")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 16, height: 16)
-                        .foregroundStyle(Color(hex: viewModel.wishlistInfo.theme.secondary))
+                HStack(spacing: 6) {
+                    Text("🎁")
+                        .font(.system(size: 20))
                     Text("\(totalCount) items")
-                        .font(.wishies(.regular, 16))
+                        .font(.wishies(.bold, 16))
                         .foregroundStyle(.black)
                 }
-                
+
                 Spacer()
                 Image("date_wishlist")
                     .resizable()
@@ -291,71 +310,126 @@ struct WishlistDetailScreen: View {
                 .foregroundStyle(.darkGrey)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(Color.lightYellow1)
+                .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 3)
+        )
     }
-    
+
+    @ViewBuilder
+    func mostDesiredSection(item: WishlistItem) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Text("🌟")
+                    .font(.system(size: 14))
+                Text("Most Desired")
+                    .font(.wishies(.bold, 14))
+                    .foregroundStyle(Color(hex: "#5B3F0F"))
+            }
+            TopPickCard(item: item) {
+                viewModel.itemSelected = item
+                viewModel.showBottomSheet = true
+            }
+            .equatable()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     @ViewBuilder
     func listContent() -> some View {
-        ScrollView {
-            LazyVStack(spacing: 12) {
-                ForEach(viewModel.wishlistInfo.items, id: \.self) { item in
-                    HStack {
+        let items = viewModel.wishlistInfo.items
+        let columns = [
+            GridItem(.flexible(), spacing: 12),
+            GridItem(.flexible(), spacing: 12)
+        ]
+        VStack(alignment: .leading, spacing: 10) {
+            Text("All Wishes · \(items.count)")
+                .font(.wishies(.bold, 14))
+                .foregroundStyle(Color(hex: "#5B3F0F"))
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(items, id: \.self) { item in
+                    gridItemCard(item: item)
+                }
+            }
+        }
+        .padding(.horizontal, 15)
+    }
+
+    @ViewBuilder
+    func gridItemCard(item: WishlistItem) -> some View {
+        let accent = Color(hex: viewModel.wishlistInfo.theme.secondary)
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .topTrailing) {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(hex: viewModel.wishlistInfo.theme.primary).lightened(by: 0.8))
+                    .frame(height: 64)
+                    .overlay {
                         WebImage(url: URL(string: item.image ?? ""), content: { image in
                             image
                                 .resizable()
-                                .scaledToFill()
-                        }, placeholder: {
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(
-                                    Color(hex: viewModel.wishlistInfo.theme.secondary)
-                                )
-                                .frame(
-                                    width: UIScreen.main.bounds.width/4,
-                                    height:  UIScreen.main.bounds.width/4
-                                )
-                                .overlay {
-                                    DotLottieAnimation(fileName: "giftloading", config: AnimationConfig(autoplay: true, loop: true)).view()
-                                        .frame(width: 40)
-                                }
-                        })
-                        .frame(width: 80, height: 80)
-                        .clipped()
-                        .cornerRadius(10)
-                        
-                        Text(item.name)
-                            .font(.wishies(.regular, 15))
-                            .foregroundStyle(.black)
-                        
-                        if item.isMostDesired {
-                            Image(systemName: "star.fill")
-                                .foregroundStyle(.yellow)
-                                .frame(width: 16, height: 16)
-                        }
-                        
-                        if item.isPicked {
-                            Spacer()
-                            Image("user")
-                                .resizable()
                                 .scaledToFit()
-                                .frame(width: 20, height: 20)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(
-                                item.isPicked
-                                    ? Color(hex: viewModel.wishlistInfo.theme.primary).lightened(by: 0.6)
-                                    : Color.white
+                        }, placeholder: {
+                            DotLottieAnimation(
+                                fileName: "giftloading",
+                                config: AnimationConfig(autoplay: true, loop: true)
                             )
-                    )
-                    .onTapGesture {
-                        viewModel.itemSelected = item
-                        viewModel.showBottomSheet = true
+                            .view()
+                            .frame(width: 30, height: 30)
+                        })
+                        .frame(width: 44, height: 44)
                     }
+                if item.isPicked {
+                    HStack(spacing: 3) {
+                        Text("🎁")
+                            .font(.system(size: 9.5))
+                        Text("Picked")
+                            .font(.wishies(.bold, 9.5))
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(accent))
+                    .padding(8)
                 }
             }
-            .padding(.horizontal, 15)
+            Text(item.name)
+                .font(.wishies(.bold, 13.5))
+                .foregroundStyle(Color(hex: "#3B2A0F"))
+                .lineLimit(1)
+                .padding(.top, 8)
+            if let price = item.price, !price.isEmpty {
+                Text(price)
+                    .font(.wishies(.bold, 12))
+                    .foregroundStyle(Color(hex: "#8C7A5A"))
+                    .padding(.top, 2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.white)
+                .shadow(
+                    color: item.isPicked
+                        ? accent.opacity(0.18)
+                        : Color(hex: "#B48C3C").opacity(0.08),
+                    radius: item.isPicked ? 9 : 7,
+                    x: 0,
+                    y: item.isPicked ? 8 : 6
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(
+                    item.isPicked ? accent : Color(hex: "#F1E4C4"),
+                    lineWidth: item.isPicked ? 2 : 1
+                )
+        )
+        .onTapGesture {
+            viewModel.itemSelected = item
+            viewModel.showBottomSheet = true
         }
     }
     @ViewBuilder
@@ -494,10 +568,17 @@ struct WishlistDetailScreen: View {
             title: viewModel.itemSelected.isMostDesired ? "Remove most desired" : "Mark as Most Desired",
             fill: Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.4)
         ) {
+            if viewModel.wouldReplaceMostDesired {
+                viewModel.showBottomSheet = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    viewModel.showReplaceMostDesiredConfirmation = true
+                }
+                return
+            }
             Task {
                 await viewModel.setDesired(
-                    wishlistId: wishlist?.id ?? "",
-                    isDesired: viewModel.itemSelected.isMostDesired ? false : true
+                    wishlistId: viewModel.wishlistInfo.id,
+                    isDesired: !viewModel.itemSelected.isMostDesired
                 )
                 viewModel.showBottomSheet = false
             }

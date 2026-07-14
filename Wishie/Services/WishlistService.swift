@@ -403,16 +403,15 @@ class WishlistService: WishlistServiceProtocol {
         do {
             let docRef = db.collection("wishList").document(wishlistId)
             let snapshot = try await docRef.getDocument()
-            guard var items = snapshot.data()?["wishListItems"] as? [[String: Any]] else {
+            guard let items = snapshot.data()?["wishListItems"] as? [[String: Any]] else {
                 throw NSError(domain: "WishlistService", code: 404)
             }
-            for index in items.indices {
-                if let id = items[index]["id"] as? String, id == itemId {
-                    items[index]["isMostDesired"] = isMostDesired
-                    break
-                }
-            }
-            try await docRef.updateData(["wishListItems": items])
+            let updatedItems = MostDesiredRule.apply(
+                items: items,
+                itemId: itemId,
+                isMostDesired: isMostDesired
+            )
+            try await docRef.updateData(["wishListItems": updatedItems])
             return .success(true)
         } catch {
             return .failure(error)

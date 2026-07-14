@@ -26,6 +26,7 @@ class WishlistDetailViewController: ObservableObject {
     @Published var showBottomSheet = false
     @Published var showReserveConfirmation: Bool = false
     @Published var showDeleteConfirmation: Bool = false
+    @Published var showReplaceMostDesiredConfirmation: Bool = false
     @Published var joinSucceed: Bool = false
     @Published var joinFailed: Bool = false
     @Published var joinErrorMessage: String = ""
@@ -207,6 +208,17 @@ class WishlistDetailViewController: ObservableObject {
             errorMessage = error.localizedDescription
             isShowError = true
         }
+    }
+
+    /// The item currently holding the most-desired flag, if any.
+    var currentMostDesiredItem: WishlistItem? {
+        wishlistInfo.items.first(where: { $0.isMostDesired })
+    }
+
+    /// True when marking `itemSelected` would displace a different item that already holds the flag.
+    var wouldReplaceMostDesired: Bool {
+        guard !itemSelected.isMostDesired, let current = currentMostDesiredItem else { return false }
+        return current.id != itemSelected.id
     }
 
     func setDesired(wishlistId: String, isDesired: Bool) async {

@@ -105,6 +105,7 @@ struct HomeView: View {
                         .offset(y: homeAppeared ? 0 : 26)
                         .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.5).delay(0.18), value: homeAppeared)
                         .padding(.bottom, 14)
+                        .padding(.horizontal, 10)
                     if isEmpty {
                         contentUnavailable(
                             msg: selectedTab == .myList
@@ -127,6 +128,7 @@ struct HomeView: View {
                     } else {
                         summaryCard()
                             .padding(.bottom, 5)
+                            .padding(.horizontal,10)
                         ScrollView {
                             LazyVStack(spacing: 6) {
                                 if !hasSeenHomeTutorial {
@@ -150,6 +152,8 @@ struct HomeView: View {
                                             } label: {
                                                 HomeItemViewCell(item: wishlist)
                                                     .rotationEffect(.degrees(index % 2 == 0 ? -1 : 1.5))
+                                                    .padding(.top, index == 0 ? 15 : 0)
+                                                    .padding(.bottom, 10)
                                             }
                                             .buttonStyle(.plain)
                                             .padding(.vertical, 14)
@@ -194,6 +198,8 @@ struct HomeView: View {
                                             } label: {
                                                 HomeItemViewCell(item: wishlist)
                                                     .rotationEffect(.degrees(index % 2 == 0 ? -1 : 1.5))
+                                                    .padding(.top, index == 0 ? 15 : 0)
+                                                    .padding(.bottom, 10)
                                             }
                                             .buttonStyle(.plain)
                                             .padding(.vertical, 14)
@@ -223,7 +229,8 @@ struct HomeView: View {
                             await homeViewModel.getListWishlist()
                         }
                     }
-                }
+                },
+                contentPadding: 0
             )
             .navigationDestination(for: Route.self) { path in
                 switch path {

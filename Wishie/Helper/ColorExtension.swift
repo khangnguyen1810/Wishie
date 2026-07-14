@@ -33,4 +33,19 @@ extension Color {
             opacity: Double(a) / 255
         )
     }
+
+    /// Blends the color toward white so it reads as a softer, less saturated surface
+    /// while keeping its hue recognizable. `amount` is 0 (unchanged) to 1 (pure white).
+    func lightened(by amount: CGFloat) -> Color {
+        let uiColor = UIColor(self)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return Color(
+            .sRGB,
+            red: r + (1 - r) * amount,
+            green: g + (1 - g) * amount,
+            blue: b + (1 - b) * amount,
+            opacity: a
+        )
+    }
 }

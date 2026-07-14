@@ -7,7 +7,6 @@
   "github.copilot.chat.agent.autoFix": true,
   "github.copilot.chat.codeGeneration.useInstructionFiles": true,
   "chat.sendElementsToChat.enabled": true,
-  "chat.sendElementsToChat.attachImages": true,
   "chat.sendElementsToChat.attachCSS": false,
   "chat.checkpoints.enabled": true,
   "chat.checkpoints.showFileChanges": true,
@@ -205,5 +204,6 @@
       "matchCommandLine": true,
       "description": "Dangerous permission changes"
     }
-  }
+  },
+  "workbench.browser.sendElementsToChat.attachImages": true
 }

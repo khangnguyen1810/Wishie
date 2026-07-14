@@ -68,6 +68,7 @@ struct StickyHeaderView<Content: View>: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 17)
+                                .foregroundStyle(.white)
                         })
                         .onTapGesture {
                             backAction()
@@ -81,6 +82,7 @@ struct StickyHeaderView<Content: View>: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 17)
+                                .foregroundStyle(.white)
                         })
                         .onTapGesture {
                             
@@ -125,7 +127,7 @@ struct StickyHeaderView<Content: View>: View {
         .padding(.top, safeAreaTop + 20)
         .background {
             InverseRoundedRectangle(radius: 30, )
-                .fill(Color(hex: headerColor))
+                .fill(Color(hex: headerColor).lightened(by: 0.45))
                 .padding(.bottom, -progress * 65)
         }
     }

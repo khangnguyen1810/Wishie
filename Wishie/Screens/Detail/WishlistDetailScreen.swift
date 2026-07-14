@@ -82,9 +82,9 @@ struct WishlistDetailScreen: View {
                 } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(.white)
                         .frame(width: 50, height: 50)
-                        .background(Color(hex: viewModel.wishlistInfo.theme.secondary))
+                        .background(Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.4))
                         .clipShape(Circle())
                         .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
                 }
@@ -343,15 +343,12 @@ struct WishlistDetailScreen: View {
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 15)
-                            .fill(Color.white)
+                            .fill(
+                                item.isPicked
+                                    ? Color(hex: viewModel.wishlistInfo.theme.primary).lightened(by: 0.6)
+                                    : Color.white
+                            )
                     )
-                    .overlay {
-                        if item.isPicked {
-                            Color(hex: viewModel.wishlistInfo.theme.primary)
-                                .opacity(0.5)
-                                .clipShape(RoundedRectangle(cornerRadius: 15))
-                        }
-                    }
                     .onTapGesture {
                         viewModel.itemSelected = item
                         viewModel.showBottomSheet = true
@@ -364,7 +361,7 @@ struct WishlistDetailScreen: View {
     @ViewBuilder
     func bottomSheet() -> some View {
         ZStack(alignment: .topLeading) {
-            Color(hex: viewModel.wishlistInfo.theme.primary).ignoresSafeArea()
+            Color(hex: viewModel.wishlistInfo.theme.primary).lightened(by: 0.45).ignoresSafeArea()
             VStack(spacing: 15) {
                 HStack {
                     ZStack {
@@ -468,7 +465,7 @@ struct WishlistDetailScreen: View {
     func linkButton() -> some View {
         bottomSheetButton(
             title: "Link",
-            fill: Color(hex: viewModel.wishlistInfo.theme.secondary),
+            fill: Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.4),
             action:  {
                 viewModel.openProductLink()
             }
@@ -495,7 +492,7 @@ struct WishlistDetailScreen: View {
     func markDesireButton() -> some View {
         bottomSheetButton(
             title: viewModel.itemSelected.isMostDesired ? "Remove most desired" : "Mark as Most Desired",
-            fill: Color(hex: viewModel.wishlistInfo.theme.secondary)
+            fill: Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.4)
         ) {
             Task {
                 await viewModel.setDesired(
@@ -523,7 +520,7 @@ struct WishlistDetailScreen: View {
         } label: {
             ZStack {
                 RoundedRectangle(cornerRadius: 15)
-                    .fill(Color(hex: viewModel.wishlistInfo.theme.secondary))
+                    .fill(Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.4))
                     .frame(maxWidth: .infinity)
                     .frame(height: 45)
                 Text("Edit this item")

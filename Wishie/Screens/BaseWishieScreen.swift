@@ -16,15 +16,18 @@ struct BaseWishieScreen<
     let background: Background
     let topBar: TopBar
     let content: Content
+    let contentPadding: CGFloat
 
     init(
         @ViewBuilder background: () -> Background = { Color.lightYellow1 },
         @ViewBuilder topBar: () -> TopBar,
-        @ViewBuilder content: () -> Content
+        @ViewBuilder content: () -> Content,
+        contentPadding: CGFloat = 10
     ) {
         self.background = background()
         self.topBar = topBar()
         self.content = content()
+        self.contentPadding = contentPadding
     }
 
     var body: some View {
@@ -32,10 +35,11 @@ struct BaseWishieScreen<
             background.ignoresSafeArea()
             VStack {
                 topBar
+                    .padding(.horizontal, 10)
                 content
+                    .padding(.horizontal, contentPadding)
                     .ignoresSafeArea()
             }
-            .padding(.horizontal, 15)
         }
         .navigationBarBackButtonHidden()
     }

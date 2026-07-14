@@ -54,6 +54,7 @@ struct HomeItemViewCell: View {
             statusBadge
                 .offset(x: -14, y: -14)
         }
+        .padding(.horizontal, 15)
     }
 
     @ViewBuilder

@@ -476,19 +476,11 @@ struct WishlistDetailScreen: View {
                     .fill(Color(hex: "#EFE4C8"))
                     .frame(height: 1)
                 if wishlist?.isOwner() == true {
-                    VStack {
-                        HStack {
-                            editButton()
-                            markDesireButton()
-                        }
-                        linkButton()
-                        deleteButton()
-                    }
+                    ownerActionsRow()
+                    deleteButton()
                 } else {
-                    VStack {
-                        linkButton()
-                        reserveButton()
-                    }
+                    nonOwnerActionsRow()
+                    reserveButton()
                 }
             }
             .padding(.top, 16)
@@ -581,6 +573,120 @@ struct WishlistDetailScreen: View {
     }
 
     @ViewBuilder
+    func iconActionButton(
+        icon: String,
+        isSystemIcon: Bool,
+        label: String,
+        isActive: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        VStack(spacing: 6) {
+            ZStack {
+                Circle()
+                    .fill(
+                        isActive
+                            ? AnyShapeStyle(
+                                LinearGradient(
+                                    colors: [Color(hex: "#FFD66B"), Color(hex: "#F3B23A")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            : AnyShapeStyle(Color(hex: "#F7F1E3"))
+                    )
+                    .frame(width: 48, height: 48)
+                if isSystemIcon {
+                    Image(systemName: icon)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(Color(hex: "#5B4A32"))
+                } else {
+                    Image(icon)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 18, height: 18)
+                        .foregroundStyle(Color(hex: "#5B4A32"))
+                }
+            }
+            Text(label)
+                .font(.wishies(.medium, 11.5))
+                .foregroundStyle(Color(hex: "#5B4A32"))
+        }
+        .onTapGesture {
+            action()
+        }
+    }
+
+    @ViewBuilder
+    func ownerActionsRow() -> some View {
+        HStack {
+            iconActionButton(
+                icon: "most_desired_icon",
+                isSystemIcon: false,
+                label: "Most Desired",
+                isActive: viewModel.itemSelected.isMostDesired
+            ) {
+                if viewModel.wouldReplaceMostDesired {
+                    viewModel.showBottomSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        viewModel.showReplaceMostDesiredConfirmation = true
+                    }
+                    return
+                }
+                Task {
+                    await viewModel.setDesired(
+                        wishlistId: viewModel.wishlistInfo.id,
+                        isDesired: !viewModel.itemSelected.isMostDesired
+                    )
+                    viewModel.showBottomSheet = false
+                }
+            }
+            Spacer()
+            iconActionButton(
+                icon: "pencil",
+                isSystemIcon: true,
+                label: "Edit",
+                isActive: false
+            ) {
+                let itemSelected = viewModel.itemSelected
+                viewModel.newItemName = itemSelected.name
+                viewModel.newItemRemoteImageUrl = itemSelected.image
+                viewModel.newItemLink = itemSelected.itemLink
+                viewModel.newItemDescription = itemSelected.description
+                viewModel.newItemPrice = itemSelected.price ?? ""
+                viewModel.showBottomSheet = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    viewModel.showEditItemSheet = true
+                }
+            }
+            Spacer()
+            iconActionButton(
+                icon: "link",
+                isSystemIcon: true,
+                label: "Link",
+                isActive: false
+            ) {
+                viewModel.openProductLink()
+            }
+        }
+    }
+
+    @ViewBuilder
+    func nonOwnerActionsRow() -> some View {
+        HStack {
+            Spacer()
+            iconActionButton(
+                icon: "link",
+                isSystemIcon: true,
+                label: "Link",
+                isActive: false
+            ) {
+                viewModel.openProductLink()
+            }
+            Spacer()
+        }
+    }
+
+    @ViewBuilder
     func reserveButton() -> some View {
         bottomSheetButton(
             title: "Reserve",
@@ -595,17 +701,6 @@ struct WishlistDetailScreen: View {
         }
     }
     @ViewBuilder
-    func linkButton() -> some View {
-        bottomSheetButton(
-            title: "Link",
-            fill: Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.4),
-            action:  {
-                viewModel.openProductLink()
-            }
-        )
-    }
-    
-    @ViewBuilder
     func deleteButton() -> some View {
         bottomSheetButton(
             title: "Delete",
@@ -619,56 +714,6 @@ struct WishlistDetailScreen: View {
             }
         }
         .disabled(viewModel.itemSelected.isPicked)
-    }
-    
-    @ViewBuilder
-    func markDesireButton() -> some View {
-        bottomSheetButton(
-            title: viewModel.itemSelected.isMostDesired ? "Remove most desired" : "Mark as Most Desired",
-            fill: Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.4)
-        ) {
-            if viewModel.wouldReplaceMostDesired {
-                viewModel.showBottomSheet = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    viewModel.showReplaceMostDesiredConfirmation = true
-                }
-                return
-            }
-            Task {
-                await viewModel.setDesired(
-                    wishlistId: viewModel.wishlistInfo.id,
-                    isDesired: !viewModel.itemSelected.isMostDesired
-                )
-                viewModel.showBottomSheet = false
-            }
-        }
-    }
-    
-    @ViewBuilder
-    func editButton() -> some View {
-        Button {
-            let itemSelected = viewModel.itemSelected
-            viewModel.newItemName = itemSelected.name
-            viewModel.newItemRemoteImageUrl = itemSelected.image
-            viewModel.newItemLink = itemSelected.itemLink
-            viewModel.newItemDescription = itemSelected.description
-            viewModel.newItemPrice = itemSelected.price ?? ""
-            viewModel.showBottomSheet = false
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                viewModel.showEditItemSheet = true
-            }
-        } label: {
-            ZStack {
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.4))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 45)
-                Text("Edit this item")
-                    .font(.wishies(.bold, 15))
-                    .foregroundStyle(.black)
-                    .frame(maxWidth: .infinity, alignment: .center)
-            }
-        }
     }
     
     @ViewBuilder

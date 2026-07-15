@@ -112,7 +112,8 @@ New `iconActionButton(icon:label:isActive:action:)` builder: 48×48
 circle (`isActive` ? gold gradient `#FFD66B → #F3B23A` : `Color(hex:
 "#F7F1E3")`), icon centered (SF Symbol or the new asset,
 `foregroundStyle` dark brown `#5B4A32`), `Text(label)` underneath
-(`.wishies(.semibold, 11.5)`, `#5B4A32`), laid out in an `HStack`
+(`.wishies(.medium, 11.5)` — `WishieFont` has no semibold case, `.medium`
+is the closest available weight — `#5B4A32`), laid out in an `HStack`
 with `Spacer()`s between (matching the mock's `space-around`).
 
 - **Owner view** (`wishlist?.isOwner() == true`): Most Desired, Edit, Link.

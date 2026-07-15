@@ -9,12 +9,19 @@ import SwiftUI
 import DotLottie
 import SDWebImageSwiftUI
 
+private struct SheetHeightPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
 struct WishlistDetailScreen: View {
     @State private var offsetY: CGFloat = 0
     @State private var channelExpnand: Bool = true
     @State private var appExpnand: Bool = true
     @Environment(\.dismiss) private var dismiss
-    @State private var sheetHeight: CGFloat = .zero
+    @State private var sheetHeight: CGFloat = 480
     @State private var isSharing: Bool = false
     @State private var isEditing: Bool = false
     @State private var showLinkNotValidOrNotExist: Bool = false
@@ -100,8 +107,11 @@ struct WishlistDetailScreen: View {
         }
         .sheet(isPresented: $viewModel.showBottomSheet) {
             bottomSheet()
-                .presentationDetents([.fraction(0.4)])
-                .presentationDragIndicator(.visible)
+                .onPreferenceChange(SheetHeightPreferenceKey.self) { height in
+                    sheetHeight = height
+                }
+                .presentationDetents([.height(sheetHeight)])
+                .presentationDragIndicator(.hidden)
         }
         .sheet(isPresented: $isSharing, content: {
             if let qrImage {
@@ -434,8 +444,29 @@ struct WishlistDetailScreen: View {
     }
     @ViewBuilder
     func bottomSheet() -> some View {
-        ZStack(alignment: .topLeading) {
-            Color(hex: viewModel.wishlistInfo.theme.primary).lightened(by: 0.45).ignoresSafeArea()
+        VStack(spacing: 0) {
+            Capsule()
+                .fill(Color(hex: "#E9DCC0"))
+                .frame(width: 40, height: 5)
+                .padding(.top, 12)
+
+            HStack {
+                Spacer()
+                Button {
+                    viewModel.showBottomSheet = false
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(Color(hex: "#F7F1E3"))
+                            .frame(width: 30, height: 30)
+                        Image(systemName: "xmark")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(Color(hex: "#8C7A5A"))
+                    }
+                }
+            }
+            .padding(.top, 6)
+
             VStack(spacing: 15) {
                 HStack {
                     ZStack {
@@ -484,9 +515,9 @@ struct WishlistDetailScreen: View {
                             .foregroundStyle(.darkGrey)
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        
+
                     }
-                    
+
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 HStack {
@@ -517,9 +548,17 @@ struct WishlistDetailScreen: View {
                     }
                 }
             }
-            .padding()
-            .padding(.top,30)
+            .padding(.top, 16)
         }
+        .padding(.horizontal, 22)
+        .padding(.bottom, 28)
+        .background(
+            GeometryReader { proxy in
+                Color.clear
+                    .preference(key: SheetHeightPreferenceKey.self, value: proxy.size.height)
+            }
+        )
+        .background(Color.white)
     }
     @ViewBuilder
     func reserveButton() -> some View {

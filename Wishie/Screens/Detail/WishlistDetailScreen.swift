@@ -565,7 +565,7 @@ struct WishlistDetailScreen: View {
 
     @ViewBuilder
     func pickedStatusPill() -> some View {
-        let isPickedByMe = viewModel.itemSelected.pickedUserId == currentUserId
+        let isPickedByMe = viewModel.itemSelected.pickedUserId != nil && viewModel.itemSelected.pickedUserId == currentUserId
         let textColor = isPickedByMe ? Color(hex: "#1F8F89") : Color(hex: viewModel.wishlistInfo.theme.secondary)
         let backgroundColor = isPickedByMe ? Color(hex: "#EAFBF8") : Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.7)
         HStack(spacing: 6) {

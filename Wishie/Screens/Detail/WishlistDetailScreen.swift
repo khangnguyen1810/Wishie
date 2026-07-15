@@ -477,10 +477,10 @@ struct WishlistDetailScreen: View {
                     .frame(height: 1)
                 if wishlist?.isOwner() == true {
                     ownerActionsRow()
-                    deleteButton()
+                    deleteCTAButton()
                 } else {
                     nonOwnerActionsRow()
-                    reserveButton()
+                    reserveCTAButton()
                 }
             }
             .padding(.top, 16)
@@ -687,53 +687,46 @@ struct WishlistDetailScreen: View {
     }
 
     @ViewBuilder
-    func reserveButton() -> some View {
-        bottomSheetButton(
-            title: "Reserve",
-            fill: viewModel.itemSelected.isPicked ? .lightGrey : .wishiePink
-        ) {
-            if !viewModel.itemSelected.isPicked {
+    func deleteCTAButton() -> some View {
+        let isDisabled = viewModel.itemSelected.isPicked
+        HStack(spacing: 8) {
+            Image(systemName: "trash")
+                .font(.system(size: 15, weight: .semibold))
+            Text("Delete item")
+                .font(.wishies(.bold, 14.5))
+        }
+        .foregroundStyle(isDisabled ? Color.darkGrey : Color(hex: "#D9375A"))
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 13)
+        .background(
+            Capsule().fill(isDisabled ? Color.lightGrey : Color(hex: "#FFECEF"))
+        )
+        .onTapGesture {
+            guard !isDisabled else { return }
+            viewModel.showBottomSheet = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                viewModel.showDeleteConfirmation = true
+            }
+        }
+    }
+
+    @ViewBuilder
+    func reserveCTAButton() -> some View {
+        let isDisabled = viewModel.itemSelected.isPicked
+        Text("Reserve")
+            .font(.wishies(.bold, 14.5))
+            .foregroundStyle(.black)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 13)
+            .background(
+                Capsule().fill(isDisabled ? Color.lightGrey : Color.wishiePink)
+            )
+            .onTapGesture {
+                guard !isDisabled else { return }
                 viewModel.showBottomSheet = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     viewModel.showReserveConfirmation = true
                 }
             }
-        }
-    }
-    @ViewBuilder
-    func deleteButton() -> some View {
-        bottomSheetButton(
-            title: "Delete",
-            fill: viewModel.itemSelected.isPicked ? .lightGrey : .wishiePink
-        ) {
-            if !viewModel.itemSelected.isPicked {
-                viewModel.showBottomSheet = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    viewModel.showDeleteConfirmation = true
-                }
-            }
-        }
-        .disabled(viewModel.itemSelected.isPicked)
-    }
-    
-    @ViewBuilder
-    func bottomSheetButton(
-        title: String,
-        fill: Color,
-        action: @escaping () -> Void
-    ) -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 15)
-                .fill(fill)
-                .frame(maxWidth: .infinity)
-                .frame(height: 45)
-            Text(title)
-                .font(.wishies(.bold, 15))
-                .foregroundStyle(.black)
-                .frame(maxWidth: .infinity, alignment: .center)
-        }
-        .onTapGesture {
-            action()
-        }
     }
 }

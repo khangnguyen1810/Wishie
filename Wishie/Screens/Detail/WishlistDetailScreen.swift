@@ -44,6 +44,9 @@ struct WishlistDetailScreen: View {
         
         return QRCodeGenerator.generate(from: link)
     }
+    var currentUserId: String? {
+        UserDefaults.standard.string(forKey: WishieConstants.userIdKey)
+    }
     var wishlistId: String?
     var isFromInfo: Bool = false
 
@@ -468,70 +471,10 @@ struct WishlistDetailScreen: View {
             .padding(.top, 6)
 
             VStack(spacing: 15) {
-                HStack {
-                    ZStack {
-                        if let selectedImage = viewModel.selectedImage {
-                            Image(uiImage: selectedImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 80, height: 80)
-                                .clipped()
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        } else {
-                            WebImage(url: URL(string: viewModel.itemSelected.image ?? ""), content: { image in
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                            }, placeholder: {
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(
-                                        Color(hex: viewModel.wishlistInfo.theme.secondary)
-                                    )
-                                    .frame(
-                                        width: UIScreen.main.bounds.width/4,
-                                        height:  UIScreen.main.bounds.width/4
-                                    )
-                                    .overlay {
-                                        DotLottieAnimation(
-                                            fileName: "giftloading",
-                                            config: AnimationConfig(autoplay: true, loop: true)
-                                        )
-                                        .view()
-                                        .frame(width: 40)
-                                    }
-                            })
-                            .frame(width: 80, height: 80)
-                            .clipped()
-                            .cornerRadius(10)
-                        }
-                    }
-                    VStack {
-                        Text(viewModel.itemSelected.name)
-                            .font(.wishies(.bold, 15))
-                            .foregroundStyle(.black)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        Text(viewModel.itemSelected.description)
-                            .font(.wishies(.regular, 15))
-                            .foregroundStyle(.darkGrey)
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                    }
-
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                HStack {
-                    Text("Price")
-                        .font(.wishies(.bold, 15))
-                        .foregroundStyle(.black)
-                    Spacer()
-                    if let price = viewModel.itemSelected.price, !price.isEmpty {
-                        Text(price)
-                            .font(.wishies(.bold, 15))
-                            .foregroundStyle(.darkGrey)
-                    }
-                }
-                Spacer()
+                itemContentRow()
+                Rectangle()
+                    .fill(Color(hex: "#EFE4C8"))
+                    .frame(height: 1)
                 if wishlist?.isOwner() == true {
                     VStack {
                         HStack {
@@ -560,6 +503,83 @@ struct WishlistDetailScreen: View {
         )
         .background(Color.white)
     }
+
+    @ViewBuilder
+    func itemContentRow() -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 14) {
+                ZStack {
+                    if let selectedImage = viewModel.selectedImage {
+                        Image(uiImage: selectedImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 84, height: 84)
+                            .clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: 18))
+                    } else {
+                        WebImage(url: URL(string: viewModel.itemSelected.image ?? ""), content: { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        }, placeholder: {
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(Color(hex: viewModel.wishlistInfo.theme.secondary))
+                                .frame(width: 84, height: 84)
+                                .overlay {
+                                    DotLottieAnimation(
+                                        fileName: "giftloading",
+                                        config: AnimationConfig(autoplay: true, loop: true)
+                                    )
+                                    .view()
+                                    .frame(width: 40)
+                                }
+                        })
+                        .frame(width: 84, height: 84)
+                        .clipped()
+                        .cornerRadius(18)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(viewModel.itemSelected.name)
+                        .font(.wishies(.bold, 19))
+                        .foregroundStyle(.black)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if let price = viewModel.itemSelected.price, !price.isEmpty {
+                        Text(price)
+                            .font(.wishies(.bold, 14))
+                            .foregroundStyle(Color(hex: viewModel.wishlistInfo.theme.secondary))
+                    }
+                    if viewModel.itemSelected.isPicked {
+                        pickedStatusPill()
+                    }
+                }
+            }
+            Text(viewModel.itemSelected.description)
+                .font(.wishies(.regular, 13.5))
+                .foregroundStyle(Color(hex: "#5B4A32"))
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    func pickedStatusPill() -> some View {
+        let isPickedByMe = viewModel.itemSelected.pickedUserId == currentUserId
+        let textColor = isPickedByMe ? Color(hex: "#1F8F89") : Color(hex: viewModel.wishlistInfo.theme.secondary)
+        let backgroundColor = isPickedByMe ? Color(hex: "#EAFBF8") : Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.7)
+        HStack(spacing: 6) {
+            Text("🎁")
+                .font(.system(size: 11))
+            Text(isPickedByMe ? "Picked by you" : "Picked")
+                .font(.wishies(.bold, 11.5))
+                .foregroundStyle(textColor)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(Capsule().fill(backgroundColor))
+    }
+
     @ViewBuilder
     func reserveButton() -> some View {
         bottomSheetButton(

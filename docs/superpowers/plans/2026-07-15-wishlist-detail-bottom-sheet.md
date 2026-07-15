@@ -14,7 +14,7 @@
 - `WishieFont` (in `Wishie/Resources/WishieCustomFont.swift`) only has `.regular`, `.medium`, `.bold`, `.light`, `.italic` — there is no `.semibold`. Use `.medium` wherever the design calls for a mid-weight label.
 - Current-user id is read via `UserDefaults.standard.string(forKey: WishieConstants.userIdKey)` (`WishieConstants.userIdKey == "userid"`) — the same lookup `WishlistModel.isOwner()`/`isUserJoined()` already use. Do not introduce a different mechanism.
 - All existing tap behaviors (edit, mark/unmark most desired incl. the replace-confirmation path, open link, delete incl. disabled-when-picked, reserve incl. disabled-when-picked) must call the exact same `viewModel` methods with the exact same guards as today — this is a visual restyle, not a behavior change.
-- Build/verify command: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro'` (run from `/Users/nguyenkhanghuu/Wishie`).
+- Build/verify command: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5'` (run from `/Users/nguyenkhanghuu/Wishie`).
 
 ---
 
@@ -58,7 +58,7 @@ Create `Wishie/Resources/Assets.xcassets/most_desired_icon.imageset/Contents.jso
 
 - [ ] **Step 3: Build to confirm the asset compiles**
 
-Run: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro'`
+Run: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5'`
 Expected: `** BUILD SUCCEEDED **` (asset catalogs are validated as part of the build; a malformed `Contents.json` fails here with an `actool` error).
 
 - [ ] **Step 4: Commit**
@@ -262,7 +262,7 @@ Replace the whole `bottomSheet()` function (lines 436-523) with (item content/bu
 
 - [ ] **Step 5: Build**
 
-Run: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro'`
+Run: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5'`
 Expected: `** BUILD SUCCEEDED **`
 
 - [ ] **Step 6: Manual check**
@@ -463,7 +463,7 @@ with:
 
 - [ ] **Step 4: Build**
 
-Run: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro'`
+Run: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5'`
 Expected: `** BUILD SUCCEEDED **`
 
 - [ ] **Step 5: Manual check**
@@ -716,7 +716,7 @@ Delete these three now-unused functions entirely (they're fully superseded by `o
 
 - [ ] **Step 4: Build**
 
-Run: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro'`
+Run: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5'`
 Expected: `** BUILD SUCCEEDED **` (note: `reserveButton()`/`deleteButton()`/`bottomSheetButton()` still exist and are still used here, so no dangling references yet — Task 5 removes them.)
 
 - [ ] **Step 5: Manual check**
@@ -881,7 +881,7 @@ Delete these three now-fully-unused functions:
 
 - [ ] **Step 4: Build**
 
-Run: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro'`
+Run: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5'`
 Expected: `** BUILD SUCCEEDED **`
 
 - [ ] **Step 5: Manual check**
@@ -903,7 +903,7 @@ git commit -m "Replace bottom sheet Delete/Reserve buttons with full-width capsu
 
 - [ ] **Step 1: Build for the simulator**
 
-Run: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro'`
+Run: `xcodebuild build -project Wishie.xcodeproj -scheme Wishie -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5'`
 Expected: `** BUILD SUCCEEDED **`
 
 - [ ] **Step 2: Install and launch on the simulator, then walk through every state**

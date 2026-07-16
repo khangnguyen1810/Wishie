@@ -10,7 +10,7 @@ import DotLottie
 import SDWebImageSwiftUI
 
 private struct SheetHeightPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
+    static var defaultValue: CGFloat = .zero
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
     }
@@ -21,7 +21,7 @@ struct WishlistDetailScreen: View {
     @State private var channelExpnand: Bool = true
     @State private var appExpnand: Bool = true
     @Environment(\.dismiss) private var dismiss
-    @State private var sheetHeight: CGFloat = 480
+    @State private var sheetHeight: CGFloat = .zero
     @State private var isSharing: Bool = false
     @State private var isEditing: Bool = false
     @State private var showLinkNotValidOrNotExist: Bool = false
@@ -111,7 +111,6 @@ struct WishlistDetailScreen: View {
         .sheet(isPresented: $viewModel.showBottomSheet) {
             bottomSheet()
                 .onPreferenceChange(SheetHeightPreferenceKey.self) { height in
-                    guard height > 0 else { return }
                     sheetHeight = height
                 }
                 .presentationDetents([.height(sheetHeight)])
@@ -476,9 +475,8 @@ struct WishlistDetailScreen: View {
         }
         .padding(.top, 12)
         .padding(.horizontal, 22)
-        .padding(.bottom, 18)
         .background(Color.white)
-        .background(
+        .overlay(
             GeometryReader { proxy in
                 Color.clear
                     .preference(key: SheetHeightPreferenceKey.self, value: proxy.size.height)
@@ -561,6 +559,8 @@ struct WishlistDetailScreen: View {
                     .foregroundStyle(Color(hex: "#5B4A32"))
                     .lineSpacing(3)
                     .multilineTextAlignment(.leading)
+                    .lineLimit(5)
+                    .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }

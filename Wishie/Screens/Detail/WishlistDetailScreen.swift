@@ -476,7 +476,7 @@ struct WishlistDetailScreen: View {
         }
         .padding(.top, 12)
         .padding(.horizontal, 22)
-        .padding(.bottom, 28)
+        .padding(.bottom, 18)
         .background(Color.white)
         .background(
             GeometryReader { proxy in
@@ -663,9 +663,13 @@ struct WishlistDetailScreen: View {
     @ViewBuilder
     func nonOwnerActionsRow() -> some View {
             ZStack {
-                Image(systemName: "link")
-                    .resizable()
-                    .frame(width: 25, height: 25)
+                HStack {
+                    Image(systemName: "link")
+                        .resizable()
+                        .frame(width: 25, height: 25)
+                        .padding(.leading)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 Text("Link")
                     .font(.wishies(.bold, 13))
             }
@@ -675,6 +679,9 @@ struct WishlistDetailScreen: View {
             .background {
                 RoundedRectangle(cornerRadius: 14)
                     .fill(Color(hex: "#F7F1E3"))
+            }
+            .onTapGesture {
+                viewModel.openProductLink()
             }
     }
 

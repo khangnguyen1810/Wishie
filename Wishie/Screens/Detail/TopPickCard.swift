@@ -107,28 +107,13 @@ struct TopPickCard: View, Equatable {
     }
 
     private var thumbnail: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.5))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.7), lineWidth: 2)
-                )
-            WebImage(url: URL(string: item.image ?? "")) { image in
-                image
-                    .resizable()
-                    .scaledToFit()
-            } placeholder: {
-                DotLottieAnimation(
-                    fileName: "giftloading",
-                    config: AnimationConfig(autoplay: true, loop: true)
-                )
-                .view()
-                .frame(width: 32, height: 32)
-            }
-            .frame(width: 42, height: 42)
-        }
-        .frame(width: 64, height: 64)
+        // Keyed on the image URL and `.equatable()` on purpose: the card's `body` re-evaluates
+        // on every Firestore update that touches an unrelated field (isPicked, price, …), which
+        // would otherwise reconcile the `WebImage` and flash the loading placeholder over an
+        // already-cached image. Isolating it here means the placeholder only appears while the
+        // image is genuinely loading for the first time.
+        TopPickThumbnail(imageURL: item.image)
+            .equatable()
     }
 
     private var badge: some View {
@@ -148,5 +133,55 @@ struct TopPickCard: View, Equatable {
                 .easeInOut(duration: 0.9).repeatForever(autoreverses: true),
                 value: isBadgePulsing
             )
+    }
+}
+
+/// The card's thumbnail, isolated so it only re-renders when the image URL itself changes.
+///
+/// `Equatable` on the URL string keeps the `WebImage` (and its loading placeholder) stable across
+/// the frequent rebuilds the parent card goes through on scroll and Firestore updates.
+private struct TopPickThumbnail: View, Equatable {
+    let imageURL: String?
+
+    static func == (lhs: TopPickThumbnail, rhs: TopPickThumbnail) -> Bool {
+        lhs.imageURL == rhs.imageURL
+    }
+
+    /// A non-empty, parseable URL — or `nil` when the item simply has no image.
+    private var resolvedURL: URL? {
+        guard let imageURL, !imageURL.isEmpty else { return nil }
+        return URL(string: imageURL)
+    }
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white.opacity(0.5))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.7), lineWidth: 2)
+                )
+            if let resolvedURL {
+                WebImage(url: resolvedURL) { image in
+                    image
+                        .resizable()
+                        .scaledToFit()
+                } placeholder: {
+                    // Only shown while the image is genuinely loading — items with no URL
+                    // fall through to the static gift below instead of looping this forever.
+                    DotLottieAnimation(
+                        fileName: "giftloading",
+                        config: AnimationConfig(autoplay: true, loop: true)
+                    )
+                    .view()
+                    .frame(width: 32, height: 32)
+                }
+                .frame(width: 42, height: 42)
+            } else {
+                Text("🎁")
+                    .font(.system(size: 30))
+            }
+        }
+        .frame(width: 64, height: 64)
     }
 }

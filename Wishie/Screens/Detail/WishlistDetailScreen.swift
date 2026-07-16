@@ -9,12 +9,19 @@ import SwiftUI
 import DotLottie
 import SDWebImageSwiftUI
 
+private struct SheetHeightPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
 struct WishlistDetailScreen: View {
     @State private var offsetY: CGFloat = 0
     @State private var channelExpnand: Bool = true
     @State private var appExpnand: Bool = true
     @Environment(\.dismiss) private var dismiss
-    @State private var sheetHeight: CGFloat = .zero
+    @State private var sheetHeight: CGFloat = 480
     @State private var isSharing: Bool = false
     @State private var isEditing: Bool = false
     @State private var showLinkNotValidOrNotExist: Bool = false
@@ -36,6 +43,9 @@ struct WishlistDetailScreen: View {
         let link = "wishie://wishlist?data=\(base64)"
         
         return QRCodeGenerator.generate(from: link)
+    }
+    var currentUserId: String? {
+        UserDefaults.standard.string(forKey: WishieConstants.userIdKey)
     }
     var wishlistId: String?
     var isFromInfo: Bool = false
@@ -100,8 +110,13 @@ struct WishlistDetailScreen: View {
         }
         .sheet(isPresented: $viewModel.showBottomSheet) {
             bottomSheet()
-                .presentationDetents([.fraction(0.4)])
-                .presentationDragIndicator(.visible)
+                .onPreferenceChange(SheetHeightPreferenceKey.self) { height in
+                    guard height > 0 else { return }
+                    sheetHeight = height
+                }
+                .presentationDetents([.height(sheetHeight)])
+                .presentationDragIndicator(.hidden)
+                .presentationCornerRadius(26)
         }
         .sheet(isPresented: $isSharing, content: {
             if let qrImage {
@@ -434,140 +449,163 @@ struct WishlistDetailScreen: View {
     }
     @ViewBuilder
     func bottomSheet() -> some View {
-        ZStack(alignment: .topLeading) {
-            Color(hex: viewModel.wishlistInfo.theme.primary).lightened(by: 0.45).ignoresSafeArea()
-            VStack(spacing: 15) {
-                HStack {
-                    ZStack {
-                        if let selectedImage = viewModel.selectedImage {
-                            Image(uiImage: selectedImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 80, height: 80)
-                                .clipped()
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        } else {
-                            WebImage(url: URL(string: viewModel.itemSelected.image ?? ""), content: { image in
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                            }, placeholder: {
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(
-                                        Color(hex: viewModel.wishlistInfo.theme.secondary)
-                                    )
-                                    .frame(
-                                        width: UIScreen.main.bounds.width/4,
-                                        height:  UIScreen.main.bounds.width/4
-                                    )
-                                    .overlay {
-                                        DotLottieAnimation(
-                                            fileName: "giftloading",
-                                            config: AnimationConfig(autoplay: true, loop: true)
-                                        )
-                                        .view()
-                                        .frame(width: 40)
-                                    }
-                            })
-                            .frame(width: 80, height: 80)
-                            .clipped()
-                            .cornerRadius(10)
-                        }
-                    }
-                    VStack {
-                        Text(viewModel.itemSelected.name)
-                            .font(.wishies(.bold, 15))
-                            .foregroundStyle(.black)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        Text(viewModel.itemSelected.description)
-                            .font(.wishies(.regular, 15))
-                            .foregroundStyle(.darkGrey)
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                    }
-                    
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                HStack {
-                    Text("Price")
-                        .font(.wishies(.bold, 15))
-                        .foregroundStyle(.black)
-                    Spacer()
-                    if let price = viewModel.itemSelected.price, !price.isEmpty {
-                        Text(price)
-                            .font(.wishies(.bold, 15))
-                            .foregroundStyle(.darkGrey)
-                    }
-                }
-                Spacer()
-                if wishlist?.isOwner() == true {
-                    VStack {
-                        HStack {
-                            editButton()
-                            markDesireButton()
-                        }
-                        linkButton()
-                        deleteButton()
-                    }
-                } else {
-                    VStack {
-                        linkButton()
-                        reserveButton()
-                    }
-                }
+        VStack(spacing: 18) {
+            Capsule()
+                .fill(Color(hex: "#E9DCC0"))
+                .frame(width: 40, height: 5)
+                .frame(maxWidth: .infinity)
+
+            itemImageBlock()
+            itemTextBlock()
+
+            if wishlist?.isOwner() == true {
+                ownerActionsRow()
+            } else {
+                nonOwnerActionsRow()
             }
-            .padding()
-            .padding(.top,30)
-        }
-    }
-    @ViewBuilder
-    func reserveButton() -> some View {
-        bottomSheetButton(
-            title: "Reserve",
-            fill: viewModel.itemSelected.isPicked ? .lightGrey : .wishiePink
-        ) {
-            if !viewModel.itemSelected.isPicked {
-                viewModel.showBottomSheet = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    viewModel.showReserveConfirmation = true
-                }
+
+            Rectangle()
+                .fill(Color(hex: "#EFE4C8"))
+                .frame(height: 1)
+
+            if wishlist?.isOwner() == true {
+                deleteItemRow()
+            } else {
+                reserveCTAButton()
             }
         }
-    }
-    @ViewBuilder
-    func linkButton() -> some View {
-        bottomSheetButton(
-            title: "Link",
-            fill: Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.4),
-            action:  {
-                viewModel.openProductLink()
+        .padding(.top, 12)
+        .padding(.horizontal, 22)
+        .padding(.bottom, 18)
+        .background(Color.white)
+        .background(
+            GeometryReader { proxy in
+                Color.clear
+                    .preference(key: SheetHeightPreferenceKey.self, value: proxy.size.height)
             }
         )
     }
-    
+
     @ViewBuilder
-    func deleteButton() -> some View {
-        bottomSheetButton(
-            title: "Delete",
-            fill: viewModel.itemSelected.isPicked ? .lightGrey : .wishiePink
-        ) {
-            if !viewModel.itemSelected.isPicked {
-                viewModel.showBottomSheet = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    viewModel.showDeleteConfirmation = true
-                }
+    func itemImageBlock() -> some View {
+        let placeholderColor = Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.85)
+        Group {
+            if let selectedImage = viewModel.selectedImage {
+                Image(uiImage: selectedImage)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                WebImage(url: URL(string: viewModel.itemSelected.image ?? ""), content: { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                }, placeholder: {
+                    placeholderColor
+                        .overlay {
+                            DotLottieAnimation(
+                                fileName: "giftloading",
+                                config: AnimationConfig(autoplay: true, loop: true)
+                            )
+                            .view()
+                            .frame(width: 40)
+                        }
+                })
             }
         }
-        .disabled(viewModel.itemSelected.isPicked)
+        .frame(maxWidth: .infinity)
+        .frame(height: 140)
+        .background(placeholderColor)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .overlay(alignment: .topTrailing) {
+            Button {
+                viewModel.showBottomSheet = false
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.9))
+                        .frame(width: 30, height: 30)
+                    Image(systemName: "xmark")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(Color(hex: "#8C7A5A"))
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(10)
+        }
+        .overlay(alignment: .bottomLeading) {
+            if viewModel.itemSelected.isPicked {
+                pickedStatusPill()
+                    .padding(10)
+            }
+        }
     }
-    
+
     @ViewBuilder
-    func markDesireButton() -> some View {
-        bottomSheetButton(
-            title: viewModel.itemSelected.isMostDesired ? "Remove most desired" : "Mark as Most Desired",
-            fill: Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.4)
-        ) {
+    func itemTextBlock() -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Text(viewModel.itemSelected.name)
+                    .font(.wishies(.bold, 20))
+                    .foregroundStyle(Color(hex: "#2A1E0B"))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                if let price = viewModel.itemSelected.price, !price.isEmpty {
+                    Text(price)
+                        .font(.wishies(.bold, 16))
+                        .foregroundStyle(Color(hex: "#38B7B0"))
+                        .fixedSize()
+                }
+            }
+            if !viewModel.itemSelected.description.isEmpty {
+                Text(viewModel.itemSelected.description)
+                    .font(.wishies(.regular, 13.5))
+                    .foregroundStyle(Color(hex: "#5B4A32"))
+                    .lineSpacing(3)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    func pickedStatusPill() -> some View {
+        let isPickedByMe = viewModel.itemSelected.pickedUserId != nil && viewModel.itemSelected.pickedUserId == currentUserId
+        let textColor = isPickedByMe ? Color(hex: "#1F8F89") : Color(hex: viewModel.wishlistInfo.theme.secondary)
+        HStack(spacing: 6) {
+            Text("🎁")
+                .font(.system(size: 11))
+            Text(isPickedByMe ? "Picked by you" : "Picked")
+                .font(.wishies(.bold, 11.5))
+                .foregroundStyle(textColor)
+        }
+        .padding(.horizontal, 11)
+        .padding(.vertical, 5)
+        .background(Capsule().fill(Color.white.opacity(0.92)))
+    }
+
+    @ViewBuilder
+    func mostDesiredCTAButton() -> some View {
+        let selectedItem = viewModel.itemSelected
+        HStack(spacing: 7) {
+            Image("most_desired_icon")
+                .resizable()
+                .frame(width: 25, height: 25)
+            Text( selectedItem.isMostDesired ? "Remove Most Desired": "Most Desired")
+                .font(.wishies(.bold, 13))
+        }
+        .foregroundStyle(Color(hex: "#6B4A0E"))
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(
+            LinearGradient(
+                colors: [Color(hex: "#FFD66B"), Color(hex: "#F3B23A")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .shadow(color: Color(hex: "#E6AA32").opacity(0.3), radius: 8, x: 0, y: 8)
+        .onTapGesture {
             if viewModel.wouldReplaceMostDesired {
                 viewModel.showBottomSheet = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -584,52 +622,107 @@ struct WishlistDetailScreen: View {
             }
         }
     }
-    
+
     @ViewBuilder
-    func editButton() -> some View {
-        Button {
-            let itemSelected = viewModel.itemSelected
-            viewModel.newItemName = itemSelected.name
-            viewModel.newItemRemoteImageUrl = itemSelected.image
-            viewModel.newItemLink = itemSelected.itemLink
-            viewModel.newItemDescription = itemSelected.description
-            viewModel.newItemPrice = itemSelected.price ?? ""
-            viewModel.showBottomSheet = false
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                viewModel.showEditItemSheet = true
-            }
-        } label: {
+    func squareIconButton(systemIcon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             ZStack {
-                RoundedRectangle(cornerRadius: 15)
-                    .fill(Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.4))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 45)
-                Text("Edit this item")
-                    .font(.wishies(.bold, 15))
-                    .foregroundStyle(.black)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color(hex: "#F7F1E3"))
+                    .frame(width: 46, height: 46)
+                Image(systemName: systemIcon)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Color(hex: "#5B4A32"))
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    func ownerActionsRow() -> some View {
+        HStack(spacing: 10) {
+            mostDesiredCTAButton()
+            squareIconButton(systemIcon: "pencil") {
+                let itemSelected = viewModel.itemSelected
+                viewModel.newItemName = itemSelected.name
+                viewModel.newItemRemoteImageUrl = itemSelected.image
+                viewModel.newItemLink = itemSelected.itemLink
+                viewModel.newItemDescription = itemSelected.description
+                viewModel.newItemPrice = itemSelected.price ?? ""
+                viewModel.showBottomSheet = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    viewModel.showEditItemSheet = true
+                }
+            }
+            squareIconButton(systemIcon: "link") {
+                viewModel.openProductLink()
             }
         }
     }
-    
+
     @ViewBuilder
-    func bottomSheetButton(
-        title: String,
-        fill: Color,
-        action: @escaping () -> Void
-    ) -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 15)
-                .fill(fill)
-                .frame(maxWidth: .infinity)
-                .frame(height: 45)
-            Text(title)
-                .font(.wishies(.bold, 15))
-                .foregroundStyle(.black)
-                .frame(maxWidth: .infinity, alignment: .center)
+    func nonOwnerActionsRow() -> some View {
+            ZStack {
+                HStack {
+                    Image(systemName: "link")
+                        .resizable()
+                        .frame(width: 25, height: 25)
+                        .padding(.leading)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Text("Link")
+                    .font(.wishies(.bold, 13))
+            }
+            .foregroundStyle(Color(hex: "#6B4A0E"))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color(hex: "#F7F1E3"))
+            }
+            .onTapGesture {
+                viewModel.openProductLink()
+            }
+    }
+
+    @ViewBuilder
+    func deleteItemRow() -> some View {
+        let isDisabled = viewModel.itemSelected.isPicked
+        HStack(spacing: 8) {
+            Image(systemName: "trash")
+                .font(.system(size: 15, weight: .semibold))
+            Text("Delete item")
+                .font(.wishies(.bold, 14))
         }
+        .foregroundStyle(isDisabled ? Color.darkGrey : Color(hex: "#D9375A"))
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
         .onTapGesture {
-            action()
+            guard !isDisabled else { return }
+            viewModel.showBottomSheet = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                viewModel.showDeleteConfirmation = true
+            }
         }
+    }
+
+    @ViewBuilder
+    func reserveCTAButton() -> some View {
+        let isDisabled = viewModel.itemSelected.isPicked
+        Text("Reserve")
+            .font(.wishies(.bold, 14.5))
+            .foregroundStyle(.black)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 13)
+            .background(
+                Capsule().fill(isDisabled ? Color.lightGrey : Color.wishiePink)
+            )
+            .onTapGesture {
+                guard !isDisabled else { return }
+                viewModel.showBottomSheet = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    viewModel.showReserveConfirmation = true
+                }
+            }
     }
 }

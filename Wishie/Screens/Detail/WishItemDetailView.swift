@@ -1,11 +1,41 @@
 import SwiftUI
 import SDWebImageSwiftUI
 
+private enum DetailField: Hashable {
+    case name, description, price, link
+}
+
+private struct FocusableFieldBackground: ViewModifier {
+    let fillColor: Color
+    let borderColor: Color
+    let isFocused: Bool
+    var cornerRadius: CGFloat = 10
+
+    func body(content: Content) -> some View {
+        content
+            .background(fillColor)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(borderColor, lineWidth: 2)
+                    .opacity(isFocused ? 1 : 0)
+            )
+            .animation(.easeInOut(duration: 0.2), value: isFocused)
+    }
+}
+
+private extension View {
+    func focusableFieldBackground(fillColor: Color, borderColor: Color, isFocused: Bool) -> some View {
+        modifier(FocusableFieldBackground(fillColor: fillColor, borderColor: borderColor, isFocused: isFocused))
+    }
+}
+
 struct WishItemDetailView: View {
     @ObservedObject var viewModel: WishlistDetailViewController
     let wishlistId: String
     @Environment(\.dismiss) private var dismiss
     @State private var keyboardHeight: CGFloat = 0
+    @FocusState private var focusedField: DetailField?
     let isEdit: Bool
     var wishItem: WishlistItem? {
         didSet {
@@ -70,8 +100,8 @@ struct WishItemDetailView: View {
                     .font(.wishies(.bold, 17))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(secondaryColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .focused($focusedField, equals: .name)
+                    .focusableFieldBackground(fillColor: secondaryColor, borderColor: primaryColor, isFocused: focusedField == .name)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
                 
@@ -81,8 +111,8 @@ struct WishItemDetailView: View {
                     .frame(height: 74, alignment: .topLeading)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(secondaryColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .focused($focusedField, equals: .description)
+                    .focusableFieldBackground(fillColor: secondaryColor, borderColor: primaryColor, isFocused: focusedField == .description)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
                 
@@ -90,8 +120,8 @@ struct WishItemDetailView: View {
                     .font(.wishies(.bold, 17))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(secondaryColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .focused($focusedField, equals: .price)
+                    .focusableFieldBackground(fillColor: secondaryColor, borderColor: primaryColor, isFocused: focusedField == .price)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
                 
@@ -102,8 +132,8 @@ struct WishItemDetailView: View {
                     .autocorrectionDisabled()
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(secondaryColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .focused($focusedField, equals: .link)
+                    .focusableFieldBackground(fillColor: secondaryColor, borderColor: primaryColor, isFocused: focusedField == .link)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
                 

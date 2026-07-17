@@ -68,6 +68,7 @@ struct WishItemDetailView: View {
                     WishieWebImage(url: viewModel.newItemRemoteImageUrl ?? "", contentMode: .fit)
                         .frame(height: 160)
                         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .shadow(color: secondaryColor.opacity(0.4), radius: 30, x: 0, y: 10)
                         .padding(.bottom, 20)
                 } else {
                     ImagePickerBox(height: 160, selectedImage: $viewModel.newItemImage) {
@@ -92,6 +93,7 @@ struct WishItemDetailView: View {
                         .frame(height: 160)
                         .background(Color.wishiePink)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .shadow(color: secondaryColor.opacity(0.4), radius: 30, x: 0, y: 10)
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)

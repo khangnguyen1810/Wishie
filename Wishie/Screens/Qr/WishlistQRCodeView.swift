@@ -44,7 +44,7 @@ struct WishlistQRCodeView: View {
                     }
                     .padding(.trailing, 10)
             } center: {
-                Text("Create new wishlist")
+                Text("Share Wishlist's QR")
                     .font(.wishies(.bold, 20))
                     .foregroundStyle(.black)
             } trailing: {

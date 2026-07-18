@@ -49,9 +49,9 @@ struct WishItemDetailView: View {
     }
     var body: some View {
         let primaryColor =  Color(hex: viewModel.wishlistInfo.theme.primary)
-        let secondaryColor =  Color(hex: viewModel.wishlistInfo.theme.secondary)
+        let secondaryColor =  Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.85)
         ZStack {
-            primaryColor.ignoresSafeArea()
+            Color.white.ignoresSafeArea()
             VStack(spacing: 0) {
                 Capsule()
                     .fill(Color.gray.opacity(0.4))

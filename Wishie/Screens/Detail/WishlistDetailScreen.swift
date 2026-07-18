@@ -29,21 +29,6 @@ struct WishlistDetailScreen: View {
     @Binding var navigationPath: NavigationPath
     var wishlist: WishlistModel?
     var owner: UserModel?
-    var qrImage: UIImage? {
-        
-        let payload = WishlistQRPayload(
-            wishListId: viewModel.wishlistInfo.id
-        )
-        
-        guard
-            let data = try? JSONEncoder().encode(payload)
-        else { return nil }
-        
-        let base64 = data.base64EncodedString()
-        let link = "wishie://wishlist?data=\(base64)"
-        
-        return QRCodeGenerator.generate(from: link)
-    }
     var currentUserId: String? {
         UserDefaults.standard.string(forKey: WishieConstants.userIdKey)
     }
@@ -58,7 +43,8 @@ struct WishlistDetailScreen: View {
                 buttonColor: viewModel.wishlistInfo.theme.secondary,
                 titlePage: "Wishlist detail",
                 wishlistTitle: viewModel.wishlistInfo.name,
-                owner: owner?.getFullName()
+                owner: owner?.getFullName(),
+                wishlistId: viewModel.wishlistInfo.id
             ) {
                 if isFromInfo {
                     navigationPath.removeLast(navigationPath.count)
@@ -117,11 +103,9 @@ struct WishlistDetailScreen: View {
                 .presentationDragIndicator(.hidden)
                 .presentationCornerRadius(26)
         }
-        .sheet(isPresented: $isSharing, content: {
-            if let qrImage {
-                ShareSheet(items: [qrImage])
-            }
-        })
+        .fullScreenCover(isPresented: $isSharing) {
+            WishlistQRCodeView(wishlistId: viewModel.wishlistInfo.id)
+        }
         .sheet(isPresented: $viewModel.showAddItemOptionSheet) {
             AddItemOptionSheet(
                 onPasteLink: {

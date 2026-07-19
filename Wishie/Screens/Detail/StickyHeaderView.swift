@@ -85,7 +85,6 @@ struct StickyHeaderView<Content: View>: View {
                                 .foregroundStyle(.white)
                         })
                         .onTapGesture {
-                            
                             isSharing = true
                         }
                 }

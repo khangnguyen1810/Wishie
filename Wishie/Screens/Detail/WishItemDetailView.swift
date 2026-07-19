@@ -1,11 +1,41 @@
 import SwiftUI
 import SDWebImageSwiftUI
 
+private enum DetailField: Hashable {
+    case name, description, price, link
+}
+
+private struct FocusableFieldBackground: ViewModifier {
+    let fillColor: Color
+    let borderColor: Color
+    let isFocused: Bool
+    var cornerRadius: CGFloat = 10
+
+    func body(content: Content) -> some View {
+        content
+            .background(fillColor)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(borderColor, lineWidth: 2)
+                    .opacity(isFocused ? 1 : 0)
+            )
+            .animation(.easeInOut(duration: 0.2), value: isFocused)
+    }
+}
+
+private extension View {
+    func focusableFieldBackground(fillColor: Color, borderColor: Color, isFocused: Bool) -> some View {
+        modifier(FocusableFieldBackground(fillColor: fillColor, borderColor: borderColor, isFocused: isFocused))
+    }
+}
+
 struct WishItemDetailView: View {
     @ObservedObject var viewModel: WishlistDetailViewController
     let wishlistId: String
     @Environment(\.dismiss) private var dismiss
     @State private var keyboardHeight: CGFloat = 0
+    @FocusState private var focusedField: DetailField?
     let isEdit: Bool
     var wishItem: WishlistItem? {
         didSet {
@@ -19,9 +49,9 @@ struct WishItemDetailView: View {
     }
     var body: some View {
         let primaryColor =  Color(hex: viewModel.wishlistInfo.theme.primary)
-        let secondaryColor =  Color(hex: viewModel.wishlistInfo.theme.secondary)
+        let secondaryColor =  Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.85)
         ZStack {
-            primaryColor.ignoresSafeArea()
+            Color.white.ignoresSafeArea()
             VStack(spacing: 0) {
                 Capsule()
                     .fill(Color.gray.opacity(0.4))
@@ -38,6 +68,7 @@ struct WishItemDetailView: View {
                     WishieWebImage(url: viewModel.newItemRemoteImageUrl ?? "", contentMode: .fit)
                         .frame(height: 160)
                         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .shadow(color: secondaryColor.opacity(0.65), radius: 30, x: 0, y: 10)
                         .padding(.bottom, 20)
                 } else {
                     ImagePickerBox(height: 160, selectedImage: $viewModel.newItemImage) {
@@ -62,39 +93,64 @@ struct WishItemDetailView: View {
                         .frame(height: 160)
                         .background(Color.wishiePink)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .shadow(color: secondaryColor.opacity(0.65), radius: 30, x: 0, y: 10)
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
                 }
+                Text("TITLE")
+                    .font(.wishies(.bold, 12))
+                    .foregroundStyle(Color(hex: "#8C7A5A"))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 6)
                 TextField("Item name", text: $viewModel.newItemName)
                     .font(.wishies(.bold, 17))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(secondaryColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .focused($focusedField, equals: .name)
+                    .focusableFieldBackground(fillColor: secondaryColor, borderColor: primaryColor, isFocused: focusedField == .name)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
                 
+                Text("DESCRIPTION")
+                    .font(.wishies(.bold, 12))
+                    .foregroundStyle(Color(hex: "#8C7A5A"))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 6)
                 TextField("About this item...", text: $viewModel.newItemDescription, axis: .vertical)
                     .font(.wishies(.italic, 14))
                     .lineLimit(2...4)
                     .frame(height: 74, alignment: .topLeading)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(secondaryColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .focused($focusedField, equals: .description)
+                    .focusableFieldBackground(fillColor: secondaryColor, borderColor: primaryColor, isFocused: focusedField == .description)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
                 
+                Text("PRICE")
+                    .font(.wishies(.bold, 12))
+                    .foregroundStyle(Color(hex: "#8C7A5A"))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 6)
                 TextField("Item's price", text: $viewModel.newItemPrice)
                     .font(.wishies(.bold, 17))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(secondaryColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .focused($focusedField, equals: .price)
+                    .focusableFieldBackground(fillColor: secondaryColor, borderColor: primaryColor, isFocused: focusedField == .price)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
                 
+                Text("LINK")
+                    .font(.wishies(.bold, 12))
+                    .foregroundStyle(Color(hex: "#8C7A5A"))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 6)
                 TextField("Paste product link", text: $viewModel.newItemLink)
                     .font(.wishies(.regular, 15))
                     .keyboardType(.URL)
@@ -102,8 +158,8 @@ struct WishItemDetailView: View {
                     .autocorrectionDisabled()
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(secondaryColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .focused($focusedField, equals: .link)
+                    .focusableFieldBackground(fillColor: secondaryColor, borderColor: primaryColor, isFocused: focusedField == .link)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
                 

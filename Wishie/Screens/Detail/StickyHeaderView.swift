@@ -19,7 +19,6 @@ struct StickyHeaderView<Content: View>: View {
     var iconTitlePage: String?
     var wishlistTitle: String?
     var owner: String?
-    var wishlistId: String
     let backAction: () -> Void
     @ViewBuilder let content: () -> Content
     

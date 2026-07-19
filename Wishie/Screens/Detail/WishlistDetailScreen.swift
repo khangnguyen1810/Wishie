@@ -43,8 +43,7 @@ struct WishlistDetailScreen: View {
                 buttonColor: viewModel.wishlistInfo.theme.secondary,
                 titlePage: "Wishlist detail",
                 wishlistTitle: viewModel.wishlistInfo.name,
-                owner: owner?.getFullName(),
-                wishlistId: viewModel.wishlistInfo.id
+                owner: owner?.getFullName()
             ) {
                 if isFromInfo {
                     navigationPath.removeLast(navigationPath.count)

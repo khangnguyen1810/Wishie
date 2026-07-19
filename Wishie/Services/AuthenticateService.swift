@@ -110,15 +110,29 @@ class AuthenticateService: AuthenticateServiceProtocol {
         .eraseToAnyPublisher()
     }
 
+    static func resolvedGoogleEmail(firebaseEmail: String?, profileEmail: String?) -> String {
+        if let firebaseEmail, !firebaseEmail.isEmpty {
+            return firebaseEmail
+        }
+        return profileEmail ?? ""
+    }
+
     private func createGoogleUserDocumentIfNeeded(for user: FirebaseAuth.User, profile: GIDProfileData?) async throws {
         let userRef = db.collection(WishieConstants.firebaseUserPath).document(user.uid)
         let snapshot = try await userRef.getDocument()
-        guard !snapshot.exists else { return }
+        let resolvedEmail = Self.resolvedGoogleEmail(firebaseEmail: user.email, profileEmail: profile?.email)
+        guard !snapshot.exists else {
+            let existingEmail = snapshot.data()?["email"] as? String ?? ""
+            if existingEmail.isEmpty && !resolvedEmail.isEmpty {
+                try await userRef.updateData(["email": resolvedEmail])
+            }
+            return
+        }
         let userData: [String: Any] = [
             "uid": user.uid,
             "firstName": profile?.givenName ?? "",
             "lastName": profile?.familyName ?? "",
-            "email": user.email ?? "",
+            "email": resolvedEmail,
             "phone": "",
             "dateOfBirth": Timestamp(date: Date()),
             "hasCompletedInterestsSetup": false,

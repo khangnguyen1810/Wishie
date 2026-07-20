@@ -3,7 +3,6 @@ import DotLottie
 
 struct GiftSuggestionsSheet: View {
     @StateObject private var viewModel: GiftSuggestionViewModel
-    @Environment(\.dismiss) private var dismiss
     private let onAdd: (WishlistItem) -> Void
 
     @State private var selectedInterestIds: Set<String> = []
@@ -61,6 +60,7 @@ struct GiftSuggestionsSheet: View {
                             addedIds.insert(suggestion.id)
                         }
                         .opacity(addedIds.contains(suggestion.id) ? 0.5 : 1)
+                        .disabled(addedIds.contains(suggestion.id))
                     }
                 }
                 .padding(.vertical, 4)

@@ -35,9 +35,14 @@ final class GiftSuggestionViewModel: ObservableObject {
     }
 
     func start() async {
-        let interests = (try? await authService.getUserInfo())?.interests ?? []
-        if interests.isEmpty {
-            phase = .needsInterests
+        do {
+            let interests = try await authService.getUserInfo()?.interests ?? []
+            if interests.isEmpty {
+                phase = .needsInterests
+                return
+            }
+        } catch {
+            phase = .error(error.localizedDescription)
             return
         }
         await generate()

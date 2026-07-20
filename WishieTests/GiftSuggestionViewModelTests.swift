@@ -93,4 +93,19 @@ struct GiftSuggestionViewModelTests {
         await vm.start()
         #expect(vm.phase == .needsInterests)
     }
+
+    @Test func startSurfacesAuthErrorInsteadOfNeedsInterests() async {
+        let auth = MockAuthenticateService()
+        auth.getUserInfoError = URLError(.notConnectedToInternet)
+
+        let vm = GiftSuggestionViewModel(
+            existingItemNames: [],
+            suggestionService: StubSuggestionService(),
+            metadataService: MockProductMetadataService(),
+            authService: auth
+        )
+        await vm.start()
+
+        if case .error = vm.phase { } else { Issue.record("expected error phase, got \(vm.phase)") }
+    }
 }

@@ -12,6 +12,7 @@ import FirebaseAuth
 final class MockAuthenticateService: AuthenticateServiceProtocol {
     var loginWithGoogleResult: AnyPublisher<AuthDataResult?, Error> = Empty().eraseToAnyPublisher()
     var userToReturn: UserModel? = nil
+    var getUserInfoError: Error? = nil
 
     func login(_ email: String, _ password: String) -> AnyPublisher<AuthDataResult?, Error> {
         Empty().eraseToAnyPublisher()
@@ -26,7 +27,8 @@ final class MockAuthenticateService: AuthenticateServiceProtocol {
         Empty().eraseToAnyPublisher()
     }
     func getUserInfo() async throws -> UserModel? {
-        userToReturn
+        if let getUserInfoError { throw getUserInfoError }
+        return userToReturn
     }
     func getUserInfo(by userId: String) async throws -> UserModel? {
         nil

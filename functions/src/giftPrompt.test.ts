@@ -1,6 +1,6 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const { buildPrompt, parseGeminiJson } = require("../giftPrompt");
+import test from "node:test";
+import assert from "node:assert/strict";
+import { buildPrompt, parseGeminiJson } from "./giftPrompt.js";
 
 test("buildPrompt includes interests, age, and avoid list", () => {
   const prompt = buildPrompt({

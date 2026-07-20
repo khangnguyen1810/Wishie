@@ -1,4 +1,22 @@
-function buildPrompt({ interests, age, existingItemNames }) {
+export interface GiftPromptInput {
+  interests: string[];
+  age: number | null;
+  existingItemNames: string[];
+}
+
+export interface GiftIdea {
+  name: string;
+  description: string;
+  price: string;
+  link: string;
+}
+
+export interface GiftIdeas {
+  ideas: GiftIdea[];
+}
+
+export function buildPrompt(input: GiftPromptInput): string {
+  const { interests, age, existingItemNames } = input;
   const interestLine = `The person enjoys: ${interests.join(", ")}.`;
   const ageLine = typeof age === "number" ? `They are about ${age} years old.` : "";
   const avoidLine =
@@ -21,7 +39,7 @@ function buildPrompt({ interests, age, existingItemNames }) {
     .join("\n");
 }
 
-function parseGeminiJson(text) {
+export function parseGeminiJson(text: string): GiftIdeas {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   const candidate = fenced ? fenced[1] : text;
   const start = candidate.indexOf("{");
@@ -33,7 +51,5 @@ function parseGeminiJson(text) {
   if (!json || !Array.isArray(json.ideas)) {
     throw new Error("Parsed JSON has no ideas array");
   }
-  return json;
+  return json as GiftIdeas;
 }
-
-module.exports = { buildPrompt, parseGeminiJson };

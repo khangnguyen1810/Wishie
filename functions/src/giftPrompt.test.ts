@@ -16,19 +16,26 @@ test("buildPrompt includes interests, age, and avoid list", () => {
 });
 
 test("buildPrompt omits age line when age is null", () => {
-  const prompt = buildPrompt({ interests: ["Gaming"], age: null, existingItemNames: [] });
+  const prompt = buildPrompt({
+    interests: ["Gaming"],
+    age: null,
+    existingItemNames: [],
+  });
   assert.doesNotMatch(prompt, /age/i);
 });
 
 test("parseGeminiJson extracts ideas from a fenced code block", () => {
-  const text = '```json\n{"ideas":[{"name":"KB","description":"d","price":"$1","link":"https://x/1"}]}\n```';
+  const text =
+    '```json\n{"ideas":[{"name":"KB","description":"d","price":"$1","link":"https://x/1"}]}\n```';
   const parsed = parseGeminiJson(text);
   assert.equal(parsed.ideas.length, 1);
   assert.equal(parsed.ideas[0].name, "KB");
 });
 
 test("parseGeminiJson extracts ideas from raw JSON", () => {
-  const parsed = parseGeminiJson('{"ideas":[{"name":"A","description":"d","price":"$1","link":"https://x/a"}]}');
+  const parsed = parseGeminiJson(
+    '{"ideas":[{"name":"A","description":"d","price":"$1","link":"https://x/a"}]}',
+  );
   assert.equal(parsed.ideas[0].link, "https://x/a");
 });
 

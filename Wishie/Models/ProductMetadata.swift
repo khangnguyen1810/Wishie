@@ -1,6 +1,6 @@
 import Foundation
 
-struct ProductMetadata {
+struct ProductMetadata: Hashable {
     let title: String
     let productDescription: String
     let imageUrl: String?

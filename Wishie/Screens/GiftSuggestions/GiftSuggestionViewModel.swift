@@ -68,7 +68,11 @@ final class GiftSuggestionViewModel: ObservableObject {
         let user = try? await authService.getUserInfo()
         let interestIds = user?.interests ?? []
         let interestNames = GiftSuggestionInputBuilder.interestNames(fromIds: interestIds)
-        let age = user.map { GiftSuggestionInputBuilder.age(from: $0.dateOfBirth) } ?? nil
+        // Social sign-up writes a placeholder dateOfBirth of "now", which yields age 0.
+        // Treat an implausibly-low age as unknown so the prompt omits it rather than
+        // telling the model the owner is 0 years old.
+        let rawAge = user.map { GiftSuggestionInputBuilder.age(from: $0.dateOfBirth) } ?? nil
+        let age = (rawAge ?? 0) >= 1 ? rawAge : nil
 
         let ideas: [GiftIdea]
         do {

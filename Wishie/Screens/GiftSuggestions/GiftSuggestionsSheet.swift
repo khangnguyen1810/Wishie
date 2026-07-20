@@ -7,6 +7,7 @@ struct GiftSuggestionsSheet: View {
 
     @State private var selectedInterestIds: Set<String> = []
     @State private var addedIds: Set<String> = []
+    @State private var addingIds: Set<String> = []
 
     init(existingItemNames: [String], onAdd: @escaping (WishlistItem) async -> Bool) {
         self.onAdd = onAdd
@@ -56,14 +57,19 @@ struct GiftSuggestionsSheet: View {
                 VStack(spacing: 12) {
                     ForEach(viewModel.suggestions) { suggestion in
                         GiftSuggestionCard(suggestion: suggestion) {
+                            guard !addedIds.contains(suggestion.id),
+                                  !addingIds.contains(suggestion.id) else { return }
+                            addingIds.insert(suggestion.id)
                             Task {
-                                if await onAdd(suggestion.toWishlistItem()) {
+                                let didAdd = await onAdd(suggestion.toWishlistItem())
+                                addingIds.remove(suggestion.id)
+                                if didAdd {
                                     addedIds.insert(suggestion.id)
                                 }
                             }
                         }
-                        .opacity(addedIds.contains(suggestion.id) ? 0.5 : 1)
-                        .disabled(addedIds.contains(suggestion.id))
+                        .opacity(addedIds.contains(suggestion.id) || addingIds.contains(suggestion.id) ? 0.5 : 1)
+                        .disabled(addedIds.contains(suggestion.id) || addingIds.contains(suggestion.id))
                     }
                 }
                 .padding(.vertical, 4)

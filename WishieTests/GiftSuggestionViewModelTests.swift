@@ -8,7 +8,11 @@ struct GiftSuggestionViewModelTests {
     final class StubSuggestionService: GiftSuggestionServiceProtocol {
         var ideas: [GiftIdea] = []
         var error: Error?
+        private(set) var didCallFetch = false
+        private(set) var receivedAge: Int?
         func fetchIdeas(interests: [String], age: Int?, existingItemNames: [String]) async throws -> [GiftIdea] {
+            didCallFetch = true
+            receivedAge = age
             if let error { throw error }
             return ideas
         }
@@ -107,5 +111,21 @@ struct GiftSuggestionViewModelTests {
         await vm.start()
 
         if case .error = vm.phase { } else { Issue.record("expected error phase, got \(vm.phase)") }
+    }
+
+    @Test func generateOmitsAgeForDefaultPlaceholderDateOfBirth() async {
+        // authStub builds a UserModel whose dateOfBirth defaults to "now" (the
+        // placeholder social sign-up writes), which would compute to age 0.
+        let suggestion = StubSuggestionService()
+        let vm = GiftSuggestionViewModel(
+            existingItemNames: [],
+            suggestionService: suggestion,
+            metadataService: MockProductMetadataService(),
+            authService: authStub(interests: ["gaming"])
+        )
+        await vm.generate()
+
+        #expect(suggestion.didCallFetch)
+        #expect(suggestion.receivedAge == nil)
     }
 }

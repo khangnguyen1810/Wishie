@@ -3,12 +3,12 @@ import DotLottie
 
 struct GiftSuggestionsSheet: View {
     @StateObject private var viewModel: GiftSuggestionViewModel
-    private let onAdd: (WishlistItem) -> Void
+    private let onAdd: (WishlistItem) async -> Bool
 
     @State private var selectedInterestIds: Set<String> = []
     @State private var addedIds: Set<String> = []
 
-    init(existingItemNames: [String], onAdd: @escaping (WishlistItem) -> Void) {
+    init(existingItemNames: [String], onAdd: @escaping (WishlistItem) async -> Bool) {
         self.onAdd = onAdd
         _viewModel = StateObject(wrappedValue: GiftSuggestionViewModel(existingItemNames: existingItemNames))
     }
@@ -56,8 +56,11 @@ struct GiftSuggestionsSheet: View {
                 VStack(spacing: 12) {
                     ForEach(viewModel.suggestions) { suggestion in
                         GiftSuggestionCard(suggestion: suggestion) {
-                            onAdd(suggestion.toWishlistItem())
-                            addedIds.insert(suggestion.id)
+                            Task {
+                                if await onAdd(suggestion.toWishlistItem()) {
+                                    addedIds.insert(suggestion.id)
+                                }
+                            }
                         }
                         .opacity(addedIds.contains(suggestion.id) ? 0.5 : 1)
                         .disabled(addedIds.contains(suggestion.id))

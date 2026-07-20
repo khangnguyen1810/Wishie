@@ -162,8 +162,13 @@ struct WishlistDetailScreen: View {
             GiftSuggestionsSheet(
                 existingItemNames: GiftSuggestionInputBuilder.existingItemNames(from: viewModel.wishlistInfo.items)
             ) { item in
-                Task {
-                    _ = try? await viewModel.addSuggestedItem(item, wishlistId: viewModel.wishlistInfo.id)
+                do {
+                    try await viewModel.addSuggestedItem(item, wishlistId: viewModel.wishlistInfo.id)
+                    return true
+                } catch {
+                    viewModel.errorMessage = error.localizedDescription
+                    viewModel.isShowError = true
+                    return false
                 }
             }
             .presentationDetents([.large])

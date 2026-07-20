@@ -84,6 +84,7 @@ struct CreateWishlistPage2: View {
                 existingItemNames: GiftSuggestionInputBuilder.existingItemNames(from: createWishlistViewModel.items)
             ) { item in
                 createWishlistViewModel.items.append(item)
+                return true
             }
             .presentationDetents([.large])
         }

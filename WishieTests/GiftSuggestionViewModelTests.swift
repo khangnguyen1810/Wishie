@@ -51,7 +51,8 @@ struct GiftSuggestionViewModelTests {
             existingItemNames: [],
             suggestionService: suggestion,
             metadataService: metadata,
-            authService: authStub(interests: ["gaming"])
+            authService: authStub(interests: ["gaming"]),
+            countryProvider: StubCountryProvider(name: nil)
         )
         await vm.generate()
 
@@ -72,7 +73,8 @@ struct GiftSuggestionViewModelTests {
             existingItemNames: [],
             suggestionService: suggestion,
             metadataService: metadata,
-            authService: authStub(interests: ["gaming"])
+            authService: authStub(interests: ["gaming"]),
+            countryProvider: StubCountryProvider(name: nil)
         )
         await vm.generate()
 
@@ -87,7 +89,8 @@ struct GiftSuggestionViewModelTests {
             existingItemNames: [],
             suggestionService: suggestion,
             metadataService: MockProductMetadataService(),
-            authService: authStub(interests: ["gaming"])
+            authService: authStub(interests: ["gaming"]),
+            countryProvider: StubCountryProvider(name: nil)
         )
         await vm.generate()
 
@@ -128,7 +131,8 @@ struct GiftSuggestionViewModelTests {
             existingItemNames: [],
             suggestionService: suggestion,
             metadataService: MockProductMetadataService(),
-            authService: authStub(interests: ["gaming"])
+            authService: authStub(interests: ["gaming"]),
+            countryProvider: StubCountryProvider(name: nil)
         )
         await vm.generate()
 

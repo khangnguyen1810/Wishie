@@ -11,6 +11,7 @@
 		F03ED6E82FBB755500157DF9 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F03ED6E72FBB755500157DF9 /* FirebaseAuth */; };
 		F03ED6EA2FBB755500157DF9 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = F03ED6E92FBB755500157DF9 /* FirebaseCore */; };
 		F03ED6EC2FBB755500157DF9 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = F03ED6EB2FBB755500157DF9 /* FirebaseFirestore */; };
+		F03ED6EE2FBB755500157DF9 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = F03ED6ED2FBB755500157DF9 /* FirebaseFunctions */; };
 		F08C489B2EF3041E00DC87DC /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = F08C489A2EF3041E00DC87DC /* Storage */; };
 		F08C489F2EF305A500DC87DC /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = F08C489E2EF305A500DC87DC /* Supabase */; };
 		F08C48A52EF31AE500DC87DC /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = F08C48A42EF31AE500DC87DC /* Auth */; };
@@ -98,6 +99,7 @@
 				F0BE20C22F6FB94800D043F5 /* SDWebImageSwiftUI in Frameworks */,
 				F03ED6EA2FBB755500157DF9 /* FirebaseCore in Frameworks */,
 				F03ED6EC2FBB755500157DF9 /* FirebaseFirestore in Frameworks */,
+				F03ED6EE2FBB755500157DF9 /* FirebaseFunctions in Frameworks */,
 				22CB1A152EA1476000FAE2D7 /* DotLottie in Frameworks */,
 				F08C489B2EF3041E00DC87DC /* Storage in Frameworks */,
 				F0BB1A9E2FFDFE1800A45D4C /* GoogleSignIn in Frameworks */,
@@ -179,6 +181,7 @@
 				F03ED6E72FBB755500157DF9 /* FirebaseAuth */,
 				F03ED6E92FBB755500157DF9 /* FirebaseCore */,
 				F03ED6EB2FBB755500157DF9 /* FirebaseFirestore */,
+				F03ED6ED2FBB755500157DF9 /* FirebaseFunctions */,
 				F0BB1A9D2FFDFE1800A45D4C /* GoogleSignIn */,
 			);
 			productName = Wishie;
@@ -469,14 +472,14 @@
 				CODE_SIGN_ENTITLEMENTS = Wishie/Wishie.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 29N547R43F;
+				DEVELOPMENT_TEAM = 8QPXDS5LYT;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Wishie/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Wishie need your camera permission to scan Qr";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Wishie need access to your photos to add an image to wishlist items.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need access to your photo library to scan QR codes from images.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -492,7 +495,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.3;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.khangnguyen.Wishie;
+				PRODUCT_BUNDLE_IDENTIFIER = com.khangnguyen.personal.Wishie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -520,7 +523,7 @@
 				INFOPLIST_FILE = Wishie/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Wishie need your camera permission to scan Qr";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Wishie need access to your photos to add an image to wishlist items.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need access to your photo library to scan QR codes from images.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -743,6 +746,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F03ED6E62FBB755500157DF9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		F03ED6ED2FBB755500157DF9 /* FirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F03ED6E62FBB755500157DF9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFunctions;
 		};
 		F08C489A2EF3041E00DC87DC /* Storage */ = {
 			isa = XCSwiftPackageProductDependency;

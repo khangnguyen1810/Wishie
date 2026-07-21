@@ -11,6 +11,7 @@ struct CreateWishlistPage2: View {
     @EnvironmentObject var createWishlistViewModel: CreateWishlistViewModel
     @State private var showAddItemOptionSheet: Bool = false
     @State private var showPasteLinkSheet: Bool = false
+    @State private var showSuggestGiftsSheet: Bool = false
     @State private var keyboardHeight: CGFloat = 0
 
     var body: some View {
@@ -65,14 +66,27 @@ struct CreateWishlistPage2: View {
                 onManual: {
                     createWishlistViewModel.items.append(WishlistItem())
                     showAddItemOptionSheet = false
+                },
+                onSuggestGifts: {
+                    showAddItemOptionSheet = false
+                    showSuggestGiftsSheet = true
                 }
             )
-            .presentationDetents([.height(280)])
+            .presentationDetents([.height(340)])
         }
         .sheet(isPresented: $showPasteLinkSheet) {
             PasteLinkSheet()
                 .environmentObject(createWishlistViewModel)
                 .presentationDetents([.large])
+        }
+        .sheet(isPresented: $showSuggestGiftsSheet) {
+            GiftSuggestionsSheet(
+                existingItemNames: GiftSuggestionInputBuilder.existingItemNames(from: createWishlistViewModel.items)
+            ) { item in
+                createWishlistViewModel.items.append(item)
+                return true
+            }
+            .presentationDetents([.large])
         }
     }
 }

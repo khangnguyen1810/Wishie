@@ -28,6 +28,11 @@ Podfile.lock
 .env
 .env.local
 
+# Firebase CLI debug logs
+firebase-debug.log
+firestore-debug.log
+*firebase-debug.log
+
 # Agent tooling (local scratch state, not project source)
 .claude/
 .superpowers/

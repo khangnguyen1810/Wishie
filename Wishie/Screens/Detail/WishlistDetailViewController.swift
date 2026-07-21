@@ -285,6 +285,11 @@ class WishlistDetailViewController: ObservableObject {
         }
     }
 
+    func addSuggestedItem(_ item: WishlistItem, wishlistId: String) async throws {
+        if checkIfItemExists(withLink: item.itemLink) { return }
+        _ = try await wishlistService.addWishlistItem(wishlistId: wishlistId, item: item)
+    }
+
     func fetchProductMetadataForNewItem(from urlString: String) async {
         isFetchingMetadata = true
         metadataFetchError = nil

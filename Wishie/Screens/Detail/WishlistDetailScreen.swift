@@ -22,6 +22,7 @@ struct WishlistDetailScreen: View {
     @State private var appExpnand: Bool = true
     @Environment(\.dismiss) private var dismiss
     @State private var sheetHeight: CGFloat = .zero
+    @State private var showSuggestGiftsSheet: Bool = false
     @State private var isSharing: Bool = false
     @State private var isEditing: Bool = false
     @State private var showLinkNotValidOrNotExist: Bool = false
@@ -118,9 +119,15 @@ struct WishlistDetailScreen: View {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         viewModel.showAddItemManualSheet = true
                     }
+                },
+                onSuggestGifts: {
+                    viewModel.showAddItemOptionSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showSuggestGiftsSheet = true
+                    }
                 }
             )
-            .presentationDetents([.height(280)])
+            .presentationDetents([.height(340)])
         }
         .sheet(
             isPresented: $viewModel.showAddItemManualSheet,
@@ -150,6 +157,21 @@ struct WishlistDetailScreen: View {
         ) {
             AddItemPasteLinkDetailSheet(viewModel: viewModel, wishlistId: wishlist?.id ?? wishlistId ?? "")
                 .presentationDetents([.large])
+        }
+        .sheet(isPresented: $showSuggestGiftsSheet) {
+            GiftSuggestionsSheet(
+                existingItemNames: GiftSuggestionInputBuilder.existingItemNames(from: viewModel.wishlistInfo.items)
+            ) { item in
+                do {
+                    try await viewModel.addSuggestedItem(item, wishlistId: viewModel.wishlistInfo.id)
+                    return true
+                } catch {
+                    viewModel.errorMessage = error.localizedDescription
+                    viewModel.isShowError = true
+                    return false
+                }
+            }
+            .presentationDetents([.large])
         }
         .sheet(
             isPresented: $viewModel.showEditItemSheet,

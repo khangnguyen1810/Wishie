@@ -3,6 +3,7 @@ import SwiftUI
 struct AddItemOptionSheet: View {
     let onPasteLink: () -> Void
     let onManual: () -> Void
+    let onSuggestGifts: () -> Void
 
     var body: some View {
         VStack(spacing: 16) {
@@ -29,6 +30,15 @@ struct AddItemOptionSheet: View {
                 subtitle: "Add item details yourself",
                 borderColor: .black.opacity(0.08),
                 action: onManual
+            )
+
+            optionCard(
+                icon: "sparkles",
+                iconTint: .wishiePink,
+                title: "Suggest gifts for me",
+                subtitle: "Get ideas based on your interests",
+                borderColor: .wishiePink.opacity(0.15),
+                action: onSuggestGifts
             )
         }
         .padding(.horizontal, 20)

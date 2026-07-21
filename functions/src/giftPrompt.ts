@@ -2,6 +2,7 @@ export interface GiftPromptInput {
   interests: string[];
   age: number | null;
   existingItemNames: string[];
+  country?: string | null;
 }
 
 export interface GiftIdea {
@@ -16,7 +17,7 @@ export interface GiftIdeas {
 }
 
 export function buildPrompt(input: GiftPromptInput): string {
-  const { interests, age, existingItemNames } = input;
+  const { interests, age, existingItemNames, country } = input;
   const interestLine = `The person enjoys: ${interests.join(", ")}.`;
   const ageLine =
     typeof age === "number" ? `They are about ${age} years old.` : "";
@@ -24,12 +25,17 @@ export function buildPrompt(input: GiftPromptInput): string {
     existingItemNames && existingItemNames.length
       ? `Do NOT suggest anything similar to items they already have: ${existingItemNames.join(", ")}.`
       : "";
+  const locationLine =
+    country && country.trim()
+      ? `The recipient is located in ${country.trim()}. Prefer gifts and https product links that are purchasable and shippable in ${country.trim()}, using retailers popular in that country.`
+      : "";
 
   return [
     "You are a thoughtful gift-recommendation assistant.",
     interestLine,
     ageLine,
     avoidLine,
+    locationLine,
     "Suggest 8 to 10 specific, real, purchasable gift products that fit these interests.",
     'For each gift provide: a short product name, a one-sentence description, an estimated price (e.g. "$25"), and a direct https product link to a real, currently-buyable item on a major store.',
     "Prefer links to well-known retailers. Every link must be a real, working https URL to a specific product listing.",

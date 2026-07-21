@@ -42,3 +42,24 @@ test("parseGeminiJson extracts ideas from raw JSON", () => {
 test("parseGeminiJson throws on unparseable text", () => {
   assert.throws(() => parseGeminiJson("sorry, no json here"));
 });
+
+test("buildPrompt includes country line when country is provided", () => {
+  const prompt = buildPrompt({
+    interests: ["Gaming"],
+    age: 26,
+    existingItemNames: [],
+    country: "Vietnam",
+  });
+  assert.match(prompt, /Vietnam/);
+  assert.match(prompt, /located in Vietnam/i);
+});
+
+test("buildPrompt omits country line when country is null", () => {
+  const prompt = buildPrompt({
+    interests: ["Gaming"],
+    age: 26,
+    existingItemNames: [],
+    country: null,
+  });
+  assert.doesNotMatch(prompt, /located in/i);
+});

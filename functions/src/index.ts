@@ -30,6 +30,8 @@ export const suggestGifts = onCall(
     const existingItemNames = Array.isArray(request.data?.existingItemNames)
       ? request.data.existingItemNames
       : [];
+    const country =
+      typeof request.data?.country === "string" ? request.data.country : null;
 
     if (interests.length === 0) {
       throw new HttpsError(
@@ -38,7 +40,7 @@ export const suggestGifts = onCall(
       );
     }
 
-    const prompt = buildPrompt({ interests, age, existingItemNames });
+    const prompt = buildPrompt({ interests, age, existingItemNames, country });
 
     const requestInit = {
       method: "POST",

@@ -21,17 +21,20 @@ final class GiftSuggestionViewModel: ObservableObject {
     private let suggestionService: GiftSuggestionServiceProtocol
     private let metadataService: ProductMetadataServiceProtocol
     private let authService: AuthenticateServiceProtocol
+    private let countryProvider: CountryProviding
 
     init(
         existingItemNames: [String],
         suggestionService: GiftSuggestionServiceProtocol = GiftSuggestionService(),
         metadataService: ProductMetadataServiceProtocol = ProductMetadataService(),
-        authService: AuthenticateServiceProtocol = AuthenticateService()
+        authService: AuthenticateServiceProtocol = AuthenticateService(),
+        countryProvider: CountryProviding = LocationManager.shared
     ) {
         self.existingItemNames = existingItemNames
         self.suggestionService = suggestionService
         self.metadataService = metadataService
         self.authService = authService
+        self.countryProvider = countryProvider
     }
 
     func start() async {
@@ -74,12 +77,15 @@ final class GiftSuggestionViewModel: ObservableObject {
         let rawAge = user.map { GiftSuggestionInputBuilder.age(from: $0.dateOfBirth) } ?? nil
         let age = (rawAge ?? 0) >= 1 ? rawAge : nil
 
+        let country = await countryProvider.resolveCountryName()
+
         let ideas: [GiftIdea]
         do {
             ideas = try await suggestionService.fetchIdeas(
                 interests: interestNames,
                 age: age,
-                existingItemNames: existingItemNames
+                existingItemNames: existingItemNames,
+                country: country
             )
         } catch {
             phase = .error(error.localizedDescription)

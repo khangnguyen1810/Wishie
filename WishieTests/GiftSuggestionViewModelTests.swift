@@ -10,12 +10,19 @@ struct GiftSuggestionViewModelTests {
         var error: Error?
         private(set) var didCallFetch = false
         private(set) var receivedAge: Int?
-        func fetchIdeas(interests: [String], age: Int?, existingItemNames: [String]) async throws -> [GiftIdea] {
+        private(set) var receivedCountry: String?
+        func fetchIdeas(interests: [String], age: Int?, existingItemNames: [String], country: String?) async throws -> [GiftIdea] {
             didCallFetch = true
             receivedAge = age
+            receivedCountry = country
             if let error { throw error }
             return ideas
         }
+    }
+
+    struct StubCountryProvider: CountryProviding {
+        let name: String?
+        func resolveCountryName() async -> String? { name }
     }
 
     func makeIdeas(_ count: Int) -> [GiftIdea] {
@@ -127,5 +134,25 @@ struct GiftSuggestionViewModelTests {
 
         #expect(suggestion.didCallFetch)
         #expect(suggestion.receivedAge == nil)
+    }
+
+    @Test func generatePassesResolvedCountryToService() async {
+        let suggestion = StubSuggestionService()
+        suggestion.ideas = makeIdeas(3)
+        let metadata = MockProductMetadataService()
+        for i in 0..<3 {
+            metadata.results["https://ex.com/\(i)"] = .success(MockProductMetadataService.metadata(for: "https://ex.com/\(i)"))
+        }
+
+        let vm = GiftSuggestionViewModel(
+            existingItemNames: [],
+            suggestionService: suggestion,
+            metadataService: metadata,
+            authService: authStub(interests: ["gaming"]),
+            countryProvider: StubCountryProvider(name: "Vietnam")
+        )
+        await vm.generate()
+
+        #expect(suggestion.receivedCountry == "Vietnam")
     }
 }

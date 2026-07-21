@@ -2,7 +2,7 @@ import Foundation
 import WebKit
 
 @MainActor
-final class WebViewMetadataExtractor: NSObject, WKNavigationDelegate {
+final class WebViewMetadataExtractor: NSObject, MetadataExtracting, WKNavigationDelegate {
 
     private var webView: WKWebView?
     private var continuation: CheckedContinuation<ProductMetadata, Error>?

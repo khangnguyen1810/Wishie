@@ -20,4 +20,15 @@ enum GiftSuggestionInputBuilder {
             .map { $0.name.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
     }
+
+    /// English country name for an ISO region code (e.g. "VN" -> "Vietnam").
+    static func countryName(fromRegionCode code: String?) -> String? {
+        guard let code, !code.isEmpty else { return nil }
+        return Locale(identifier: "en_US").localizedString(forRegionCode: code)
+    }
+
+    /// English country name for the device's current region, if any.
+    static func deviceRegionCountryName() -> String? {
+        countryName(fromRegionCode: Locale.current.region?.identifier)
+    }
 }

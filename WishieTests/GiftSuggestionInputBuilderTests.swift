@@ -32,4 +32,14 @@ struct GiftSuggestionInputBuilderTests {
         let names = GiftSuggestionInputBuilder.existingItemNames(from: items)
         #expect(names == ["AirPods", "Book"])
     }
+
+    @Test func countryNameMapsIsoRegionCodeToEnglishName() {
+        #expect(GiftSuggestionInputBuilder.countryName(fromRegionCode: "VN") == "Vietnam")
+        #expect(GiftSuggestionInputBuilder.countryName(fromRegionCode: "US") == "United States")
+    }
+
+    @Test func countryNameReturnsNilForNilOrEmptyCode() {
+        #expect(GiftSuggestionInputBuilder.countryName(fromRegionCode: nil) == nil)
+        #expect(GiftSuggestionInputBuilder.countryName(fromRegionCode: "") == nil)
+    }
 }

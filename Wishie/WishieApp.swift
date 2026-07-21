@@ -48,6 +48,7 @@ struct WishieApp: App {
             .animation(.easeInOut(duration: 0.4), value: authViewModel.isLoggedIn)
             .animation(RootNavigationAnimations.welcomeToAuth, value: coordinator.appState)
             .onAppear {
+                LocationManager.shared.requestPermission()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     withAnimation(.spring) {
                         isActive = true

@@ -287,6 +287,11 @@ class WishlistDetailViewController: ObservableObject {
 
     func addSuggestedItem(_ item: WishlistItem, wishlistId: String) async throws {
         if checkIfItemExists(withLink: item.itemLink) { return }
+        var item = item
+        if let localImage = item.localImage {
+            item.image = try await wishlistService.upload(image: localImage, fileName: UUID().uuidString)
+            item.localImage = nil
+        }
         _ = try await wishlistService.addWishlistItem(wishlistId: wishlistId, item: item)
     }
 

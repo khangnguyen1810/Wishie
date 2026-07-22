@@ -71,11 +71,9 @@ differs only for untested sites, where it buys safety at no measured cost.
    returned result always has one.
 3. If that result also has an image, return it.
 4. Otherwise try the WebView extractor.
-5. If the WebView result has no image but the LinkPresentation result did, attach
-   that image to it before returning.
-6. If the WebView extractor fails but the LinkPresentation extractor returned a
+5. If the WebView extractor fails but the LinkPresentation extractor returned a
    result, return that result rather than failing.
-7. If both fail, throw. Existing call sites already surface the error.
+6. If both fail, throw. Existing call sites already surface the error.
 
 ## Components
 

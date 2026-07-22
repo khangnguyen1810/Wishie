@@ -42,32 +42,12 @@ class ProductMetadataService: ProductMetadataServiceProtocol {
         }
 
         do {
-            let webViewResult = try await makeWebViewExtractor().extract(from: url)
-            return merge(webViewResult: webViewResult, linkPresentationResult: linkPresentationResult)
+            return try await makeWebViewExtractor().extract(from: url)
         } catch {
             // The WebView extractor is the more capable of the two, so its
             // failure is the more informative error to surface.
             guard let linkPresentationResult else { throw error }
             return linkPresentationResult
         }
-    }
-
-    /// Carries the LinkPresentation image over when the WebView scrape found none.
-    private func merge(
-        webViewResult: ProductMetadata,
-        linkPresentationResult: ProductMetadata?
-    ) -> ProductMetadata {
-        guard !webViewResult.hasImage, let localImage = linkPresentationResult?.localImage else {
-            return webViewResult
-        }
-
-        return ProductMetadata(
-            title: webViewResult.title,
-            productDescription: webViewResult.productDescription,
-            imageUrl: webViewResult.imageUrl,
-            productUrl: webViewResult.productUrl,
-            price: webViewResult.price,
-            localImage: localImage
-        )
     }
 }

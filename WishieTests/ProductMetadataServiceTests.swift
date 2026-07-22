@@ -82,21 +82,6 @@ struct ProductMetadataServiceTests {
         #expect(result.title == "Scraped")
     }
 
-    /// The WebView extractor got a title but no image; LinkPresentation had an
-    /// image. Keep both rather than discarding the image we already paid for.
-    @Test func webViewResultInheritsLinkPresentationImage() async throws {
-        let image = anImage
-        let lp = StubExtractor(result: .success(metadata(title: "No image", localImage: image)))
-        let web = StubExtractor(result: .success(metadata(title: "Scraped", price: "100")))
-        let service = makeService(linkPresentation: lp, webView: web)
-
-        let result = try await service.fetchMetadata(from: "https://example.com/p")
-
-        #expect(result.title == "Scraped")
-        #expect(result.price == "100")
-        #expect(result.localImage === image)
-    }
-
     @Test func returnsLinkPresentationResultWhenWebViewFails() async throws {
         let lp = StubExtractor(result: .success(metadata(title: "Title only")))
         let web = StubExtractor(result: .failure(URLError(.timedOut)))

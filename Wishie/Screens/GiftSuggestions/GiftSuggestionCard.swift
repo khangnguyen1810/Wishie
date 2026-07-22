@@ -6,10 +6,13 @@ struct GiftSuggestionCard: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if let imageUrl = suggestion.metadata.imageUrl {
-                WishieWebImage(url: imageUrl)
-                    .frame(width: 64, height: 64)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            if suggestion.metadata.hasImage {
+                WishieProductImage(
+                    localImage: suggestion.metadata.localImage,
+                    url: suggestion.metadata.imageUrl
+                )
+                .frame(width: 64, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
 
             VStack(alignment: .leading, spacing: 4) {

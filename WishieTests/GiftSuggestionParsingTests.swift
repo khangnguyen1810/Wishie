@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import UIKit
 @testable import Wishie
 
 struct GiftSuggestionParsingTests {
@@ -50,5 +51,20 @@ struct GiftSuggestionParsingTests {
         #expect(item.itemLink == "https://ex.com/kb")
         #expect(item.price == "$79")
         #expect(item.description == "From store")
+    }
+
+    @Test func toWishlistItemCarriesLocalImageIdentity() {
+        let idea = GiftIdea(name: "Keyboard", description: "Clicky", price: "$80", link: "https://ex.com/kb")
+        let localImage = UIImage(systemName: "gift")!
+        let metadata = ProductMetadata(
+            title: "Real Keyboard",
+            productDescription: "From store",
+            imageUrl: nil,
+            productUrl: "https://ex.com/kb",
+            price: "$79",
+            localImage: localImage
+        )
+        let item = GiftSuggestion(idea: idea, metadata: metadata).toWishlistItem()
+        #expect(item.localImage === localImage)
     }
 }

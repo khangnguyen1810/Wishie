@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import UIKit
 @testable import Wishie
 
 @MainActor
@@ -158,5 +159,38 @@ struct GiftSuggestionViewModelTests {
         await vm.generate()
 
         #expect(suggestion.receivedCountry == "Vietnam")
+    }
+
+    /// LinkPresentation results carry a decoded image and no image URL. The
+    /// validation filter must accept them, or the fast path yields nothing.
+    @Test func generateKeepsSuggestionsWithOnlyALocalImage() async {
+        let suggestion = StubSuggestionService()
+        suggestion.ideas = makeIdeas(6)
+
+        let metadata = MockProductMetadataService()
+        for i in 0..<6 {
+            metadata.results["https://ex.com/\(i)"] = .success(
+                ProductMetadata(
+                    title: "Title \(i)",
+                    productDescription: "Desc",
+                    imageUrl: nil,
+                    productUrl: "https://ex.com/\(i)",
+                    price: "$10",
+                    localImage: UIImage(systemName: "gift")!
+                )
+            )
+        }
+
+        let vm = GiftSuggestionViewModel(
+            existingItemNames: [],
+            suggestionService: suggestion,
+            metadataService: metadata,
+            authService: authStub(interests: ["gaming"]),
+            countryProvider: StubCountryProvider(name: nil)
+        )
+        await vm.generate()
+
+        #expect(vm.suggestions.count == 6)
+        #expect(vm.phase == .results)
     }
 }

@@ -41,6 +41,7 @@ struct GiftSuggestion: Hashable, Identifiable {
             name: metadata.title.isEmpty ? idea.name : metadata.title,
             description: metadata.productDescription.isEmpty ? idea.description : metadata.productDescription,
             image: metadata.imageUrl,
+            localImage: metadata.localImage,
             itemLink: metadata.productUrl,
             price: (metadata.price?.isEmpty == false ? metadata.price : idea.price)
         )

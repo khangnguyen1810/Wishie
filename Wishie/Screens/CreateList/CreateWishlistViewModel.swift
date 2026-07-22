@@ -71,6 +71,7 @@ class CreateWishlistViewModel: ObservableObject {
             name: metadata.title,
             description: metadata.productDescription,
             image: metadata.imageUrl,
+            localImage: metadata.localImage,
             itemLink: metadata.productUrl,
             price: metadata.price
         )

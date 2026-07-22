@@ -301,6 +301,7 @@ class WishlistDetailViewController: ObservableObject {
             newItemName = ""
             newItemDescription = ""
             newItemRemoteImageUrl = nil
+            newItemImage = nil
             newItemPrice = ""
         }
         isFetchingMetadata = false
@@ -319,6 +320,7 @@ class WishlistDetailViewController: ObservableObject {
         newItemDescription = metadata.productDescription
         newItemLink = metadata.productUrl
         newItemRemoteImageUrl = metadata.imageUrl
+        newItemImage = metadata.localImage
         newItemPrice = metadata.price ?? ""
     }
 }

@@ -164,8 +164,8 @@ Two need care:
   title present, absent, and whitespace-only (the latter two must throw); image
   present/absent; `url` present/absent.
 - **Resolution order:** stub both extractors and assert each branch — LP usable means
-  the WebView extractor is never invoked; LP without an image falls through; a
-  WebView result missing an image inherits LP's; both failing throws.
+  the WebView extractor is never invoked; LP without an image falls through; a WebView
+  failure falls back to the LP result; both failing throws.
 - **Regression:** `GiftSuggestionViewModel` keeps a suggestion whose metadata has a
   `localImage` but no `imageUrl`. This is the trap named above, so it gets an
   explicit test.

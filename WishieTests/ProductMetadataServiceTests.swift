@@ -102,6 +102,20 @@ struct ProductMetadataServiceTests {
         }
     }
 
+    @Test func buildsAFreshExtractorForEveryExtraction() async {
+        let lp = StubExtractor(result: .success(metadata(title: "Fast", localImage: anImage)))
+        var built = 0
+        let service = ProductMetadataService(
+            makeLinkPresentationExtractor: { built += 1; return lp },
+            makeWebViewExtractor: { StubExtractor(result: .success(self.metadata())) }
+        )
+
+        _ = try? await service.fetchMetadata(from: "https://example.com/p")
+        _ = try? await service.fetchMetadata(from: "https://example.com/p")
+
+        #expect(built == 2)
+    }
+
     @Test func rejectsNonHTTPSchemesBeforeExtracting() async {
         let lp = StubExtractor(result: .success(metadata()))
         let web = StubExtractor(result: .success(metadata()))

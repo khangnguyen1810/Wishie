@@ -1,5 +1,7 @@
 # Supabase Backend Migration — Design
 
+> **Status: superseded.** Replaced by `2026-07-25-nestjs-backend-migration-design.md`, which puts a custom NestJS server (Prisma + Postgres, proxying Supabase Auth/Storage) in front of Supabase instead of having clients talk to Supabase directly.
+
 ## Context
 
 Wishie currently uses Firebase (FirebaseAuth, Firestore, Firebase Cloud Functions) as its backend. A companion web app is being planned that needs to share the same database and account system as the iOS app. The owner wants to stop depending on Firebase and needs a shared backend that both clients can call.

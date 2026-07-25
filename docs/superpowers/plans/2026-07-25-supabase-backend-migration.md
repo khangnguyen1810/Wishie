@@ -1,5 +1,7 @@
 # Supabase Backend Migration Implementation Plan
 
+> **Status: superseded.** The design this plan implements (direct client access to Supabase) was replaced by `docs/superpowers/specs/2026-07-25-nestjs-backend-migration-design.md`. Do not execute this plan — it's kept for reference only.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace FirebaseAuth and Firestore with a single shared Supabase project (Postgres + Auth + Realtime + Edge Functions), consumed directly by both the iOS app and the future web app, with no data migration required (no production users exist).

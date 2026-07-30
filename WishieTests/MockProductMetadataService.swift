@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 @testable import Wishie
 
 final class MockProductMetadataService: ProductMetadataServiceProtocol {
@@ -13,13 +14,14 @@ final class MockProductMetadataService: ProductMetadataServiceProtocol {
         }
     }
 
-    static func metadata(for url: String) -> ProductMetadata {
+    static func metadata(for url: String, localImage: UIImage? = nil) -> ProductMetadata {
         ProductMetadata(
             title: "Title \(url)",
             productDescription: "Desc",
             imageUrl: "https://img/\(url).jpg",
             productUrl: url,
-            price: "$10"
+            price: "$10",
+            localImage: localImage
         )
     }
 }

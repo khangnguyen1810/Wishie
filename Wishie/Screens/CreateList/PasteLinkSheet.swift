@@ -59,8 +59,8 @@ struct PasteLinkSheet: View {
 
             if let metadata = fetchedMetadata {
                 VStack(alignment: .leading, spacing: 8) {
-                    if let imageUrl = metadata.imageUrl {
-                        WishieWebImage(url: imageUrl)
+                    if metadata.hasImage {
+                        WishieProductImage(localImage: metadata.localImage, url: metadata.imageUrl)
                             .frame(height: 140)
                             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }

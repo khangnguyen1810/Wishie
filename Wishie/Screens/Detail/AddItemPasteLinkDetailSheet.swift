@@ -73,10 +73,13 @@ struct AddItemPasteLinkDetailSheet: View {
 
             if !viewModel.newItemName.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
-                    if let imageUrl = viewModel.newItemRemoteImageUrl {
-                        WishieWebImage(url: imageUrl)
-                            .frame(height: 140)
-                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    if viewModel.newItemImage != nil || viewModel.newItemRemoteImageUrl?.isEmpty == false {
+                        WishieProductImage(
+                            localImage: viewModel.newItemImage,
+                            url: viewModel.newItemRemoteImageUrl
+                        )
+                        .frame(height: 140)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
 
                     Text(viewModel.newItemName)

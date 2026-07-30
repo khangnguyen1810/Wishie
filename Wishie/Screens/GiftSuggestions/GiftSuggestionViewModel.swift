@@ -115,7 +115,7 @@ final class GiftSuggestionViewModel: ObservableObject {
                 for idea in batch {
                     group.addTask { [metadataService] in
                         guard let metadata = try? await metadataService.fetchMetadata(from: idea.link),
-                              metadata.imageUrl?.isEmpty == false
+                              metadata.hasImage
                         else { return nil }
                         return GiftSuggestion(idea: idea, metadata: metadata)
                     }

@@ -287,6 +287,11 @@ class WishlistDetailViewController: ObservableObject {
 
     func addSuggestedItem(_ item: WishlistItem, wishlistId: String) async throws {
         if checkIfItemExists(withLink: item.itemLink) { return }
+        var item = item
+        if let localImage = item.localImage {
+            item.image = try await wishlistService.upload(image: localImage, fileName: UUID().uuidString)
+            item.localImage = nil
+        }
         _ = try await wishlistService.addWishlistItem(wishlistId: wishlistId, item: item)
     }
 
@@ -301,6 +306,7 @@ class WishlistDetailViewController: ObservableObject {
             newItemName = ""
             newItemDescription = ""
             newItemRemoteImageUrl = nil
+            newItemImage = nil
             newItemPrice = ""
         }
         isFetchingMetadata = false
@@ -319,6 +325,7 @@ class WishlistDetailViewController: ObservableObject {
         newItemDescription = metadata.productDescription
         newItemLink = metadata.productUrl
         newItemRemoteImageUrl = metadata.imageUrl
+        newItemImage = metadata.localImage
         newItemPrice = metadata.price ?? ""
     }
 }

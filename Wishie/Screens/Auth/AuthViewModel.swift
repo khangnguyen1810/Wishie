@@ -2,14 +2,13 @@
 //  AuthViewModel.swift
 //  Wishie
 //
-//  Created by Nguyễn Khang Hữu on 12/10/25.
-//
 
 import Foundation
-import FirebaseAuth
 import UIKit
+
 final class AuthViewModel: ObservableObject {
     private let authService: AuthenticateServiceProtocol
+    private let sessionStore: SessionStore
     @Published var email: String = ""
     @Published var password: String = ""
     @Published var isLoggedIn: Bool = false
@@ -25,31 +24,32 @@ final class AuthViewModel: ObservableObject {
     @Published var isSentEmail: Bool = false
     @Published var forgotenEmail: String = ""
     @Published var userInfoError: String = ""
-    init(authService: AuthenticateServiceProtocol = AuthenticateService()) {
+
+    init(authService: AuthenticateServiceProtocol = AuthenticateService(), sessionStore: SessionStore = .shared) {
         self.authService = authService
+        self.sessionStore = sessionStore
         checkToken()
     }
+
     func checkToken() {
-        guard let firebaseUser = Auth.auth().currentUser,
-              let storedId = UserDefaults.standard.string(forKey: userid),
-              !storedId.isEmpty,
-              firebaseUser.uid == storedId else {
-            UserDefaults.standard.removeObject(forKey: userid)
-            return
-        }
         Task {
+            guard await sessionStore.current() != nil else { return }
             do {
-                _ = try await firebaseUser.getIDToken(forcingRefresh: true)
-                await self.getUserInfo()
+                guard let result = try await authService.getUserInfo() else {
+                    await sessionStore.clear()
+                    return
+                }
                 await MainActor.run {
-                    UserDefaults.standard.set(self.userInfo.hasCompletedInterestsSetup, forKey: "hasCompletedInterestsSetup")
+                    self.userInfo = result
+                    UserDefaults.standard.set(result.hasCompletedInterestsSetup, forKey: "hasCompletedInterestsSetup")
                     self.isLoggedIn = true
                 }
             } catch {
-                await MainActor.run { UserDefaults.standard.removeObject(forKey: self.userid) }
+                await sessionStore.clear()
             }
         }
     }
+
     func login(email: String, password: String) {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -64,9 +64,9 @@ final class AuthViewModel: ObservableObject {
             do {
                 let session = try await authService.login(trimmedEmail, trimmedPassword)
                 await MainActor.run {
-                    self.isShowProgress = false
                     UserDefaults.standard.setValue(session.userId, forKey: self.userid)
                     self.isLoggedIn = true
+                    self.isShowProgress = false
                 }
                 await self.getUserInfo()
             } catch {
@@ -86,9 +86,9 @@ final class AuthViewModel: ObservableObject {
             do {
                 let session = try await authService.signUp(request)
                 await MainActor.run {
-                    self.isShowProgress = false
                     UserDefaults.standard.setValue(session.userId, forKey: self.userid)
                     self.isLoggedIn = true
+                    self.isShowProgress = false
                 }
                 await self.getUserInfo()
             } catch {
@@ -108,9 +108,9 @@ final class AuthViewModel: ObservableObject {
             do {
                 let session = try await authService.loginWithGoogle(presentingViewController: presentingViewController)
                 await MainActor.run {
-                    self.isShowProgress = false
                     UserDefaults.standard.setValue(session.userId, forKey: self.userid)
                     self.isLoggedIn = true
+                    self.isShowProgress = false
                 }
                 await self.getUserInfo()
             } catch {
@@ -130,13 +130,18 @@ final class AuthViewModel: ObservableObject {
 
     func logOut() {
         self.isShowProgress = true
-        UserDefaults.standard.removeObject(forKey: userid)
-        isLoggedIn = false
-        self.userInfo = UserModel()
-        self.userInfoError = ""
-        self.isShowProgress = false
+        Task {
+            try? await authService.logout()
+            await MainActor.run {
+                UserDefaults.standard.removeObject(forKey: self.userid)
+                self.isLoggedIn = false
+                self.userInfo = UserModel()
+                self.userInfoError = ""
+                self.isShowProgress = false
+            }
+        }
     }
-    
+
     @MainActor
     func getUserInfo() async {
         do {
@@ -146,14 +151,12 @@ final class AuthViewModel: ObservableObject {
             self.userInfoError = error.localizedDescription
         }
     }
-    
+
     func forgotPassword() {
         Task {
             do {
                 let success = try await authService.resetPassword(forgotenEmail)
-                await MainActor.run {
-                    self.isSentEmail = success
-                }
+                await MainActor.run { self.isSentEmail = success }
             } catch {
                 print(error.localizedDescription)
             }

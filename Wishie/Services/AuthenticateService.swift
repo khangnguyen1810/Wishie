@@ -2,217 +2,155 @@
 //  AuthenticateService.swift
 //  Wishie
 //
-//  Created by Nguyễn Khang Hữu on 13/10/25.
+//  Created by Nguyễn Khang Hữu on 13/10/25.
 //
 
 import Foundation
 import UIKit
-import FirebaseAuth
-import FirebaseFirestore
-import Supabase
 import GoogleSignIn
-import Combine
+
+struct ResetPasswordResponse: Decodable {
+    let success: Bool
+}
+
+struct AvatarUploadResponse: Decodable {
+    let avatarUrl: String
+}
+
 protocol AuthenticateServiceProtocol {
-    func login(_ email: String, _ password: String) -> AnyPublisher<AuthDataResult?, Error>
-    func signUp(_ signUpRequest: SignUpRequest) -> AnyPublisher<FirebaseAuth.AuthDataResult?, Error>
-    func loginWithGoogle(presentingViewController: UIViewController) -> AnyPublisher<AuthDataResult?, Error>
-    func resetPassword(_ email: String) -> AnyPublisher<Bool, Error>
+    func signUp(_ request: SignUpRequest) async throws -> AuthSession
+    func login(_ email: String, _ password: String) async throws -> AuthSession
+    func loginWithGoogle(presentingViewController: UIViewController) async throws -> AuthSession
+    func resetPassword(_ email: String) async throws -> Bool
+    func logout() async throws
     func getUserInfo() async throws -> UserModel?
     func getUserInfo(by userId: String) async throws -> UserModel?
     func uploadAvatar(image: UIImage, userId: String) async throws -> String
     func updateUserInfo(userId: String, firstName: String, lastName: String, phone: String, dateOfBirth: Date, avatarUrl: String?) async throws
     func updateUserInterests(userId: String, interests: [String]) async throws
 }
-class AuthenticateService: AuthenticateServiceProtocol {
-    private let db = Firestore.firestore()
-    private var auth = Auth.auth()
-    func login(_ email: String, _ password: String) -> AnyPublisher<AuthDataResult?, Error> {
-        return Future<AuthDataResult?, Error> { [weak self] promise in
-            guard let self else { return }
-            self.auth.signIn(withEmail: email, password: password) { result, error in
-                if let error = error {
-                    promise(.failure(error))
-                    return
-                } else {
-                    promise(.success(result))
-                }
-            }
-        }
-        .eraseToAnyPublisher()
-    }
-    func signUp(_ signupRequest: SignUpRequest) -> AnyPublisher<FirebaseAuth.AuthDataResult?, any Error> {
-        return Future<AuthDataResult?, Error> { [weak self] promise in
-            guard let self else { return }
-            self.auth.createUser(withEmail: signupRequest.email, password: signupRequest.password) { result, error in
-                if let error {
-                    promise(.failure(error))
-                    return
-                }
-                guard let user = result?.user else {
-                    promise(.failure(NSError(domain: "SignUpError", code: -1, userInfo: [NSLocalizedDescriptionKey: "User object is nil."])))
-                    return
-                }
-                let userData: [String: Any] = [
-                    "uid": user.uid,
-                    "firstName": signupRequest.firstName,
-                    "lastName": signupRequest.lastName,
-                    "email": signupRequest.email,
-                    "phone": signupRequest.phone,
-                    "dateOfBirth": Timestamp(date: signupRequest.dateOfBirth),
-                    "createAt": FieldValue.serverTimestamp()
-                ]
-                self.db.collection("users").document(user.uid).setData(userData) { error in
-                    if let error {
-                        promise(.failure(error))
-                        return
-                    } else {
-                        promise(.success(result))
-                    }
-                }
-            }
-        }
-        .eraseToAnyPublisher()
-    }
-    func loginWithGoogle(presentingViewController: UIViewController) -> AnyPublisher<AuthDataResult?, Error> {
-        return Future<AuthDataResult?, Error> { [weak self] promise in
-            guard let self else { return }
-            GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController) { signInResult, error in
-                if let error {
-                    promise(.failure(error))
-                    return
-                }
-                guard let googleUser = signInResult?.user,
-                      let idToken = googleUser.idToken?.tokenString else {
-                    promise(.failure(NSError(domain: "GoogleSignInError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Missing Google ID token."])))
-                    return
-                }
-                let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: googleUser.accessToken.tokenString)
-                self.auth.signIn(with: credential) { result, error in
-                    if let error {
-                        promise(.failure(error))
-                        return
-                    }
-                    guard let result else {
-                        promise(.failure(NSError(domain: "GoogleSignInError", code: -2, userInfo: [NSLocalizedDescriptionKey: "Authentication result is nil."])))
-                        return
-                    }
-                    Task {
-                        do {
-                            try await self.createGoogleUserDocumentIfNeeded(for: result.user, profile: googleUser.profile)
-                            promise(.success(result))
-                        } catch {
-                            promise(.failure(error))
-                        }
-                    }
-                }
-            }
-        }
-        .eraseToAnyPublisher()
+
+final class AuthenticateService: AuthenticateServiceProtocol {
+    private let apiClient: APIClientProtocol
+    private let sessionStore: SessionStore
+
+    init(apiClient: APIClientProtocol = APIClient(), sessionStore: SessionStore = .shared) {
+        self.apiClient = apiClient
+        self.sessionStore = sessionStore
     }
 
-    static func resolvedGoogleEmail(firebaseEmail: String?, profileEmail: String?) -> String {
-        if let firebaseEmail, !firebaseEmail.isEmpty {
-            return firebaseEmail
+    func signUp(_ request: SignUpRequest) async throws -> AuthSession {
+        struct RequestBody: Encodable {
+            let email: String
+            let password: String
+            let firstName: String
+            let lastName: String
+            let phone: String
+            let dateOfBirth: String
         }
-        return profileEmail ?? ""
+        let body = RequestBody(
+            email: request.email,
+            password: request.password,
+            firstName: request.firstName,
+            lastName: request.lastName,
+            phone: request.phone,
+            dateOfBirth: WishieDateFormatting.dateOnly.string(from: request.dateOfBirth)
+        )
+        let json = try JSONEncoder().encode(body)
+        let session: AuthSession = try await apiClient.send(.post("/auth/signup", json: json))
+        await sessionStore.save(session)
+        return session
     }
 
-    private func createGoogleUserDocumentIfNeeded(for user: FirebaseAuth.User, profile: GIDProfileData?) async throws {
-        let userRef = db.collection(WishieConstants.firebaseUserPath).document(user.uid)
-        let snapshot = try await userRef.getDocument()
-        let resolvedEmail = Self.resolvedGoogleEmail(firebaseEmail: user.email, profileEmail: profile?.email)
-        guard !snapshot.exists else {
-            let existingEmail = snapshot.data()?["email"] as? String ?? ""
-            if existingEmail.isEmpty && !resolvedEmail.isEmpty {
-                try await userRef.updateData(["email": resolvedEmail])
-            }
-            return
-        }
-        let userData: [String: Any] = [
-            "uid": user.uid,
-            "firstName": profile?.givenName ?? "",
-            "lastName": profile?.familyName ?? "",
-            "email": resolvedEmail,
-            "phone": "",
-            "dateOfBirth": Timestamp(date: Date()),
-            "hasCompletedInterestsSetup": false,
-            "createAt": FieldValue.serverTimestamp()
-        ]
-        try await userRef.setData(userData)
+    func login(_ email: String, _ password: String) async throws -> AuthSession {
+        struct RequestBody: Encodable { let email: String; let password: String }
+        let json = try JSONEncoder().encode(RequestBody(email: email, password: password))
+        let session: AuthSession = try await apiClient.send(.post("/auth/login", json: json))
+        await sessionStore.save(session)
+        return session
     }
-    func resetPassword(_ email: String) -> AnyPublisher<Bool, Error> {
-        return Future<Bool, Error> { [weak self] promise in
-            guard let self else { return }
-            self.auth.sendPasswordReset(withEmail: email) { error in
-                if let error = error {
-                    promise(.failure(error))
-                } else {
-                    promise(.success(true))
+
+    func loginWithGoogle(presentingViewController: UIViewController) async throws -> AuthSession {
+        let signInResult = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<GIDSignInResult, Error>) in
+            GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController) { result, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
                 }
+                guard let result else {
+                    continuation.resume(throwing: NSError(domain: "GoogleSignInError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Sign-in result is nil."]))
+                    return
+                }
+                continuation.resume(returning: result)
             }
         }
-        .eraseToAnyPublisher()
+        guard let serverAuthCode = signInResult.serverAuthCode else {
+            throw NSError(domain: "GoogleSignInError", code: -2, userInfo: [NSLocalizedDescriptionKey: "Missing Google server auth code."])
+        }
+        struct RequestBody: Encodable {
+            let code: String
+            let platform: String
+            let firstName: String?
+            let lastName: String?
+        }
+        let profile = signInResult.user.profile
+        let body = RequestBody(code: serverAuthCode, platform: "mobile", firstName: profile?.givenName, lastName: profile?.familyName)
+        let json = try JSONEncoder().encode(body)
+        let session: AuthSession = try await apiClient.send(.post("/auth/google", json: json))
+        await sessionStore.save(session)
+        return session
     }
+
+    func resetPassword(_ email: String) async throws -> Bool {
+        struct RequestBody: Encodable { let email: String }
+        let json = try JSONEncoder().encode(RequestBody(email: email))
+        let response: ResetPasswordResponse = try await apiClient.send(.post("/auth/reset-password", json: json))
+        return response.success
+    }
+
+    func logout() async throws {
+        if let accessToken = await sessionStore.current()?.accessToken {
+            struct RequestBody: Encodable { let accessToken: String }
+            if let json = try? JSONEncoder().encode(RequestBody(accessToken: accessToken)) {
+                _ = try? await apiClient.sendNoContent(.post("/auth/logout", json: json, requiresAuth: false))
+            }
+        }
+        await sessionStore.clear()
+    }
+
     func getUserInfo() async throws -> UserModel? {
-        guard let userId = UserDefaults.standard.string(forKey: "userid") else {
-            return nil
-        }
-        
-        let userDoc = try? await db
-            .collection("users")
-            .document(userId)
-            .getDocument()
-        
-        guard let data = userDoc?.data() else {
-            return nil
-        }
-        return UserModel(dictionary: data)
+        let profile: ProfileResponse = try await apiClient.send(.get("/profiles/me"))
+        return UserModel(profile: profile)
     }
-    
+
     func getUserInfo(by userId: String) async throws -> UserModel? {
-        let userDoc = try? await db
-            .collection("users")
-            .document(userId)
-            .getDocument()
-        
-        guard let data = userDoc?.data() else {
-            return nil
-        }
-        return UserModel(dictionary: data)
+        let profile: ProfileResponse = try await apiClient.send(.get("/profiles/\(userId)"))
+        return UserModel(profile: profile)
     }
 
     func uploadAvatar(image: UIImage, userId: String) async throws -> String {
         guard let data = image.jpegData(compressionQuality: 0.8) else {
             throw NSError(domain: "avatar", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to encode image."])
         }
-        let path = "avatar/\(userId).jpg"
-        try await SupabaseManager.shared.client.storage
-            .from("Wishie")
-            .upload(path, data: data, options: FileOptions(contentType: "image/jpeg", upsert: true))
-        let publicURL = try SupabaseManager.shared.client.storage
-            .from("Wishie")
-            .getPublicURL(path: path)
-            .absoluteString
-        return "\(publicURL)?t=\(Int(Date().timeIntervalSince1970))"
+        let endpoint = Endpoint.postMultipart("/profiles/me/avatar", fieldName: "file", fileName: "\(userId).jpg", mimeType: "image/jpeg", fileData: data)
+        let response: AvatarUploadResponse = try await apiClient.send(endpoint)
+        return response.avatarUrl
     }
 
     func updateUserInfo(userId: String, firstName: String, lastName: String, phone: String, dateOfBirth: Date, avatarUrl: String?) async throws {
-        var updateDict: [String: Any] = [
-            "firstName": firstName,
-            "lastName": lastName,
-            "phone": phone,
-            "dateOfBirth": Timestamp(date: dateOfBirth)
-        ]
-        if let avatarUrl {
-            updateDict["avatarUrl"] = avatarUrl
+        struct RequestBody: Encodable {
+            let firstName: String
+            let lastName: String
+            let phone: String
+            let dateOfBirth: String
         }
-        try await db.collection("users").document(userId).updateData(updateDict)
+        let json = try JSONEncoder().encode(RequestBody(firstName: firstName, lastName: lastName, phone: phone, dateOfBirth: WishieDateFormatting.dateOnly.string(from: dateOfBirth)))
+        let _: ProfileResponse = try await apiClient.send(.patch("/profiles/me", json: json))
     }
 
     func updateUserInterests(userId: String, interests: [String]) async throws {
-        try await db.collection(WishieConstants.firebaseUserPath).document(userId).updateData([
-            "interests": interests,
-            "hasCompletedInterestsSetup": true
-        ])
+        struct RequestBody: Encodable { let interests: [String] }
+        let json = try JSONEncoder().encode(RequestBody(interests: interests))
+        let _: ProfileResponse = try await apiClient.send(.patch("/profiles/me/interests", json: json))
     }
 }

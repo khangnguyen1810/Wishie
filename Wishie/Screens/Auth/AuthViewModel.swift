@@ -6,11 +6,9 @@
 //
 
 import Foundation
-import Combine
 import FirebaseAuth
 import UIKit
 final class AuthViewModel: ObservableObject {
-    private var cancellables = Set<AnyCancellable>()
     private let authService: AuthenticateServiceProtocol
     @Published var email: String = ""
     @Published var password: String = ""
@@ -62,68 +60,62 @@ final class AuthViewModel: ObservableObject {
             return
         }
         self.isShowProgress = true
-        authService.login(trimmedEmail, trimmedPassword)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] completion in
-                guard let self else { return }
-                self.isShowProgress = false
-                switch completion {
-                case .finished:
-                    break
-                case .failure(let error):
+        Task {
+            do {
+                let session = try await authService.login(trimmedEmail, trimmedPassword)
+                await MainActor.run {
+                    self.isShowProgress = false
+                    UserDefaults.standard.setValue(session.userId, forKey: self.userid)
+                    self.isLoggedIn = true
+                }
+                await self.getUserInfo()
+            } catch {
+                await MainActor.run {
+                    self.isShowProgress = false
                     self.isShowError = true
                     self.errorTitle = "Login Failed"
                     self.errorMessage = error.localizedDescription
                 }
-            } receiveValue: { [weak self] credential in
-                guard let self,
-                      let user = credential?.user
-                else { return }
-                UserDefaults.standard.setValue(user.uid, forKey: userid)
-                isLoggedIn = true
-                Task { await self.getUserInfo() }
             }
-            .store(in: &cancellables)
+        }
     }
-    
+
     func signup(request: SignUpRequest) {
         self.isShowProgress = true
-        authService.signUp(request)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] completion in
-                guard let self else { return }
-                self.isShowProgress = false
-                switch completion {
-                case .failure(let error):
+        Task {
+            do {
+                let session = try await authService.signUp(request)
+                await MainActor.run {
+                    self.isShowProgress = false
+                    UserDefaults.standard.setValue(session.userId, forKey: self.userid)
+                    self.isLoggedIn = true
+                }
+                await self.getUserInfo()
+            } catch {
+                await MainActor.run {
+                    self.isShowProgress = false
                     self.isShowError = true
                     self.errorTitle = "Signup Failed"
                     self.errorMessage = error.localizedDescription
-                case .finished:
-                    break
                 }
-            } receiveValue: { [weak self] result in
-                guard let self,
-                      let user = result?.user
-                else { return }
-                UserDefaults.standard.setValue(user.uid, forKey: userid)
-                isLoggedIn = true
-                Task { await self.getUserInfo() }
             }
-            .store(in: &cancellables)
-
+        }
     }
 
     func loginWithGoogle(presentingViewController: UIViewController) {
         self.isShowProgress = true
-        authService.loginWithGoogle(presentingViewController: presentingViewController)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] completion in
-                guard let self else { return }
-                self.isShowProgress = false
-                switch completion {
-                case .finished:
-                    break
-                case .failure(let error):
+        Task {
+            do {
+                let session = try await authService.loginWithGoogle(presentingViewController: presentingViewController)
+                await MainActor.run {
+                    self.isShowProgress = false
+                    UserDefaults.standard.setValue(session.userId, forKey: self.userid)
+                    self.isLoggedIn = true
+                }
+                await self.getUserInfo()
+            } catch {
+                await MainActor.run {
+                    self.isShowProgress = false
                     let nsError = error as NSError
                     if nsError.domain == self.googleSignInErrorDomain, nsError.code == self.googleSignInCanceledCode {
                         return
@@ -132,15 +124,8 @@ final class AuthViewModel: ObservableObject {
                     self.errorTitle = "Google Login Failed"
                     self.errorMessage = error.localizedDescription
                 }
-            } receiveValue: { [weak self] credential in
-                guard let self,
-                      let user = credential?.user
-                else { return }
-                UserDefaults.standard.setValue(user.uid, forKey: userid)
-                isLoggedIn = true
-                Task { await self.getUserInfo() }
             }
-            .store(in: &cancellables)
+        }
     }
 
     func logOut() {
@@ -163,18 +148,15 @@ final class AuthViewModel: ObservableObject {
     }
     
     func forgotPassword() {
-        authService.resetPassword(forgotenEmail)
-            .receive(on: DispatchQueue.main)
-            .sink { completion in
-                switch completion {
-                case .finished:
-                    break
-                case .failure(let error):
-                    print(error.localizedDescription)
+        Task {
+            do {
+                let success = try await authService.resetPassword(forgotenEmail)
+                await MainActor.run {
+                    self.isSentEmail = success
                 }
-            } receiveValue: { [weak self]success in
-                self?.isSentEmail = success
+            } catch {
+                print(error.localizedDescription)
             }
-            .store(in: &cancellables)
+        }
     }
 }

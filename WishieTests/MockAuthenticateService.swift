@@ -5,26 +5,29 @@
 
 import Foundation
 import UIKit
-import Combine
-import FirebaseAuth
 @testable import Wishie
 
 final class MockAuthenticateService: AuthenticateServiceProtocol {
-    var loginWithGoogleResult: AnyPublisher<AuthDataResult?, Error> = Empty().eraseToAnyPublisher()
+    var signUpResult: Result<AuthSession, Error> = .failure(NSError(domain: "MockAuthenticateService", code: -1))
+    var loginResult: Result<AuthSession, Error> = .failure(NSError(domain: "MockAuthenticateService", code: -1))
+    var loginWithGoogleResult: Result<AuthSession, Error> = .failure(NSError(domain: "MockAuthenticateService", code: -1))
+    var resetPasswordResult: Result<Bool, Error> = .success(true)
     var userToReturn: UserModel? = nil
     var getUserInfoError: Error? = nil
 
-    func login(_ email: String, _ password: String) -> AnyPublisher<AuthDataResult?, Error> {
-        Empty().eraseToAnyPublisher()
+    func signUp(_ request: SignUpRequest) async throws -> AuthSession {
+        try signUpResult.get()
     }
-    func signUp(_ signUpRequest: SignUpRequest) -> AnyPublisher<FirebaseAuth.AuthDataResult?, Error> {
-        Empty().eraseToAnyPublisher()
+    func login(_ email: String, _ password: String) async throws -> AuthSession {
+        try loginResult.get()
     }
-    func loginWithGoogle(presentingViewController: UIViewController) -> AnyPublisher<AuthDataResult?, Error> {
-        loginWithGoogleResult
+    func loginWithGoogle(presentingViewController: UIViewController) async throws -> AuthSession {
+        try loginWithGoogleResult.get()
     }
-    func resetPassword(_ email: String) -> AnyPublisher<Bool, Error> {
-        Empty().eraseToAnyPublisher()
+    func resetPassword(_ email: String) async throws -> Bool {
+        try resetPasswordResult.get()
+    }
+    func logout() async throws {
     }
     func getUserInfo() async throws -> UserModel? {
         if let getUserInfoError { throw getUserInfoError }

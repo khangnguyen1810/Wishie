@@ -129,17 +129,21 @@ struct APIClientTests {
                 var streamData = Data()
                 let bufferSize = 4096
                 var buffer = [UInt8](repeating: 0, count: bufferSize)
+                httpBodyStream.open()
                 while httpBodyStream.hasBytesAvailable {
                     let bytesRead = httpBodyStream.read(&buffer, maxLength: bufferSize)
                     if bytesRead > 0 {
                         streamData.append(&buffer, count: bytesRead)
+                    } else {
+                        break
                     }
                 }
+                httpBodyStream.close()
                 body = streamData
             } else {
                 body = nil
             }
-            capturedBodyContainsFileBytes = body.map { $0.contains(contentsOf: fileData) } ?? false
+            capturedBodyContainsFileBytes = body.map { $0.range(of: fileData) != nil } ?? false
             let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
             return (response, Data(#"{"avatarUrl":"https://cdn.example.com/u1.jpg"}"#.utf8))
         }
@@ -183,9 +187,9 @@ struct APIClientTests {
 
         do {
             let _: Sample = try await client.send(.post("/auth/login", json: Data(), requiresAuth: false))
-            Issue.record("expected APIError.server to be thrown")
+            Issue.record("expected APIError.unauthorized to be thrown")
         } catch let error as APIError {
-            #expect(error == .server(statusCode: 401, message: "Invalid email or password", code: nil))
+            #expect(error == .unauthorized)
         }
         #expect(callCount == 1) // only the original login attempt, no refresh retry
     }

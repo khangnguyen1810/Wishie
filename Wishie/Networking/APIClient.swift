@@ -33,6 +33,7 @@ final class APIClient: APIClientProtocol {
         do {
             return try await execute(endpoint)
         } catch APIError.unauthorized {
+            guard endpoint.requiresAuth else { throw APIError.unauthorized }
             _ = try await sessionStore.refreshedSession { [weak self] refreshToken in
                 guard let self else { throw APIError.sessionExpired }
                 return try await self.performRefresh(refreshToken: refreshToken)

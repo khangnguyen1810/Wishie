@@ -121,7 +121,25 @@ struct APIClientTests {
         let fileData = Data([0xFF, 0xD8, 0xFF])
         MockURLProtocol.requestHandler = { request in
             capturedContentType = request.value(forHTTPHeaderField: "Content-Type")
-            capturedBodyContainsFileBytes = (request.httpBodyStream != nil) || true
+            // Read body from either httpBody or httpBodyStream (URLSession may convert)
+            let body: Data?
+            if let httpBody = request.httpBody {
+                body = httpBody
+            } else if let httpBodyStream = request.httpBodyStream {
+                var streamData = Data()
+                let bufferSize = 4096
+                var buffer = [UInt8](repeating: 0, count: bufferSize)
+                while httpBodyStream.hasBytesAvailable {
+                    let bytesRead = httpBodyStream.read(&buffer, maxLength: bufferSize)
+                    if bytesRead > 0 {
+                        streamData.append(&buffer, count: bytesRead)
+                    }
+                }
+                body = streamData
+            } else {
+                body = nil
+            }
+            capturedBodyContainsFileBytes = body.map { $0.contains(contentsOf: fileData) } ?? false
             let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
             return (response, Data(#"{"avatarUrl":"https://cdn.example.com/u1.jpg"}"#.utf8))
         }
@@ -144,5 +162,31 @@ struct APIClientTests {
         let client = APIClient(session: MockURLProtocol.makeSession(), baseURL: URL(string: "http://localhost:3000")!, sessionStore: SessionStore(keychain: InMemoryKeychain()))
 
         try await client.sendNoContent(.post("/auth/logout", json: Data(), requiresAuth: false))
+    }
+
+    @Test func on401UnauthenticatedEndpointThrowsUnauthorizedWithoutRefresh() async throws {
+        struct Sample: Decodable { let value: String }
+        let keychain = seededKeychain(accessToken: "valid-token", refreshToken: "refresh-token")
+        var callCount = 0
+        MockURLProtocol.requestHandler = { request in
+            callCount += 1
+            // All requests should be the original login attempt (no refresh)
+            if request.url!.path == "/auth/refresh" {
+                Issue.record("refresh should not be called for requiresAuth: false endpoint")
+            }
+            let response = HTTPURLResponse(url: request.url!, statusCode: 401, httpVersion: nil, headerFields: nil)!
+            let body = Data(#"{"statusCode":401,"message":"Invalid email or password","error":"Unauthorized"}"#.utf8)
+            return (response, body)
+        }
+        let sessionStore = SessionStore(keychain: keychain)
+        let client = APIClient(session: MockURLProtocol.makeSession(), baseURL: URL(string: "http://localhost:3000")!, sessionStore: sessionStore)
+
+        do {
+            let _: Sample = try await client.send(.post("/auth/login", json: Data(), requiresAuth: false))
+            Issue.record("expected APIError.server to be thrown")
+        } catch let error as APIError {
+            #expect(error == .server(statusCode: 401, message: "Invalid email or password", code: nil))
+        }
+        #expect(callCount == 1) // only the original login attempt, no refresh retry
     }
 }

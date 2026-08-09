@@ -138,6 +138,35 @@ struct SessionStoreTests {
         #expect(loaded == nil)
     }
 
+    @Test func logoutDuringInFlightRefreshDoesNotResurrectTheSession() async {
+        let store = SessionStore(keychain: InMemoryKeychain())
+        await store.save(sampleSession())
+        let newSession = sampleSession(accessToken: "new", refreshToken: "new-refresh")
+
+        async let refreshResult: Void = {
+            do {
+                _ = try await store.refreshedSession { _ in
+                    try await Task.sleep(for: .milliseconds(50))
+                    return newSession
+                }
+                Issue.record("expected refreshedSession to throw sessionExpired once clear() ran during the await")
+            } catch let error as APIError {
+                #expect(error == .sessionExpired)
+            } catch {
+                Issue.record("unexpected error type: \(error)")
+            }
+        }()
+
+        // Log out while the refresh above is still suspended in Task.sleep.
+        try? await Task.sleep(for: .milliseconds(10))
+        await store.clear()
+
+        _ = await refreshResult
+
+        let loaded = await store.current()
+        #expect(loaded == nil)
+    }
+
     @Test func refreshWithNoStoredSessionThrowsSessionExpired() async {
         let store = SessionStore(keychain: InMemoryKeychain())
 

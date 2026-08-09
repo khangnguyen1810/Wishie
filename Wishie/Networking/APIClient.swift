@@ -10,7 +10,15 @@ final class APIClient: APIClientProtocol {
     private let baseURL: URL
     private let sessionStore: SessionStore
 
-    init(session: URLSession = .shared, baseURL: URL = APIConfig.baseURL, sessionStore: SessionStore = .shared) {
+    /// A shorter-than-default timeout so a slow/unreachable backend can't block the UI (e.g. a
+    /// blocking progress overlay during logout) for the system default of 60 seconds.
+    private static let defaultSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 20
+        return URLSession(configuration: config)
+    }()
+
+    init(session: URLSession = APIClient.defaultSession, baseURL: URL = APIConfig.baseURL, sessionStore: SessionStore = .shared) {
         self.session = session
         self.baseURL = baseURL
         self.sessionStore = sessionStore
@@ -32,8 +40,9 @@ final class APIClient: APIClientProtocol {
     private func executeWithRefresh(_ endpoint: Endpoint) async throws -> Data {
         do {
             return try await execute(endpoint)
-        } catch APIError.unauthorized {
-            guard endpoint.requiresAuth else { throw APIError.unauthorized }
+        } catch let error as APIError {
+            guard case .unauthorized = error else { throw error }
+            guard endpoint.requiresAuth else { throw error }
             _ = try await sessionStore.refreshedSession { [weak self] refreshToken in
                 guard let self else { throw APIError.sessionExpired }
                 return try await self.performRefresh(refreshToken: refreshToken)
@@ -90,7 +99,7 @@ final class APIClient: APIClientProtocol {
             throw APIError.invalidResponse
         }
         if http.statusCode == 401 {
-            throw APIError.unauthorized
+            throw APIError.unauthorized(APIError.decodeServerError(data: data, statusCode: http.statusCode))
         }
         guard (200..<300).contains(http.statusCode) else {
             throw APIError.decodeServerError(data: data, statusCode: http.statusCode)

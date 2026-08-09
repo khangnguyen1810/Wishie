@@ -189,7 +189,13 @@ struct APIClientTests {
             let _: Sample = try await client.send(.post("/auth/login", json: Data(), requiresAuth: false))
             Issue.record("expected APIError.unauthorized to be thrown")
         } catch let error as APIError {
-            #expect(error == .unauthorized)
+            guard case .unauthorized(let underlying) = error else {
+                Issue.record("expected APIError.unauthorized, got \(error)")
+                return
+            }
+            // The server's error message must survive, not be discarded in favor of a generic string.
+            #expect(underlying?.errorDescription == "Invalid email or password")
+            #expect(error.errorDescription == "Invalid email or password")
         }
         #expect(callCount == 1) // only the original login attempt, no refresh retry
     }

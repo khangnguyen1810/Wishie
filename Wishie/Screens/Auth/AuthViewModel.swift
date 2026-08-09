@@ -33,20 +33,32 @@ final class AuthViewModel: ObservableObject {
 
     func checkToken() {
         Task {
-            guard await sessionStore.current() != nil else { return }
+            guard let session = await sessionStore.current() else { return }
             do {
                 guard let result = try await authService.getUserInfo() else {
-                    await sessionStore.clear()
+                    await clearSessionAndLogOut()
                     return
                 }
                 await MainActor.run {
                     self.userInfo = result
                     UserDefaults.standard.set(result.hasCompletedInterestsSetup, forKey: "hasCompletedInterestsSetup")
+                    UserDefaults.standard.setValue(session.userId, forKey: self.userid)
                     self.isLoggedIn = true
                 }
             } catch {
-                await sessionStore.clear()
+                await clearSessionAndLogOut()
             }
+        }
+    }
+
+    /// Clears the persisted session and flips the view model back to a logged-out state.
+    /// Shared by `checkToken()` (startup token validation) and `getUserInfo()` (mid-session
+    /// `sessionExpired` detection) so both paths respond to an invalid/expired session the same way.
+    private func clearSessionAndLogOut() async {
+        await sessionStore.clear()
+        await MainActor.run {
+            self.isLoggedIn = false
+            UserDefaults.standard.removeObject(forKey: self.userid)
         }
     }
 
@@ -148,7 +160,11 @@ final class AuthViewModel: ObservableObject {
             guard let result = try await authService.getUserInfo() else { return }
             self.userInfo = result
         } catch {
-            self.userInfoError = error.localizedDescription
+            if let apiError = error as? APIError, apiError == .sessionExpired {
+                await clearSessionAndLogOut()
+            } else {
+                self.userInfoError = error.localizedDescription
+            }
         }
     }
 

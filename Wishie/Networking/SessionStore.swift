@@ -19,6 +19,9 @@ actor SessionStore {
 
     private var cachedSession: AuthSession?
     private var refreshTask: Task<AuthSession, Error>?
+    /// Bumped by `clear()` so an in-flight refresh that resolves after a logout can detect it ran
+    /// during the `await` and avoid resurrecting a session that was explicitly cleared.
+    private var generation = 0
 
     init(keychain: KeychainStoring = KeychainManager.shared) {
         self.keychain = keychain
@@ -54,9 +57,11 @@ actor SessionStore {
         keychain.delete(key: emailKey)
         cachedSession = nil
         refreshTask = nil
+        generation += 1
     }
 
     func refreshedSession(using refresher: @escaping @Sendable (String) async throws -> AuthSession) async throws -> AuthSession {
+        let startGeneration = generation
         let task: Task<AuthSession, Error>
         if let refreshTask {
             task = refreshTask
@@ -73,11 +78,18 @@ actor SessionStore {
         do {
             let newSession = try await task.value
             refreshTask = nil
+            // If clear() ran while we were suspended awaiting the refresh (e.g. the user logged
+            // out), do not resurrect the session by saving the now-stale refreshed tokens.
+            guard generation == startGeneration else {
+                throw APIError.sessionExpired
+            }
             save(newSession)
             return newSession
         } catch {
             refreshTask = nil
-            clear()
+            if generation == startGeneration {
+                clear()
+            }
             throw APIError.sessionExpired
         }
     }

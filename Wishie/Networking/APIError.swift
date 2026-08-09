@@ -2,7 +2,7 @@ import Foundation
 
 enum APIError: Error, LocalizedError, Equatable {
     case server(statusCode: Int, message: String, code: String?)
-    case unauthorized
+    indirect case unauthorized(APIError?)
     case sessionExpired
     case invalidResponse
     case transport(String)
@@ -10,7 +10,7 @@ enum APIError: Error, LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .server(_, let message, _): return message
-        case .unauthorized: return "Unauthorized."
+        case .unauthorized(let underlying): return underlying?.errorDescription ?? "Unauthorized."
         case .sessionExpired: return "Your session has expired. Please log in again."
         case .invalidResponse: return "Unexpected server response."
         case .transport(let message): return message

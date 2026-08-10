@@ -39,7 +39,7 @@ final class MockAuthenticateService: AuthenticateServiceProtocol {
     func uploadAvatar(image: UIImage, userId: String) async throws -> String {
         ""
     }
-    func updateUserInfo(userId: String, firstName: String, lastName: String, phone: String, dateOfBirth: Date, avatarUrl: String?) async throws {
+    func updateUserInfo(userId: String, firstName: String, lastName: String, phone: String, dateOfBirth: Date) async throws {
     }
     func updateUserInterests(userId: String, interests: [String]) async throws {
     }

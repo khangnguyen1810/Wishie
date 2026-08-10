@@ -22,6 +22,9 @@ final class APIService: APIServiceProtocol {
             if case .requestRetryFailed(let retryError, _) = afError, let apiError = retryError as? APIError {
                 throw apiError
             }
+            if case .requestAdaptationFailed(let adaptError) = afError, let apiError = adaptError as? APIError {
+                throw apiError
+            }
             guard let httpResponse = dataResponse.response else {
                 throw APIError.transport(afError.localizedDescription)
             }

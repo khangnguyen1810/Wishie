@@ -2,8 +2,9 @@ import Testing
 import Foundation
 @testable import Wishie
 
-@Suite(.serialized)
-struct APIServiceTests {
+extension MockURLProtocolSharingTests {
+    @Suite
+    struct APIServiceTests {
     private func seededKeychain(accessToken: String = "expired-token", refreshToken: String = "refresh-token") -> InMemoryKeychain {
         let keychain = InMemoryKeychain()
         keychain.save(key: "wishie.auth.accessToken", value: accessToken)
@@ -159,5 +160,23 @@ struct APIServiceTests {
             }
         }
         #expect(callCount == 1) // only the original login attempt, no refresh retry
+    }
+
+    @Test func sendMapsAdaptationFailureToSessionExpiredWithoutSendingARequest() async throws {
+        struct Sample: Decodable { let value: String }
+        MockURLProtocol.requestHandler = { _ in
+            Issue.record("request should never be sent")
+            let response = HTTPURLResponse(url: URL(string: "http://localhost:3000")!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (response, Data(#"{"value":"ok"}"#.utf8))
+        }
+        let service = APIService(configuration: makeConfiguration(), sessionStore: SessionStore(keychain: InMemoryKeychain()))
+
+        do {
+            let _: Sample = try await service.send(.getWishlists)
+            Issue.record("expected APIError.sessionExpired to be thrown")
+        } catch let error as APIError {
+            #expect(error == .sessionExpired)
+        }
+    }
     }
 }

@@ -30,6 +30,10 @@ final class WishieRequestInterceptor: RequestInterceptor {
     }
 
     func retry(_ request: Request, for session: Session, dueTo error: Error, completion: @escaping (RetryResult) -> Void) {
+        // The `request.request?.value(forHTTPHeaderField: "Authorization") != nil` check below is also
+        // what prevents the refresh sub-request dispatched from this method from recursively triggering
+        // another refresh: `.refresh` has `requiresAuth == false` and never carries a bearer token, so it
+        // never satisfies this guard, regardless of which interceptor instance handles its `adapt`/`retry`.
         guard let statusCode = (request.task?.response as? HTTPURLResponse)?.statusCode,
               statusCode == 401,
               request.request?.value(forHTTPHeaderField: "Authorization") != nil,
@@ -40,7 +44,7 @@ final class WishieRequestInterceptor: RequestInterceptor {
         Task {
             do {
                 _ = try await sessionStore.refreshedSession { refreshToken in
-                    let dataResponse = await session.request(APIRoute.refresh(refreshToken: refreshToken), interceptor: nil)
+                    let dataResponse = await session.request(APIRoute.refresh(refreshToken: refreshToken))
                         .validate()
                         .serializingDecodable(AuthSession.self)
                         .response

@@ -2,8 +2,9 @@ import Testing
 import Foundation
 @testable import Wishie
 
-@Suite(.serialized)
-struct APIClientTests {
+extension MockURLProtocolSharingTests {
+    @Suite
+    struct APIClientTests {
     private func seededKeychain(accessToken: String = "expired-token", refreshToken: String = "refresh-token") -> InMemoryKeychain {
         let keychain = InMemoryKeychain()
         keychain.save(key: "wishie.auth.accessToken", value: accessToken)
@@ -198,5 +199,6 @@ struct APIClientTests {
             #expect(error.errorDescription == "Invalid email or password")
         }
         #expect(callCount == 1) // only the original login attempt, no refresh retry
+    }
     }
 }

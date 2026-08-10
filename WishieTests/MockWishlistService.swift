@@ -50,8 +50,18 @@ final class MockWishlistService: WishlistServiceProtocol {
         .success(true)
     }
 
-    func getUserWishlists() async throws -> Result<[(WishlistModel, UserModel)], Error> {
-        .success([])
+    var wishlistsResult: Result<[WishlistModel], Error> = .success([])
+    func getUserWishlists() async throws -> [WishlistModel] {
+        try wishlistsResult.get()
+    }
+
+    var profilesById: [String: UserModel] = [:]
+    var getProfileError: Error?
+    private(set) var requestedProfileIds: [String] = []
+    func getProfile(id: String) async throws -> UserModel {
+        requestedProfileIds.append(id)
+        if let getProfileError { throw getProfileError }
+        return profilesById[id] ?? UserModel()
     }
 
     func pickItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error> {

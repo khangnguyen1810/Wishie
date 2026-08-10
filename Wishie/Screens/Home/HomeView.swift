@@ -258,7 +258,7 @@ struct HomeView: View {
             }
             .task {
                 await authViewModel.getUserInfo()
-                homeViewModel.startObservingWishlists()
+                await homeViewModel.getListWishlist()
             }
             .onAppear {
                 celebrationFloat = true

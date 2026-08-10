@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		22CB1A152EA1476000FAE2D7 /* DotLottie in Frameworks */ = {isa = PBXBuildFile; productRef = 22CB1A142EA1476000FAE2D7 /* DotLottie */; };
+		8E453169E5C1593FDCD7D8FA /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 93616D9A8661E49EEC28B356 /* Alamofire */; };
 		F03ED6E82FBB755500157DF9 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F03ED6E72FBB755500157DF9 /* FirebaseAuth */; };
 		F03ED6EA2FBB755500157DF9 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = F03ED6E92FBB755500157DF9 /* FirebaseCore */; };
 		F03ED6EC2FBB755500157DF9 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = F03ED6EB2FBB755500157DF9 /* FirebaseFirestore */; };
@@ -78,11 +79,15 @@
 		};
 		2257D0F42E922166009D268F /* WishieTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = WishieTests;
 			sourceTree = "<group>";
 		};
 		2257D0FE2E922166009D268F /* WishieUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = WishieUITests;
 			sourceTree = "<group>";
 		};
@@ -103,6 +108,7 @@
 				22CB1A152EA1476000FAE2D7 /* DotLottie in Frameworks */,
 				F08C489B2EF3041E00DC87DC /* Storage in Frameworks */,
 				F0BB1A9E2FFDFE1800A45D4C /* GoogleSignIn in Frameworks */,
+				8E453169E5C1593FDCD7D8FA /* Alamofire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -183,6 +189,7 @@
 				F03ED6EB2FBB755500157DF9 /* FirebaseFirestore */,
 				F03ED6ED2FBB755500157DF9 /* FirebaseFunctions */,
 				F0BB1A9D2FFDFE1800A45D4C /* GoogleSignIn */,
+				93616D9A8661E49EEC28B356 /* Alamofire */,
 			);
 			productName = Wishie;
 			productReference = 2257D0E32E922161009D268F /* Wishie.app */;
@@ -205,8 +212,6 @@
 				2257D0F42E922166009D268F /* WishieTests */,
 			);
 			name = WishieTests;
-			packageProductDependencies = (
-			);
 			productName = WishieTests;
 			productReference = 2257D0F12E922166009D268F /* WishieTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -228,8 +233,6 @@
 				2257D0FE2E922166009D268F /* WishieUITests */,
 			);
 			name = WishieUITests;
-			packageProductDependencies = (
-			);
 			productName = WishieUITests;
 			productReference = 2257D0FB2E922166009D268F /* WishieUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -272,6 +275,7 @@
 				F0BE20C02F6FB94800D043F5 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
 				F03ED6E62FBB755500157DF9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				F0BB1A9C2FFDFE1800A45D4C /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				E24E5ED8D9C27F29E9402E32 /* XCRemoteSwiftPackageReference "Alamofire" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2257D0E42E922161009D268F /* Products */;
@@ -692,6 +696,14 @@
 				kind = branch;
 			};
 		};
+		E24E5ED8D9C27F29E9402E32 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.9.0;
+			};
+		};
 		F03ED6E62FBB755500157DF9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -731,6 +743,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 22CB1A132EA1476000FAE2D7 /* XCRemoteSwiftPackageReference "dotlottie-ios" */;
 			productName = DotLottie;
+		};
+		93616D9A8661E49EEC28B356 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E24E5ED8D9C27F29E9402E32 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
 		};
 		F03ED6E72FBB755500157DF9 /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;

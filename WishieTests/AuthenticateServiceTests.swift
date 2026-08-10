@@ -3,6 +3,25 @@ import Foundation
 import UIKit
 @testable import Wishie
 
+/// Records the arguments `AuthenticateService` passes to the injected `AuthUserDocumentBridging`,
+/// so tests can verify the signup/Google-login flows call it with the right data without touching
+/// a real Firestore instance (see `Fix 1` in the PR review: `WishlistService.getWishlist(by:)` reads
+/// `users/{id}` and needs this bridging document to exist for newly created accounts).
+final class SpyAuthUserDocumentBridge: AuthUserDocumentBridging, @unchecked Sendable {
+    struct Call: Equatable {
+        let userId: String
+        let firstName: String
+        let lastName: String
+        let email: String
+        let phone: String
+    }
+    private(set) var calls: [Call] = []
+
+    func writeIfNeeded(userId: String, firstName: String, lastName: String, email: String, phone: String, dateOfBirth: Date) async {
+        calls.append(Call(userId: userId, firstName: firstName, lastName: lastName, email: email, phone: phone))
+    }
+}
+
 struct AuthenticateServiceTests {
     private func sampleSession(userId: String = "u1", email: String = "user@example.com") -> AuthSession {
         AuthSession(accessToken: "a", refreshToken: "r", userId: userId, email: email)
@@ -17,7 +36,11 @@ struct AuthenticateServiceTests {
         let session = sampleSession(email: "new@example.com")
         stubClient.sendResults = [session]
         let sessionStore = SessionStore(keychain: InMemoryKeychain())
-        let service = AuthenticateService(apiClient: stubClient, sessionStore: sessionStore)
+        // Inject a no-op bridge: the real FirestoreAuthUserDocumentBridge would make a live network
+        // call here (this test target runs inside the app host process, which configures a real
+        // FirebaseApp — see TEST_HOST in the Xcode project), which would make this test slow and
+        // network-dependent for behavior this test isn't about.
+        let service = AuthenticateService(apiClient: stubClient, sessionStore: sessionStore, userDocumentBridge: NoOpAuthUserDocumentBridge())
         let request = SignUpRequest(firstName: "A", lastName: "B", email: "new@example.com", phone: "123", password: "password1", dateOfBirth: Date())
 
         let result = try await service.signUp(request)
@@ -26,6 +49,20 @@ struct AuthenticateServiceTests {
         #expect(stubClient.sentEndpoints.first?.path == "/auth/signup")
         let stored = await sessionStore.current()
         #expect(stored == session)
+    }
+
+    @Test func signUpWritesTheBridgingFirestoreUserDocument() async throws {
+        let stubClient = StubAPIClient()
+        let session = sampleSession(userId: "new-user-uuid", email: "new@example.com")
+        stubClient.sendResults = [session]
+        let sessionStore = SessionStore(keychain: InMemoryKeychain())
+        let spyBridge = SpyAuthUserDocumentBridge()
+        let service = AuthenticateService(apiClient: stubClient, sessionStore: sessionStore, userDocumentBridge: spyBridge)
+        let request = SignUpRequest(firstName: "A", lastName: "B", email: "new@example.com", phone: "123", password: "password1", dateOfBirth: Date())
+
+        _ = try await service.signUp(request)
+
+        #expect(spyBridge.calls == [SpyAuthUserDocumentBridge.Call(userId: "new-user-uuid", firstName: "A", lastName: "B", email: "new@example.com", phone: "123")])
     }
 
     @Test func loginSendsCredentialsAndPersistsSession() async throws {
@@ -105,7 +142,7 @@ struct AuthenticateServiceTests {
         stubClient.sendResults = [sampleProfile()]
         let service = AuthenticateService(apiClient: stubClient, sessionStore: SessionStore(keychain: InMemoryKeychain()))
 
-        try await service.updateUserInfo(userId: "u1", firstName: "Ada", lastName: "Lovelace", phone: "999", dateOfBirth: Date(), avatarUrl: nil)
+        try await service.updateUserInfo(userId: "u1", firstName: "Ada", lastName: "Lovelace", phone: "999", dateOfBirth: Date())
 
         #expect(stubClient.sentEndpoints.first?.path == "/profiles/me")
         #expect(stubClient.sentEndpoints.first?.method == "PATCH")

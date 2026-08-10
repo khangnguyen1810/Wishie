@@ -101,3 +101,23 @@ extension WishlistModel {
         }
     }
 }
+
+extension WishlistModel {
+    init(response: WishlistResponse) {
+        self.id = response.id
+        self.name = response.name
+        self.description = response.description
+        self.userCreateId = response.ownerId
+        self.dueDate = WishieDateFormatting.parseServerDate(response.dueDate) ?? Date()
+        self.themeColor = response.colorTheme
+        self.isArchived = response.isArchived
+        if let members = response.members {
+            self.members = Dictionary(uniqueKeysWithValues: members.compactMap { member in
+                WishlistRole(rawValue: member.role).map { (member.userId, $0) }
+            })
+        } else {
+            self.members = [:]
+        }
+        self.items = (response.items ?? []).map(WishlistItem.init(response:))
+    }
+}

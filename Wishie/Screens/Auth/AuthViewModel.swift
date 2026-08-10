@@ -46,7 +46,13 @@ final class AuthViewModel: ObservableObject {
                     self.isLoggedIn = true
                 }
             } catch {
-                await clearSessionAndLogOut()
+                if let apiError = error as? APIError, apiError == .sessionExpired {
+                    await clearSessionAndLogOut()
+                }
+                // Any other error (transport/offline, decode failure, unexpected server error) is
+                // not proof the session itself is invalid — leave the stored refresh token alone so
+                // a later launch (once back online) can restore the session via checkToken() again.
+                // The user simply isn't logged in for *this* launch.
             }
         }
     }

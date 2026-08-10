@@ -23,7 +23,7 @@ struct WishieApp: App {
 
         }
         if let clientID = FirebaseApp.app()?.options.clientID {
-            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID, serverClientID: WishieConstants.googleWebClientID)
         }
         let auth = AuthViewModel()
         _authViewModel = StateObject(wrappedValue: auth)

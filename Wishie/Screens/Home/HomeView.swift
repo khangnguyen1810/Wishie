@@ -315,6 +315,7 @@ struct HomeView: View {
             showLeaveConfirm = false
         })
         .showFullScreenDialog($homeViewModel.isGettingList)
+        .showFullScreenDialog($authViewModel.isShowProgress)
     }
 
     @ViewBuilder

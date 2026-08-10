@@ -35,3 +35,19 @@ struct UserModel: Codable, Hashable {
         return "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
     }
 }
+
+extension UserModel {
+    init(profile: ProfileResponse) {
+        self.init()
+        self.firstName = profile.firstName
+        self.lastName = profile.lastName
+        self.email = profile.email
+        self.phone = profile.phone
+        if let dateOfBirthString = profile.dateOfBirth, let date = WishieDateFormatting.parseServerDate(dateOfBirthString) {
+            self.dateOfBirth = date
+        }
+        self.avatarUrl = profile.avatarUrl
+        self.interests = profile.interests
+        self.hasCompletedInterestsSetup = profile.hasCompletedInterestsSetup
+    }
+}

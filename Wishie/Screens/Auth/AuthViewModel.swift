@@ -2,16 +2,13 @@
 //  AuthViewModel.swift
 //  Wishie
 //
-//  Created by Nguyễn Khang Hữu on 12/10/25.
-//
 
 import Foundation
-import Combine
-import FirebaseAuth
 import UIKit
+
 final class AuthViewModel: ObservableObject {
-    private var cancellables = Set<AnyCancellable>()
     private let authService: AuthenticateServiceProtocol
+    private let sessionStore: SessionStore
     @Published var email: String = ""
     @Published var password: String = ""
     @Published var isLoggedIn: Bool = false
@@ -27,31 +24,50 @@ final class AuthViewModel: ObservableObject {
     @Published var isSentEmail: Bool = false
     @Published var forgotenEmail: String = ""
     @Published var userInfoError: String = ""
-    init(authService: AuthenticateServiceProtocol = AuthenticateService()) {
+
+    init(authService: AuthenticateServiceProtocol = AuthenticateService(), sessionStore: SessionStore = .shared) {
         self.authService = authService
+        self.sessionStore = sessionStore
         checkToken()
     }
+
     func checkToken() {
-        guard let firebaseUser = Auth.auth().currentUser,
-              let storedId = UserDefaults.standard.string(forKey: userid),
-              !storedId.isEmpty,
-              firebaseUser.uid == storedId else {
-            UserDefaults.standard.removeObject(forKey: userid)
-            return
-        }
         Task {
+            guard let session = await sessionStore.current() else { return }
             do {
-                _ = try await firebaseUser.getIDToken(forcingRefresh: true)
-                await self.getUserInfo()
+                guard let result = try await authService.getUserInfo() else {
+                    await clearSessionAndLogOut()
+                    return
+                }
                 await MainActor.run {
-                    UserDefaults.standard.set(self.userInfo.hasCompletedInterestsSetup, forKey: "hasCompletedInterestsSetup")
+                    self.userInfo = result
+                    UserDefaults.standard.set(result.hasCompletedInterestsSetup, forKey: "hasCompletedInterestsSetup")
+                    UserDefaults.standard.setValue(session.userId, forKey: self.userid)
                     self.isLoggedIn = true
                 }
             } catch {
-                await MainActor.run { UserDefaults.standard.removeObject(forKey: self.userid) }
+                if let apiError = error as? APIError, apiError == .sessionExpired {
+                    await clearSessionAndLogOut()
+                }
+                // Any other error (transport/offline, decode failure, unexpected server error) is
+                // not proof the session itself is invalid — leave the stored refresh token alone so
+                // a later launch (once back online) can restore the session via checkToken() again.
+                // The user simply isn't logged in for *this* launch.
             }
         }
     }
+
+    /// Clears the persisted session and flips the view model back to a logged-out state.
+    /// Shared by `checkToken()` (startup token validation) and `getUserInfo()` (mid-session
+    /// `sessionExpired` detection) so both paths respond to an invalid/expired session the same way.
+    private func clearSessionAndLogOut() async {
+        await sessionStore.clear()
+        await MainActor.run {
+            self.isLoggedIn = false
+            UserDefaults.standard.removeObject(forKey: self.userid)
+        }
+    }
+
     func login(email: String, password: String) {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -62,68 +78,62 @@ final class AuthViewModel: ObservableObject {
             return
         }
         self.isShowProgress = true
-        authService.login(trimmedEmail, trimmedPassword)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] completion in
-                guard let self else { return }
-                self.isShowProgress = false
-                switch completion {
-                case .finished:
-                    break
-                case .failure(let error):
+        Task {
+            do {
+                let session = try await authService.login(trimmedEmail, trimmedPassword)
+                await MainActor.run {
+                    UserDefaults.standard.setValue(session.userId, forKey: self.userid)
+                    self.isLoggedIn = true
+                    self.isShowProgress = false
+                }
+                await self.getUserInfo()
+            } catch {
+                await MainActor.run {
+                    self.isShowProgress = false
                     self.isShowError = true
                     self.errorTitle = "Login Failed"
                     self.errorMessage = error.localizedDescription
                 }
-            } receiveValue: { [weak self] credential in
-                guard let self,
-                      let user = credential?.user
-                else { return }
-                UserDefaults.standard.setValue(user.uid, forKey: userid)
-                isLoggedIn = true
-                Task { await self.getUserInfo() }
             }
-            .store(in: &cancellables)
+        }
     }
-    
+
     func signup(request: SignUpRequest) {
         self.isShowProgress = true
-        authService.signUp(request)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] completion in
-                guard let self else { return }
-                self.isShowProgress = false
-                switch completion {
-                case .failure(let error):
+        Task {
+            do {
+                let session = try await authService.signUp(request)
+                await MainActor.run {
+                    UserDefaults.standard.setValue(session.userId, forKey: self.userid)
+                    self.isLoggedIn = true
+                    self.isShowProgress = false
+                }
+                await self.getUserInfo()
+            } catch {
+                await MainActor.run {
+                    self.isShowProgress = false
                     self.isShowError = true
                     self.errorTitle = "Signup Failed"
                     self.errorMessage = error.localizedDescription
-                case .finished:
-                    break
                 }
-            } receiveValue: { [weak self] result in
-                guard let self,
-                      let user = result?.user
-                else { return }
-                UserDefaults.standard.setValue(user.uid, forKey: userid)
-                isLoggedIn = true
-                Task { await self.getUserInfo() }
             }
-            .store(in: &cancellables)
-
+        }
     }
 
     func loginWithGoogle(presentingViewController: UIViewController) {
         self.isShowProgress = true
-        authService.loginWithGoogle(presentingViewController: presentingViewController)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] completion in
-                guard let self else { return }
-                self.isShowProgress = false
-                switch completion {
-                case .finished:
-                    break
-                case .failure(let error):
+        Task {
+            do {
+                let session = try await authService.loginWithGoogle(presentingViewController: presentingViewController)
+                await MainActor.run {
+                    UserDefaults.standard.setValue(session.userId, forKey: self.userid)
+                    self.isLoggedIn = true
+                    self.isShowProgress = false
+                }
+                await self.getUserInfo()
+            } catch {
+                await MainActor.run {
+                    self.isShowProgress = false
                     let nsError = error as NSError
                     if nsError.domain == self.googleSignInErrorDomain, nsError.code == self.googleSignInCanceledCode {
                         return
@@ -132,49 +142,46 @@ final class AuthViewModel: ObservableObject {
                     self.errorTitle = "Google Login Failed"
                     self.errorMessage = error.localizedDescription
                 }
-            } receiveValue: { [weak self] credential in
-                guard let self,
-                      let user = credential?.user
-                else { return }
-                UserDefaults.standard.setValue(user.uid, forKey: userid)
-                isLoggedIn = true
-                Task { await self.getUserInfo() }
             }
-            .store(in: &cancellables)
+        }
     }
 
     func logOut() {
         self.isShowProgress = true
-        UserDefaults.standard.removeObject(forKey: userid)
-        isLoggedIn = false
-        self.userInfo = UserModel()
-        self.userInfoError = ""
-        self.isShowProgress = false
+        Task {
+            try? await authService.logout()
+            await MainActor.run {
+                UserDefaults.standard.removeObject(forKey: self.userid)
+                self.isLoggedIn = false
+                self.userInfo = UserModel()
+                self.userInfoError = ""
+                self.isShowProgress = false
+            }
+        }
     }
-    
+
     @MainActor
     func getUserInfo() async {
         do {
             guard let result = try await authService.getUserInfo() else { return }
             self.userInfo = result
         } catch {
-            self.userInfoError = error.localizedDescription
+            if let apiError = error as? APIError, apiError == .sessionExpired {
+                await clearSessionAndLogOut()
+            } else {
+                self.userInfoError = error.localizedDescription
+            }
         }
     }
-    
+
     func forgotPassword() {
-        authService.resetPassword(forgotenEmail)
-            .receive(on: DispatchQueue.main)
-            .sink { completion in
-                switch completion {
-                case .finished:
-                    break
-                case .failure(let error):
-                    print(error.localizedDescription)
-                }
-            } receiveValue: { [weak self]success in
-                self?.isSentEmail = success
+        Task {
+            do {
+                let success = try await authService.resetPassword(forgotenEmail)
+                await MainActor.run { self.isSentEmail = success }
+            } catch {
+                print(error.localizedDescription)
             }
-            .store(in: &cancellables)
+        }
     }
 }

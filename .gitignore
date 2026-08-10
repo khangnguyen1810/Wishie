@@ -36,3 +36,4 @@ firestore-debug.log
 # Agent tooling (local scratch state, not project source)
 .claude/
 .superpowers/
+.worktrees/

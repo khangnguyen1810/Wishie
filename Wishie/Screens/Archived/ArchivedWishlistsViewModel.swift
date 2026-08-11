@@ -23,7 +23,7 @@ class ArchivedWishlistsViewModel: ObservableObject {
         do {
             let wishlists = try await service.getUserWishlists()
             let owned = wishlists.filter { $0.members[userId] == .owner && $0.isArchived }
-            archivedWishlists = try await service.pairWithOwnerProfiles(owned)
+            archivedWishlists = await service.pairWithOwnerProfiles(owned)
         } catch {
             errorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
         }

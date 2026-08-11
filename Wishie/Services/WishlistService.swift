@@ -33,15 +33,20 @@ extension WishlistServiceProtocol {
     /// Resolves each wishlist's owner profile, deduped per distinct `userCreateId` and fetched
     /// concurrently — shared by `HomeViewModel` and `ArchivedWishlistsViewModel` so owner-profile
     /// resolution isn't duplicated per screen.
-    func pairWithOwnerProfiles(_ wishlists: [WishlistModel]) async throws -> [(WishlistModel, UserModel)] {
+    ///
+    /// Individual `getProfile` failures (e.g. a 404 or timeout for one friend's profile) are
+    /// swallowed rather than propagated, so one bad profile only drops that one wishlist from the
+    /// result instead of failing the whole screen — see `HomeViewModel.getListWishlist()`, which
+    /// awaits both the owned and joined calls together.
+    func pairWithOwnerProfiles(_ wishlists: [WishlistModel]) async -> [(WishlistModel, UserModel)] {
         let ownerIds = Set(wishlists.map(\.userCreateId))
-        let profilesByOwnerId = try await withThrowingTaskGroup(of: (String, UserModel).self) { group in
+        let profilesByOwnerId = await withTaskGroup(of: (String, UserModel?).self) { group in
             for ownerId in ownerIds {
-                group.addTask { (ownerId, try await self.getProfile(id: ownerId)) }
+                group.addTask { (ownerId, try? await self.getProfile(id: ownerId)) }
             }
             var result: [String: UserModel] = [:]
-            for try await (ownerId, profile) in group {
-                result[ownerId] = profile
+            for await (ownerId, profile) in group {
+                if let profile { result[ownerId] = profile }
             }
             return result
         }

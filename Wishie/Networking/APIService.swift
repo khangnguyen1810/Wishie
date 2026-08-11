@@ -8,7 +8,16 @@ protocol APIServiceProtocol {
 final class APIService: APIServiceProtocol {
     private let session: Alamofire.Session
 
-    init(configuration: URLSessionConfiguration = .default, sessionStore: SessionStore = .shared) {
+    /// A shorter-than-default timeout so a slow/unreachable backend can't block the UI (e.g.
+    /// Home's blocking full-screen overlay while `isGettingList`/`isLoading` is true) for the
+    /// system default of 60 seconds. Mirrors `APIClient.defaultSession`'s timeout.
+    static let defaultConfiguration: URLSessionConfiguration = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 20
+        return config
+    }()
+
+    init(configuration: URLSessionConfiguration = APIService.defaultConfiguration, sessionStore: SessionStore = .shared) {
         session = Alamofire.Session(configuration: configuration, interceptor: WishieRequestInterceptor(sessionStore: sessionStore))
     }
 

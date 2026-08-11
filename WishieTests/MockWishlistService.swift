@@ -56,11 +56,16 @@ final class MockWishlistService: WishlistServiceProtocol {
     }
 
     var profilesById: [String: UserModel] = [:]
+    /// Fails every `getProfile` call, regardless of id. For failing only a specific owner's
+    /// fetch (e.g. to simulate one friend's profile 404ing) use `getProfileErrorsById` instead.
     var getProfileError: Error?
+    /// Per-id error injection: only `getProfile(id:)` calls for a key present here throw.
+    var getProfileErrorsById: [String: Error] = [:]
     private(set) var requestedProfileIds: [String] = []
     func getProfile(id: String) async throws -> UserModel {
         requestedProfileIds.append(id)
         if let getProfileError { throw getProfileError }
+        if let idError = getProfileErrorsById[id] { throw idError }
         return profilesById[id] ?? UserModel()
     }
 

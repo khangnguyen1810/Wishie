@@ -29,7 +29,7 @@ class HomeViewModel: ObservableObject {
             let joined = wishlists.filter { $0.members[userId] == .member }
             async let ownedPairs = service.pairWithOwnerProfiles(owned)
             async let joinedPairs = service.pairWithOwnerProfiles(joined)
-            (myWishlists, myFriendWishlists) = try await (ownedPairs, joinedPairs)
+            (myWishlists, myFriendWishlists) = await (ownedPairs, joinedPairs)
         } catch {
             errorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
         }

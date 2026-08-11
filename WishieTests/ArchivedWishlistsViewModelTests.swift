@@ -3,8 +3,10 @@ import Testing
 import Foundation
 @testable import Wishie
 
-@MainActor
-struct ArchivedWishlistsViewModelTests {
+extension UserDefaultsSharingTests {
+    @MainActor
+    @Suite
+    struct ArchivedWishlistsViewModelTests {
     @Test func showsOnlySelfOwnedArchivedWishlists() async throws {
         UserDefaults.standard.set("me", forKey: WishieConstants.userIdKey)
         defer { UserDefaults.standard.removeObject(forKey: WishieConstants.userIdKey) }
@@ -33,5 +35,6 @@ struct ArchivedWishlistsViewModelTests {
         await viewModel.loadArchivedWishlists()
 
         #expect(viewModel.errorMessage == "Server exploded")
+    }
     }
 }

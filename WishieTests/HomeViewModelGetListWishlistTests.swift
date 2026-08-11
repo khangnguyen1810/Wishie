@@ -3,8 +3,10 @@ import Testing
 import Foundation
 @testable import Wishie
 
-@MainActor
-struct HomeViewModelGetListWishlistTests {
+extension UserDefaultsSharingTests {
+    @MainActor
+    @Suite
+    struct HomeViewModelGetListWishlistTests {
     @Test func splitsOwnedAndJoinedWishlistsByRole() async throws {
         UserDefaults.standard.set("me", forKey: WishieConstants.userIdKey)
         defer { UserDefaults.standard.removeObject(forKey: WishieConstants.userIdKey) }
@@ -51,5 +53,6 @@ struct HomeViewModelGetListWishlistTests {
 
         #expect(viewModel.errorMessage == "Server exploded")
         #expect(viewModel.isGettingList == false)
+    }
     }
 }

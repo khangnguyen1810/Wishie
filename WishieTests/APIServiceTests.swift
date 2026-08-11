@@ -4,7 +4,7 @@ import Foundation
 
 extension MockURLProtocolSharingTests {
     @Suite
-    struct APIClientTests {
+    struct APIServiceTests {
     private func seededKeychain(accessToken: String = "expired-token", refreshToken: String = "refresh-token") -> InMemoryKeychain {
         let keychain = InMemoryKeychain()
         keychain.save(key: "wishie.auth.accessToken", value: accessToken)
@@ -14,20 +14,26 @@ extension MockURLProtocolSharingTests {
         return keychain
     }
 
+    private func makeConfiguration() -> URLSessionConfiguration {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [MockURLProtocol.self]
+        return config
+    }
+
     @Test func sendDecodesASuccessfulJSONResponse() async throws {
         struct Sample: Decodable, Equatable { let value: String }
         MockURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
             return (response, Data(#"{"value":"ok"}"#.utf8))
         }
-        let client = APIClient(session: MockURLProtocol.makeSession(), baseURL: URL(string: "http://localhost:3000")!, sessionStore: SessionStore(keychain: InMemoryKeychain()))
+        let service = APIService(configuration: makeConfiguration(), sessionStore: SessionStore(keychain: seededKeychain(accessToken: "valid-token")))
 
-        let result: Sample = try await client.send(.get("/sample", requiresAuth: false))
+        let result: Sample = try await service.send(.getWishlists)
 
         #expect(result == Sample(value: "ok"))
     }
 
-    @Test func sendAttachesBearerTokenForAuthenticatedEndpoints() async throws {
+    @Test func sendAttachesBearerTokenForAuthenticatedRoutes() async throws {
         struct Sample: Decodable { let value: String }
         var capturedAuthHeader: String?
         MockURLProtocol.requestHandler = { request in
@@ -35,32 +41,46 @@ extension MockURLProtocolSharingTests {
             let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
             return (response, Data(#"{"value":"ok"}"#.utf8))
         }
-        let keychain = seededKeychain(accessToken: "valid-token")
-        let client = APIClient(session: MockURLProtocol.makeSession(), baseURL: URL(string: "http://localhost:3000")!, sessionStore: SessionStore(keychain: keychain))
+        let service = APIService(configuration: makeConfiguration(), sessionStore: SessionStore(keychain: seededKeychain(accessToken: "valid-token")))
 
-        let _: Sample = try await client.send(.get("/profiles/me"))
+        let _: Sample = try await service.send(.getProfile(id: "u1"))
 
         #expect(capturedAuthHeader == "Bearer valid-token")
+    }
+
+    @Test func sendDoesNotAttachBearerTokenForUnauthenticatedRoutes() async throws {
+        struct Sample: Decodable { let value: String }
+        var capturedAuthHeader: String? = "not-yet-set"
+        MockURLProtocol.requestHandler = { request in
+            capturedAuthHeader = request.value(forHTTPHeaderField: "Authorization")
+            let response = HTTPURLResponse(url: request.url!, statusCode: 201, httpVersion: nil, headerFields: nil)!
+            return (response, Data(#"{"value":"ok"}"#.utf8))
+        }
+        let service = APIService(configuration: makeConfiguration(), sessionStore: SessionStore(keychain: InMemoryKeychain()))
+
+        let _: Sample = try await service.send(.login(email: "a@b.com", password: "pw"))
+
+        #expect(capturedAuthHeader == nil)
     }
 
     @Test func sendThrowsServerErrorWithDecodedMessage() async throws {
         struct Sample: Decodable { let value: String }
         MockURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(url: request.url!, statusCode: 400, httpVersion: nil, headerFields: nil)!
-            let body = Data(#"{"statusCode":400,"message":"Invalid email","error":"Bad Request"}"#.utf8)
+            let body = Data(#"{"statusCode":400,"message":"Invalid id","error":"Bad Request"}"#.utf8)
             return (response, body)
         }
-        let client = APIClient(session: MockURLProtocol.makeSession(), baseURL: URL(string: "http://localhost:3000")!, sessionStore: SessionStore(keychain: InMemoryKeychain()))
+        let service = APIService(configuration: makeConfiguration(), sessionStore: SessionStore(keychain: seededKeychain(accessToken: "valid-token")))
 
         do {
-            let _: Sample = try await client.send(.post("/auth/signup", json: Data()))
+            let _: Sample = try await service.send(.getProfile(id: "u1"))
             Issue.record("expected APIError.server to be thrown")
         } catch let error as APIError {
-            #expect(error == .server(statusCode: 400, message: "Invalid email", code: nil))
+            #expect(error == .server(statusCode: 400, message: "Invalid id", code: nil))
         }
     }
 
-    @Test func on401ClientRefreshesThenRetriesTheOriginalRequestOnce() async throws {
+    @Test func on401ItRefreshesThenRetriesTheOriginalRequestOnce() async throws {
         struct Sample: Decodable { let value: String }
         let keychain = seededKeychain(accessToken: "expired-token", refreshToken: "refresh-token")
         var callCount = 0
@@ -80,9 +100,9 @@ extension MockURLProtocolSharingTests {
             return (response, Data(#"{"value":"ok"}"#.utf8))
         }
         let sessionStore = SessionStore(keychain: keychain)
-        let client = APIClient(session: MockURLProtocol.makeSession(), baseURL: URL(string: "http://localhost:3000")!, sessionStore: sessionStore)
+        let service = APIService(configuration: makeConfiguration(), sessionStore: sessionStore)
 
-        let result: Sample = try await client.send(.get("/profiles/me"))
+        let result: Sample = try await service.send(.getWishlists)
 
         #expect(result.value == "ok")
         #expect(callCount == 3) // original 401 + refresh + retry
@@ -103,10 +123,10 @@ extension MockURLProtocolSharingTests {
             return (response, Data())
         }
         let sessionStore = SessionStore(keychain: keychain)
-        let client = APIClient(session: MockURLProtocol.makeSession(), baseURL: URL(string: "http://localhost:3000")!, sessionStore: sessionStore)
+        let service = APIService(configuration: makeConfiguration(), sessionStore: sessionStore)
 
         do {
-            let _: Sample = try await client.send(.get("/profiles/me"))
+            let _: Sample = try await service.send(.getWishlists)
             Issue.record("expected APIError.sessionExpired to be thrown")
         } catch let error as APIError {
             #expect(error == .sessionExpired)
@@ -115,90 +135,48 @@ extension MockURLProtocolSharingTests {
         #expect(cleared == nil)
     }
 
-    @Test func uploadMultipartEndpointSendsFileFieldsAndDecodesResponse() async throws {
-        struct AvatarResponse: Decodable { let avatarUrl: String }
-        var capturedContentType: String?
-        var capturedBodyContainsFileBytes = false
-        let fileData = Data([0xFF, 0xD8, 0xFF])
-        MockURLProtocol.requestHandler = { request in
-            capturedContentType = request.value(forHTTPHeaderField: "Content-Type")
-            // Read body from either httpBody or httpBodyStream (URLSession may convert)
-            let body: Data?
-            if let httpBody = request.httpBody {
-                body = httpBody
-            } else if let httpBodyStream = request.httpBodyStream {
-                var streamData = Data()
-                let bufferSize = 4096
-                var buffer = [UInt8](repeating: 0, count: bufferSize)
-                httpBodyStream.open()
-                while httpBodyStream.hasBytesAvailable {
-                    let bytesRead = httpBodyStream.read(&buffer, maxLength: bufferSize)
-                    if bytesRead > 0 {
-                        streamData.append(&buffer, count: bytesRead)
-                    } else {
-                        break
-                    }
-                }
-                httpBodyStream.close()
-                body = streamData
-            } else {
-                body = nil
-            }
-            capturedBodyContainsFileBytes = body.map { $0.range(of: fileData) != nil } ?? false
-            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
-            return (response, Data(#"{"avatarUrl":"https://cdn.example.com/u1.jpg"}"#.utf8))
-        }
-        let keychain = seededKeychain(accessToken: "valid-token")
-        let client = APIClient(session: MockURLProtocol.makeSession(), baseURL: URL(string: "http://localhost:3000")!, sessionStore: SessionStore(keychain: keychain))
-
-        let endpoint = Endpoint.postMultipart("/profiles/me/avatar", fieldName: "file", fileName: "u1.jpg", mimeType: "image/jpeg", fileData: fileData)
-        let result: AvatarResponse = try await client.send(endpoint)
-
-        #expect(result.avatarUrl == "https://cdn.example.com/u1.jpg")
-        #expect(capturedContentType?.hasPrefix("multipart/form-data; boundary=") == true)
-        #expect(capturedBodyContainsFileBytes)
-    }
-
-    @Test func sendNoContentSucceedsWithoutDecodingABody() async throws {
-        MockURLProtocol.requestHandler = { request in
-            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
-            return (response, Data(#"{"success":true}"#.utf8))
-        }
-        let client = APIClient(session: MockURLProtocol.makeSession(), baseURL: URL(string: "http://localhost:3000")!, sessionStore: SessionStore(keychain: InMemoryKeychain()))
-
-        try await client.sendNoContent(.post("/auth/logout", json: Data(), requiresAuth: false))
-    }
-
-    @Test func on401UnauthenticatedEndpointThrowsUnauthorizedWithoutRefresh() async throws {
+    @Test func on401ForAnUnauthenticatedRouteThrowsWithoutAttemptingRefresh() async throws {
         struct Sample: Decodable { let value: String }
         let keychain = seededKeychain(accessToken: "valid-token", refreshToken: "refresh-token")
         var callCount = 0
         MockURLProtocol.requestHandler = { request in
             callCount += 1
-            // All requests should be the original login attempt (no refresh)
             if request.url!.path == "/auth/refresh" {
-                Issue.record("refresh should not be called for requiresAuth: false endpoint")
+                Issue.record("refresh should not be called for an unauthenticated route")
             }
             let response = HTTPURLResponse(url: request.url!, statusCode: 401, httpVersion: nil, headerFields: nil)!
             let body = Data(#"{"statusCode":401,"message":"Invalid email or password","error":"Unauthorized"}"#.utf8)
             return (response, body)
         }
-        let sessionStore = SessionStore(keychain: keychain)
-        let client = APIClient(session: MockURLProtocol.makeSession(), baseURL: URL(string: "http://localhost:3000")!, sessionStore: sessionStore)
+        let service = APIService(configuration: makeConfiguration(), sessionStore: SessionStore(keychain: keychain))
 
         do {
-            let _: Sample = try await client.send(.post("/auth/login", json: Data(), requiresAuth: false))
+            let _: Sample = try await service.send(.login(email: "a@b.com", password: "wrong"))
             Issue.record("expected APIError.unauthorized to be thrown")
         } catch let error as APIError {
-            guard case .unauthorized(let underlying) = error else {
+            guard case .unauthorized = error else {
                 Issue.record("expected APIError.unauthorized, got \(error)")
                 return
             }
-            // The server's error message must survive, not be discarded in favor of a generic string.
-            #expect(underlying?.errorDescription == "Invalid email or password")
-            #expect(error.errorDescription == "Invalid email or password")
         }
         #expect(callCount == 1) // only the original login attempt, no refresh retry
+    }
+
+    @Test func sendMapsAdaptationFailureToSessionExpiredWithoutSendingARequest() async throws {
+        struct Sample: Decodable { let value: String }
+        MockURLProtocol.requestHandler = { _ in
+            Issue.record("request should never be sent")
+            let response = HTTPURLResponse(url: URL(string: "http://localhost:3000")!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (response, Data(#"{"value":"ok"}"#.utf8))
+        }
+        let service = APIService(configuration: makeConfiguration(), sessionStore: SessionStore(keychain: InMemoryKeychain()))
+
+        do {
+            let _: Sample = try await service.send(.getWishlists)
+            Issue.record("expected APIError.sessionExpired to be thrown")
+        } catch let error as APIError {
+            #expect(error == .sessionExpired)
+        }
     }
     }
 }

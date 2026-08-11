@@ -14,7 +14,8 @@ protocol WishlistServiceProtocol {
     func upload(image: UIImage, fileName: String) async throws -> String
     func getWishlist(by id: String) async throws -> (WishlistModel, UserModel)
     func joinWishlist(wishListId: String) async throws  -> Result<Bool, Error>
-    func getUserWishlists() async throws -> Result<[(WishlistModel, UserModel)], Error>
+    func getUserWishlists() async throws -> [WishlistModel]
+    func getProfile(id: String) async throws -> UserModel
     func pickItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
     func updateWishlistItem(wishlistId: String, itemId: String, newName: String?, newDescription: String?, newImage: UIImage?, newPrice: String?) async throws -> Result<Bool, Error>
     func deleteWishlist(wishlistId: String) async throws -> Result<Bool, Error>
@@ -28,8 +29,51 @@ protocol WishlistServiceProtocol {
     func observeUserWishlistIds(onChange: @escaping ([String]) -> Void) -> ListenerRegistration?
 }
 
+extension WishlistServiceProtocol {
+    /// Resolves each wishlist's owner profile, deduped per distinct `userCreateId` and fetched
+    /// concurrently — shared by `HomeViewModel` and `ArchivedWishlistsViewModel` so owner-profile
+    /// resolution isn't duplicated per screen.
+    ///
+    /// Individual `getProfile` failures (e.g. a 404 or timeout for one friend's profile) are
+    /// swallowed rather than propagated, so one bad profile only drops that one wishlist from the
+    /// result instead of failing the whole screen — see `HomeViewModel.getListWishlist()`, which
+    /// awaits both the owned and joined calls together.
+    func pairWithOwnerProfiles(_ wishlists: [WishlistModel]) async -> [(WishlistModel, UserModel)] {
+        let ownerIds = Set(wishlists.map(\.userCreateId))
+        let profilesByOwnerId = await withTaskGroup(of: (String, UserModel?).self) { group in
+            for ownerId in ownerIds {
+                group.addTask { (ownerId, try? await self.getProfile(id: ownerId)) }
+            }
+            var result: [String: UserModel] = [:]
+            for await (ownerId, profile) in group {
+                if let profile { result[ownerId] = profile }
+            }
+            return result
+        }
+        return wishlists.compactMap { wishlist in
+            profilesByOwnerId[wishlist.userCreateId].map { (wishlist, $0) }
+        }
+    }
+}
+
 class WishlistService: WishlistServiceProtocol {
     private let db = Firestore.firestore()
+    private let apiService: APIServiceProtocol
+
+    init(apiService: APIServiceProtocol = APIService()) {
+        self.apiService = apiService
+    }
+
+    func getUserWishlists() async throws -> [WishlistModel] {
+        let responses: [WishlistResponse] = try await apiService.send(.getWishlists)
+        return responses.map(WishlistModel.init(response:))
+    }
+
+    func getProfile(id: String) async throws -> UserModel {
+        let response: ProfileResponse = try await apiService.send(.getProfile(id: id))
+        return UserModel(profile: response)
+    }
+
     func createWishlist(wishList: WishlistModel) async throws -> Result<String, Error> {
         do {
             let data : [String: Any] = [
@@ -167,41 +211,6 @@ class WishlistService: WishlistServiceProtocol {
             try await batch.commit()
             
             return .success(true)
-        } catch {
-            return .failure(error)
-        }
-    }
-    func getUserWishlists() async throws -> Result<[(WishlistModel, UserModel)], any Error> {
-        do {
-            guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else {
-                throw NSError(domain: "WishlistServie", code: 404)
-            }
-            let snapshot = try await db
-                .collection(WishieConstants.firebaseUserPath)
-                .document(userId)
-                .collection(WishieConstants.firebaseWishlistPath)
-                .order(by: "joinedAt")
-                .getDocuments()
-            let wishlistIds = snapshot.documents.map { $0.documentID }
-            
-            let wishlists = try await withThrowingTaskGroup(of: (WishlistModel, UserModel).self) { [weak self] group in
-                guard let self else { throw NSError(domain: "", code: 404) }
-                for id in wishlistIds {
-                    group.addTask {
-                        let wishlist = try await self.getWishlist(by: id)
-                        return (wishlist.0, wishlist.1)
-                    }
-                }
-                
-                var results: [(WishlistModel, UserModel)] = []
-                
-                for try await result in group {
-                    results.append(result)
-                }
-                
-                return results
-            }
-            return .success(wishlists)
         } catch {
             return .failure(error)
         }

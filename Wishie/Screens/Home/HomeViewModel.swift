@@ -2,11 +2,10 @@
 //  HomeViewModel.swift
 //  Wishie
 //
-//  Created by Khang Huu Nguyen on 9/2/26.
+//  Created by Nguyễn Khang Hữu on 9/2/26.
 //
 
 import Foundation
-import FirebaseFirestore
 
 @MainActor
 class HomeViewModel: ObservableObject {
@@ -15,90 +14,32 @@ class HomeViewModel: ObservableObject {
     @Published var isGettingList: Bool = false
     @Published var errorMessage: String = ""
     private var service: WishlistServiceProtocol
-    private var userWishlistsListener: ListenerRegistration?
-    private var wishlistListeners: [ListenerRegistration] = []
 
     init(service: WishlistServiceProtocol = WishlistService()) {
         self.service = service
     }
 
-    deinit {
-        userWishlistsListener?.remove()
-        wishlistListeners.forEach { $0.remove() }
-    }
-
     func getListWishlist() async {
+        guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else { return }
+        isGettingList = true
+        defer { isGettingList = false }
         do {
-            isGettingList = true
-            let result = try await service.getUserWishlists()
-            switch result {
-            case .success(let list):
-                isGettingList = false
-                guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else { return }
-                   
-                   self.myWishlists = list.filter {
-                       $0.0.members[userId] == .owner && !$0.0.isArchived
-                   }
-
-                   self.myFriendWishlists = list.filter {
-                       $0.0.members[userId] == .member && !$0.0.isArchived
-                   }
-            case .failure(let error):
-                isGettingList = false
-                self.errorMessage = error.localizedDescription
-            }
+            let wishlists = try await service.getUserWishlists().filter { !$0.isArchived }
+            let owned = wishlists.filter { $0.members[userId] == .owner }
+            let joined = wishlists.filter { $0.members[userId] == .member }
+            async let ownedPairs = service.pairWithOwnerProfiles(owned)
+            async let joinedPairs = service.pairWithOwnerProfiles(joined)
+            (myWishlists, myFriendWishlists) = await (ownedPairs, joinedPairs)
         } catch {
-            isGettingList = false
-            self.errorMessage = error.localizedDescription
-        }
-    }
-
-    private func setWishlistListeners(wishlistIds: [String]) {
-        wishlistListeners.forEach { $0.remove() }
-        wishlistListeners = wishlistIds.map { id in
-            service.observeWishlist(by: id, onChange: { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    await self?.refreshWishlists()
-                }
-            }, onError: { _ in })
-        }
-    }
-
-    private func refreshWishlists() async {
-        do {
-            let result = try await service.getUserWishlists()
-            switch result {
-            case .success(let list):
-                isGettingList = false
-                guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else { return }
-                self.myWishlists = list.filter { $0.0.members[userId] == .owner && !$0.0.isArchived }
-                self.myFriendWishlists = list.filter { $0.0.members[userId] == .member && !$0.0.isArchived }
-            case .failure(let error):
-                isGettingList = false
-                self.errorMessage = error.localizedDescription
-            }
-        } catch {
-            isGettingList = false
-            self.errorMessage = error.localizedDescription
-        }
-    }
-
-    func startObservingWishlists() {
-        isGettingList = myWishlists.isEmpty && myFriendWishlists.isEmpty
-        userWishlistsListener?.remove()
-        userWishlistsListener = service.observeUserWishlistIds { [weak self] ids in
-            Task { @MainActor [weak self] in
-                self?.setWishlistListeners(wishlistIds: ids)
-                await self?.refreshWishlists()
-            }
+            errorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
         }
     }
 
     func deleteWishlist(wishlistId: String) async {
         do {
-            let result = try await service.deleteWishlist(wishlistId:  wishlistId)
+            let result = try await service.deleteWishlist(wishlistId: wishlistId)
             switch result {
-            case .success(let success):
+            case .success:
                 await getListWishlist()
             case .failure(let failure):
                 self.errorMessage = failure.localizedDescription
@@ -107,11 +48,12 @@ class HomeViewModel: ObservableObject {
             self.errorMessage = error.localizedDescription
         }
     }
+
     func leaveWishlist(wishlistId: String) async {
         do {
-            let result = try await service.leaveWishlist(wishListId:  wishlistId)
+            let result = try await service.leaveWishlist(wishListId: wishlistId)
             switch result {
-            case .success(let success):
+            case .success:
                 await getListWishlist()
             case .failure(let failure):
                 self.errorMessage = failure.localizedDescription
@@ -120,11 +62,12 @@ class HomeViewModel: ObservableObject {
             self.errorMessage = error.localizedDescription
         }
     }
+
     func archiveWishlist(wishlistId: String) async {
         do {
             let result = try await service.setArchived(wishlistId: wishlistId, isArchived: true)
             switch result {
-            case .success(let success):
+            case .success:
                 await getListWishlist()
             case .failure(let failure):
                 self.errorMessage = failure.localizedDescription

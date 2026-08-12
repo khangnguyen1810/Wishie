@@ -23,32 +23,22 @@ class CreateWishlistViewModel: ObservableObject {
         self.createWishListService = createWishListService
         self.productMetadataService = productMetadataService
     }
-    func saveItem() async -> Result<String, Error>{
-        do {
-            guard let userId = UserDefaults.standard.string(forKey: "userid") else {
-                return .failure(NSError(
-                    domain: "UserError",
-                    code: 0,
-                    userInfo: [NSLocalizedDescriptionKey: "User not logged in"]
-                ))
-            }
-            for index in items.indices {
-                guard let image = items[index].localImage else { continue }
-                let imageUrl = try await createWishListService.upload(image: image, fileName: UUID().uuidString)
-                items[index].image = imageUrl
-                items[index].localImage = nil
-            }
-            let wishList =  WishlistModel(
-                name: name,
-                description: description,
-                dueDate: dueDate,
-                items: items,
-                themeColor: selectedTheme?.rawValue,
-                userCreateId: userId)
-            return try await createWishListService.createWishlist(wishList: wishList)
-        } catch {
-            return .failure(error)
+    func saveItem() async throws -> WishlistModel {
+        guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else {
+            throw NSError(
+                domain: "UserError",
+                code: 0,
+                userInfo: [NSLocalizedDescriptionKey: "User not logged in"]
+            )
         }
+        let wishList = WishlistModel(
+            name: name,
+            description: description,
+            dueDate: dueDate,
+            items: items,
+            themeColor: selectedTheme?.rawValue,
+            userCreateId: userId)
+        return try await createWishListService.createWishlist(wishList: wishList)
     }
 
     @MainActor

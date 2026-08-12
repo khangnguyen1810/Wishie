@@ -68,18 +68,17 @@ struct CreateWishListScreen: View {
                             } else {
                                 Task {
                                     creating = true
-                                    let result = await createWishlistViewModel.saveItem()
-                                    switch result {
-                                    case .success(let id):
+                                    do {
+                                        let wishlist = try await createWishlistViewModel.saveItem()
                                         creating = false
                                         path.append(
                                             Route.createSuccess(
-                                                wishListId: id
+                                                wishListId: wishlist.id
                                             )
                                         )
-                                    case .failure(let failure):
+                                    } catch {
                                         creating = false
-                                        errorMessage = failure.localizedDescription
+                                        errorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
                                     }
                                 }
                             }

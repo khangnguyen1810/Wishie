@@ -37,10 +37,19 @@ final class MockWishlistService: WishlistServiceProtocol {
         return addWishlistItemResult
     }
 
-    // MARK: - Unused by these tests; minimal stub bodies.
-    func createWishlist(wishList: WishlistModel) async throws -> Result<String, Error> {
-        .success(wishList.id)
+    // MARK: - createWishlist
+    var createWishlistResult: Result<WishlistModel, Error>?
+    private(set) var lastCreatedWishlist: WishlistModel?
+
+    func createWishlist(wishList: WishlistModel) async throws -> WishlistModel {
+        lastCreatedWishlist = wishList
+        if let createWishlistResult {
+            return try createWishlistResult.get()
+        }
+        return wishList
     }
+
+    // MARK: - Unused by these tests; minimal stub bodies.
 
     func getWishlist(by id: String) async throws -> (WishlistModel, UserModel) {
         (WishlistModel(name: "", userCreateId: ""), UserModel())

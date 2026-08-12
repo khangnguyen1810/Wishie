@@ -10,7 +10,7 @@ import FirebaseFirestore
 import Supabase
 
 protocol WishlistServiceProtocol {
-    func createWishlist(wishList: WishlistModel) async throws -> Result<String, Error>
+    func createWishlist(wishList: WishlistModel) async throws -> WishlistModel
     func upload(image: UIImage, fileName: String) async throws -> String
     func getWishlist(by id: String) async throws -> (WishlistModel, UserModel)
     func joinWishlist(wishListId: String) async throws  -> Result<Bool, Error>
@@ -74,52 +74,29 @@ class WishlistService: WishlistServiceProtocol {
         return UserModel(profile: response)
     }
 
-    func createWishlist(wishList: WishlistModel) async throws -> Result<String, Error> {
-        do {
-            let data : [String: Any] = [
-                "id": wishList.id,
-                "wishListName": wishList.name,
-                "description": wishList.description,
-                "userCreateId": wishList.userCreateId,
-                "dueDate": Timestamp(date: wishList.dueDate),
-                "colorTheme": wishList.themeColor ?? "",
-                "wishListItems": wishList.items.map {
-                    [
-                        "id": $0.id,
-                        "name": $0.name,
-                        "description": $0.description,
-                        "imageUrl": $0.image ?? "",
-                        "isPicked": $0.isPicked,
-                        "itemLink": $0.itemLink,
-                        "price": $0.price ?? ""
-                    ]
-                },
-                "members": [
-                    wishList.userCreateId: "owner"
-                ]
-            ]
-            try await db
-                .collection("wishList")
-                .document(wishList.id)
-                .setData(data)
-            
-            let userWishlistData: [String: Any] = [
-                "role": "owner",
-                "joinedAt": Timestamp()
-            ]
-            
-            try await db
-                .collection("users")
-                .document(wishList.userCreateId)
-                .collection("wishlists")
-                .document(wishList.id)
-                .setData(userWishlistData)
-            
-            return .success(wishList.id)
-        } catch {
-            return .failure(error)
+    func createWishlist(wishList: WishlistModel) async throws -> WishlistModel {
+        let response: WishlistResponse = try await apiService.send(.createWishlist(CreateWishlistRequest(wishList)))
+        let model = WishlistModel(response: response)
+
+        await withTaskGroup(of: Void.self) { group in
+            for item in wishList.items where item.localImage != nil {
+                group.addTask {
+                    try? await self.uploadItemImage(wishlistId: model.id, itemId: item.id, image: item.localImage!)
+                }
+            }
         }
+
+        return model
     }
+
+    /// Best-effort — a failed upload here doesn't fail `createWishlist`, since the wishlist and
+    /// its items already exist server-side by the time this runs. Mirrors the swallow-per-item
+    /// convention in `WishlistServiceProtocol.pairWithOwnerProfiles` above.
+    private func uploadItemImage(wishlistId: String, itemId: String, image: UIImage) async throws {
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
+        let _: WishlistItemResponse = try await apiService.send(.uploadItemImage(wishlistId: wishlistId, itemId: itemId, imageData: data))
+    }
+
     func upload(
         image: UIImage,
         fileName: String

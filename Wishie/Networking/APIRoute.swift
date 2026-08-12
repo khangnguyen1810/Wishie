@@ -13,11 +13,12 @@ enum APIRoute: URLRequestConvertible {
     case refresh(refreshToken: String)
     case getWishlists
     case getProfile(id: String)
+    case createWishlist(CreateWishlistRequest)
 
     var method: HTTPMethod {
         switch self {
         case .getWishlists, .getProfile: return .get
-        case .login, .signup, .refresh: return .post
+        case .login, .signup, .refresh, .createWishlist: return .post
         }
     }
 
@@ -28,13 +29,14 @@ enum APIRoute: URLRequestConvertible {
         case .refresh: return "/auth/refresh"
         case .getWishlists: return "/wishlists"
         case .getProfile(let id): return "/profiles/\(id)"
+        case .createWishlist: return "/wishlists"
         }
     }
 
     var requiresAuth: Bool {
         switch self {
         case .login, .signup, .refresh: return false
-        case .getWishlists, .getProfile: return true
+        case .getWishlists, .getProfile, .createWishlist: return true
         }
     }
 
@@ -59,6 +61,9 @@ enum APIRoute: URLRequestConvertible {
             ])
         case .refresh(let refreshToken):
             return try JSONEncoding.default.encode(request, with: ["refreshToken": refreshToken])
+        case .createWishlist(let body):
+            request.httpBody = try JSONEncoder().encode(body)
+            return request
         case .getWishlists, .getProfile:
             return request
         }

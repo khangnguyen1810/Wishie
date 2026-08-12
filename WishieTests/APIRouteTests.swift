@@ -61,4 +61,20 @@ struct APIRouteTests {
         #expect(json?["email"] == "ada@example.com")
         #expect(json?["dateOfBirth"] == "1990-01-01")
     }
+
+    @Test func createWishlistBuildsAnAuthenticatedPOSTWithTheWishlistBody() throws {
+        let item = WishlistItem(id: "i1", name: "Lego", itemLink: "https://shop.example.com", price: "19.99")
+        let wishlist = WishlistModel(id: "w1", name: "Birthday", dueDate: Date(), items: [item], userCreateId: "u1")
+        let body = CreateWishlistRequest(wishlist)
+
+        let request = try APIRoute.createWishlist(body).asURLRequest()
+
+        #expect(request.httpMethod == "POST")
+        #expect(request.url?.path == "/wishlists")
+        #expect(request.value(forHTTPHeaderField: APIRoute.requiresAuthHeader) == "true")
+        let httpBody = try #require(request.httpBody)
+        let json = try JSONSerialization.jsonObject(with: httpBody) as? [String: Any]
+        #expect(json?["id"] as? String == "w1")
+        #expect(json?["name"] as? String == "Birthday")
+    }
 }

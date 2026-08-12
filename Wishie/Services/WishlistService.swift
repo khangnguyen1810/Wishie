@@ -81,7 +81,11 @@ class WishlistService: WishlistServiceProtocol {
         await withTaskGroup(of: Void.self) { group in
             for item in wishList.items where item.localImage != nil {
                 group.addTask {
-                    try? await self.uploadItemImage(wishlistId: model.id, itemId: item.id, image: item.localImage!)
+                    do {
+                        try await self.uploadItemImage(wishlistId: model.id, itemId: item.id, image: item.localImage!)
+                    } catch {
+                        print("WishlistService.createWishlist: image upload failed for item \(item.id): \(error)")
+                    }
                 }
             }
         }

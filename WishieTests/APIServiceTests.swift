@@ -165,8 +165,10 @@ extension MockURLProtocolSharingTests {
     @Test func sendDispatchesMultipartRoutesAsAnUploadRequest() async throws {
         struct Sample: Decodable { let id: String }
         var capturedContentType: String?
+        var capturedAuthHeader: String?
         MockURLProtocol.requestHandler = { request in
             capturedContentType = request.value(forHTTPHeaderField: "Content-Type")
+            capturedAuthHeader = request.value(forHTTPHeaderField: "Authorization")
             let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
             return (response, Data(#"{"id":"i1"}"#.utf8))
         }
@@ -176,6 +178,7 @@ extension MockURLProtocolSharingTests {
 
         #expect(result.id == "i1")
         #expect(capturedContentType?.hasPrefix("multipart/form-data") == true)
+        #expect(capturedAuthHeader == "Bearer valid-token")
     }
 
     @Test func sendMapsAdaptationFailureToSessionExpiredWithoutSendingARequest() async throws {

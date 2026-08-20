@@ -162,6 +162,25 @@ extension MockURLProtocolSharingTests {
         #expect(callCount == 1) // only the original login attempt, no refresh retry
     }
 
+    @Test func sendDispatchesMultipartRoutesAsAnUploadRequest() async throws {
+        struct Sample: Decodable { let id: String }
+        var capturedContentType: String?
+        var capturedAuthHeader: String?
+        MockURLProtocol.requestHandler = { request in
+            capturedContentType = request.value(forHTTPHeaderField: "Content-Type")
+            capturedAuthHeader = request.value(forHTTPHeaderField: "Authorization")
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (response, Data(#"{"id":"i1"}"#.utf8))
+        }
+        let service = APIService(configuration: makeConfiguration(), sessionStore: SessionStore(keychain: seededKeychain(accessToken: "valid-token")))
+
+        let result: Sample = try await service.send(.uploadItemImage(wishlistId: "w1", itemId: "i1", imageData: Data([0xFF, 0xD8, 0xFF])))
+
+        #expect(result.id == "i1")
+        #expect(capturedContentType?.hasPrefix("multipart/form-data") == true)
+        #expect(capturedAuthHeader == "Bearer valid-token")
+    }
+
     @Test func sendMapsAdaptationFailureToSessionExpiredWithoutSendingARequest() async throws {
         struct Sample: Decodable { let value: String }
         MockURLProtocol.requestHandler = { _ in

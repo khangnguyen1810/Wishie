@@ -22,7 +22,13 @@ final class APIService: APIServiceProtocol {
     }
 
     func send<T: Decodable>(_ route: APIRoute) async throws -> T {
-        let dataResponse = await session.request(route)
+        let request: DataRequest
+        if let multipartFormData = route.multipartFormData {
+            request = session.upload(multipartFormData: multipartFormData, with: route)
+        } else {
+            request = session.request(route)
+        }
+        let dataResponse = await request
             .validate()
             .serializingData()
             .response

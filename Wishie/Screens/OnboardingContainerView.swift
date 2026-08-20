@@ -2,7 +2,7 @@
 //  OnboardingView1.swift
 //  Wishie
 //
-//  Created by Nguyễn Khang Hữu on 5/10/25.
+//  Created by Nguyễn Khang Hữu on 5/10/25.
 //
 
 import SwiftUI
@@ -11,109 +11,115 @@ struct Onboarding: Identifiable {
     var id: UUID = UUID()
     let image: String
     let headline: String
-    
+    let subtext: String
 }
 let onboardings: [Onboarding] = [
-    Onboarding(image: "onboardingImg1", headline: "Create your personal wishlist"),
-    Onboarding(image: "onboardingImg2", headline: "Share with Family & Friends"),
-    Onboarding(image: "onboardingImg3", headline: "Get the gift you truly want"),
+    Onboarding(
+        image: "ob-image-1",
+        headline: "Create your personal wishlist",
+        subtext: "Drop a link, a photo or a note — it lands in your wishlist in one tap."
+    ),
+    Onboarding(
+        image: "ob-image-2",
+        headline: "Share with Family & Friends",
+        subtext: "Send one link to friends and family. They see exactly what you want."
+    ),
+    Onboarding(
+        image: "ob-image-3",
+        headline: "Get the gift you truly want",
+        subtext: "Reserved items get marked, so nobody buys the same thing twice."
+    ),
 ]
 struct OnboardingView: View {
     var onboarding: Onboarding
     @Binding var currentIndex: Int
     @EnvironmentObject var coordinator: RootNavigationCoordinator
-    @State var headlineContent: String = ""
-    @State private var amount = -10.0
-    @State var nextPage: Bool = false
+    @State private var contentVisible: Bool = false
+
     var body: some View {
-        onboadingViewContent(image: onboarding.image, headline: onboarding.headline)
+        onboardingViewContent(image: onboarding.image, headline: onboarding.headline, subtext: onboarding.subtext)
             .navigationBarBackButtonHidden()
     }
+
     @ViewBuilder
-    func onboadingViewContent(image: String, headline: String) -> some View {
-        VStack {
-            if currentIndex == 2 {
+    func onboardingViewContent(image: String, headline: String, subtext: String) -> some View {
+        VStack(spacing: 0) {
+            HStack {
                 Spacer()
-            }
-            Text(headlineContent)
-                .foregroundStyle(Color.white)
-                .font(.wishies(.bold, 50))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, currentIndex == 2 ? 40 : 0)
-                .task {
-                    await typeWriter()
-                }
-                .onChange(of: currentIndex) { _, _ in
-                    Task {
-                        headlineContent = ""
-                        await typeWriter()
-                    }
-                }
-            if currentIndex != 2 {
-                Spacer()
-            }
-            if currentIndex == onboardings.count - 1 {
                 Button {
                     coordinator.completeOnboarding()
                 } label: {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(.lightYellow)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 60)
-                        Text("Continue")
-                            .font(.wishies(.bold, 20))
-                            .foregroundStyle(.black)
-                    }
+                    Text("Skip")
+                        .font(.wishies(.medium, 16))
+                        .foregroundStyle(Color("obInk"))
                 }
-            } else {
-                Button {
-                    currentIndex += 1
-                    nextPage = true
-                } label: {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(.lightYellow)
-                            .frame(width: .infinity, height: 60)
-                        Text("Next")
-                            .font(.wishies(.bold, 20))
-                            .foregroundStyle(.black)
-                    }
-                }
-                
             }
-        }
-        .safeAreaPadding(.bottom,60)
-        .safeAreaPadding(.top,80)
-        .padding(.horizontal,30)
-        .background {
+
+            Spacer()
+
             Image(image)
                 .resizable()
-                .frame(maxHeight: .infinity)
-                .aspectRatio(contentMode: .fill)
-                .overlay(
-                    LinearGradient(
-                        gradient: Gradient(colors: [.darkGrey.opacity(0.5), .black.opacity(0.8)]),
-                        startPoint: .bottom,
-                        endPoint: .top
-                    )
-                )
+                .aspectRatio(contentMode: .fit)
+                .frame(width: currentIndex == 1 ? 282 : 268)
+                .opacity(contentVisible ? 1 : 0)
+                .offset(y: contentVisible ? 0 : 12)
+
+            Text(headline)
+                .font(.wishiesDisplay(.bold, 32))
+                .foregroundStyle(Color("obInk"))
+                .multilineTextAlignment(.center)
+                .padding(.top, 32)
+                .opacity(contentVisible ? 1 : 0)
+                .offset(y: contentVisible ? 0 : 12)
+
+            Text(subtext)
+                .font(.wishies(.regular, 16))
+                .foregroundStyle(Color("obInk").opacity(0.7))
+                .multilineTextAlignment(.center)
+                .padding(.top, 12)
+                .opacity(contentVisible ? 1 : 0)
+                .offset(y: contentVisible ? 0 : 12)
+
+            Spacer()
+
+            PaginationDotsView(count: onboardings.count, currentIndex: currentIndex)
+                .padding(.bottom, 24)
+
+            WishieButton(
+                title: currentIndex == onboardings.count - 1 ? "Get started" : "Next",
+                enabled: true,
+                filColor: Color("obInk"),
+                titleColor: .white
+            ) {
+                if currentIndex == onboardings.count - 1 {
+                    coordinator.completeOnboarding()
+                } else {
+                    currentIndex += 1
+                }
+            }
+        }
+        .safeAreaPadding(.bottom, 40)
+        .safeAreaPadding(.top, 20)
+        .padding(.horizontal, 30)
+        .background {
+            Color("obScreenBg")
                 .ignoresSafeArea()
         }
-    }
-    func typeWriter() async {
-        if nextPage {
-            headlineContent = ""
+        .task {
+            withAnimation(.easeOut(duration: 0.4)) {
+                contentVisible = true
+            }
         }
-        for char in onboarding.headline {
-            headlineContent.append(char)
-            try? await Task.sleep(for: .milliseconds(75))
+        .onChange(of: currentIndex) { _, _ in
+            contentVisible = false
+            withAnimation(.easeOut(duration: 0.4)) {
+                contentVisible = true
+            }
         }
     }
 }
 struct OnboardingContainerView: View {
     @State private var currentIndex = 0
-    @State private var startTyping = true
     var body: some View {
         OnboardingView(onboarding: onboardings[currentIndex], currentIndex: $currentIndex)
     }

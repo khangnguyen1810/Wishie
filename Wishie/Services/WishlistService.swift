@@ -11,7 +11,7 @@ import Supabase
 
 protocol WishlistServiceProtocol {
     func createWishlist(wishList: WishlistModel) async throws -> WishlistModel
-    func upload(image: UIImage, fileName: String) async throws -> String
+    func upload(wishlistId: String, image: UIImage) async throws -> String
     func getWishlist(by id: String) async throws -> (WishlistModel, UserModel)
     func joinWishlist(wishListId: String) async throws  -> Result<Bool, Error>
     func getUserWishlists() async throws -> [WishlistModel]
@@ -96,40 +96,28 @@ class WishlistService: WishlistServiceProtocol {
     /// Best-effort — a failed upload here doesn't fail `createWishlist`, since the wishlist and
     /// its items already exist server-side by the time this runs. Mirrors the swallow-per-item
     /// convention in `WishlistServiceProtocol.pairWithOwnerProfiles` above.
-    private func uploadItemImage(wishlistId: String, itemId: String, image: UIImage) async throws {
-        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
-        let _: WishlistItemResponse = try await apiService.send(.uploadItemImage(wishlistId: wishlistId, itemId: itemId, imageData: data))
+    @discardableResult
+    private func uploadItemImage(wishlistId: String, itemId: String, image: UIImage) async throws -> String? {
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return nil }
+        let response: WishlistItemResponse = try await apiService.send(.uploadItemImage(wishlistId: wishlistId, itemId: itemId, imageData: data))
+        return response.imageUrl
     }
 
+    /// Uploads through the backend's service-role Supabase client rather than talking to Supabase
+    /// Storage directly from the app — direct client uploads run as the `authenticated` Postgres
+    /// role, and `storage.objects` RLS on the "Wishie" bucket only grants `anon`, so they were
+    /// failing with "new row violates row-level security policy" for every logged-in user.
     func upload(
-        image: UIImage,
-        fileName: String
+        wishlistId: String,
+        image: UIImage
     ) async throws -> String {
-        
         guard let data = image.jpegData(compressionQuality: 0.8) else {
             throw NSError(domain: "image", code: -1)
         }
-        
-        let path = "wishlist/\(fileName).jpg"
-        
-        try await SupabaseManager.shared.client
-            .storage
-            .from("Wishie")
-            .upload(
-                path,
-                data: data,
-                options: FileOptions(
-                    contentType: "image/jpeg",
-                    upsert: true
-                )
-            )
-        
-        let url = try SupabaseManager.shared.client
-            .storage
-            .from("Wishie")
-            .getPublicURL(path: path)
-        
-        return url.absoluteString
+        let response: WishlistImageUploadResponse = try await apiService.send(
+            .uploadWishlistImage(wishlistId: wishlistId, imageData: data)
+        )
+        return response.imageUrl
     }
     func getWishlist(by id: String) async throws -> (WishlistModel, UserModel) {
         
@@ -249,15 +237,14 @@ class WishlistService: WishlistServiceProtocol {
                         items[index]["description"] = newDescription
                     }
                     if let newImage {
-                       
-                        if let oldUrl = items[index]["imageUrl"] as? String,
-                           !oldUrl.isEmpty {
-                            try? await deleteImageStorage(imageUrl: oldUrl)
+                        // Uploads to the same `wishlist/<itemId>.jpg` storage path (upsert),
+                        // overwriting any existing image in place via the backend's service-role
+                        // client — avoids a separate direct-to-Supabase delete of the old image,
+                        // which ran as the `authenticated` role and hit the same `storage.objects`
+                        // RLS restriction documented on `upload(wishlistId:image:)` above.
+                        if let newUrl = try await uploadItemImage(wishlistId: wishlistId, itemId: itemId, image: newImage) {
+                            items[index]["imageUrl"] = newUrl
                         }
-                        
-                        let fileName = UUID().uuidString
-                        let newUrl = try await upload(image: newImage, fileName: fileName)
-                        items[index]["imageUrl"] = newUrl
                     }
                     if let newPrice {
                         items[index]["price"] = newPrice

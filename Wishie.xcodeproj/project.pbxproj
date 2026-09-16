@@ -79,15 +79,11 @@
 		};
 		2257D0F42E922166009D268F /* WishieTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = WishieTests;
 			sourceTree = "<group>";
 		};
 		2257D0FE2E922166009D268F /* WishieUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = WishieUITests;
 			sourceTree = "<group>";
 		};
@@ -476,7 +472,7 @@
 				CODE_SIGN_ENTITLEMENTS = Wishie/Wishie.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8QPXDS5LYT;
+				DEVELOPMENT_TEAM = 29N547R43F;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

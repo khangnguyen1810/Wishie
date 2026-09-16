@@ -251,7 +251,7 @@ class WishlistDetailViewController: ObservableObject {
         do {
             var imageUrl: String? = nil
             if let localImage = newItemImage {
-                imageUrl = try await wishlistService.upload(image: localImage, fileName: UUID().uuidString)
+                imageUrl = try await wishlistService.upload(wishlistId: wishlistId, image: localImage)
             } else if let remoteUrl = newItemRemoteImageUrl {
                 imageUrl = remoteUrl
             }
@@ -289,7 +289,7 @@ class WishlistDetailViewController: ObservableObject {
         if checkIfItemExists(withLink: item.itemLink) { return }
         var item = item
         if let localImage = item.localImage {
-            item.image = try await wishlistService.upload(image: localImage, fileName: UUID().uuidString)
+            item.image = try await wishlistService.upload(wishlistId: wishlistId, image: localImage)
             item.localImage = nil
         }
         _ = try await wishlistService.addWishlistItem(wishlistId: wishlistId, item: item)

@@ -20,6 +20,10 @@ struct WishlistItemResponse: Decodable {
     let isMostDesired: Bool
 }
 
+struct WishlistImageUploadResponse: Decodable {
+    let imageUrl: String
+}
+
 struct WishlistResponse: Decodable {
     let id: String
     let name: String

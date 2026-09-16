@@ -15,12 +15,13 @@ enum APIRoute: URLRequestConvertible {
     case getProfile(id: String)
     case createWishlist(CreateWishlistRequest)
     case uploadItemImage(wishlistId: String, itemId: String, imageData: Data)
-
+    case uploadWishlistImage(wishlistId: String, imageData: Data)
+    case editWishlistItem(wishlistId: String, itemId: Int)
     var method: HTTPMethod {
         switch self {
         case .getWishlists, .getProfile: return .get
-        case .login, .signup, .refresh, .createWishlist: return .post
-        case .uploadItemImage: return .patch
+        case .login, .signup, .refresh, .createWishlist, .uploadWishlistImage: return .post
+        case .uploadItemImage, .editWishlistItem: return .patch
         }
     }
 
@@ -33,13 +34,15 @@ enum APIRoute: URLRequestConvertible {
         case .getProfile(let id): return "/profiles/\(id)"
         case .createWishlist: return "/wishlists"
         case .uploadItemImage(let wishlistId, let itemId, _): return "/wishlists/\(wishlistId)/items/\(itemId)"
+        case .uploadWishlistImage(let wishlistId, _): return "/wishlists/\(wishlistId)/items/image"
+        case .editWishlistItem(let wishlistId, let wishListItemId): return "/wishlists/\(wishlistId)/items/\(wishListItemId)"
         }
     }
 
     var requiresAuth: Bool {
         switch self {
         case .login, .signup, .refresh: return false
-        case .getWishlists, .getProfile, .createWishlist, .uploadItemImage: return true
+        case .getWishlists, .getProfile, .createWishlist, .uploadItemImage, .uploadWishlistImage, .editWishlistItem: return true
         }
     }
 
@@ -47,7 +50,7 @@ enum APIRoute: URLRequestConvertible {
     /// dispatch via `session.upload(multipartFormData:with:)` instead of `session.request(_:)`.
     var multipartFormData: ((MultipartFormData) -> Void)? {
         switch self {
-        case .uploadItemImage(_, _, let imageData):
+        case .uploadItemImage(_, _, let imageData), .uploadWishlistImage(_, let imageData):
             return { form in
                 form.append(imageData, withName: "file", fileName: "image.jpg", mimeType: "image/jpeg")
             }
@@ -62,9 +65,12 @@ enum APIRoute: URLRequestConvertible {
         if requiresAuth {
             request.setValue("true", forHTTPHeaderField: Self.requiresAuthHeader)
         }
-        // `.uploadItemImage` has no JSON body — Alamofire sets the multipart `Content-Type`
+        // Multipart routes have no JSON body — Alamofire sets the multipart `Content-Type`
         // (with boundary) itself when `APIService.send` encodes `multipartFormData`.
         if case .uploadItemImage = self {
+            return request
+        }
+        if case .uploadWishlistImage = self {
             return request
         }
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -85,7 +91,7 @@ enum APIRoute: URLRequestConvertible {
         case .createWishlist(let body):
             request.httpBody = try JSONEncoder().encode(body)
             return request
-        case .getWishlists, .getProfile, .uploadItemImage:
+        case .getWishlists, .getProfile, .uploadItemImage, .uploadWishlistImage, .editWishlistItem:
             return request
         }
     }

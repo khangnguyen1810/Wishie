@@ -19,12 +19,12 @@ final class MockWishlistService: WishlistServiceProtocol {
     var uploadResult: Result<String, Error> = .success("https://uploaded.example.com/img.jpg")
     private(set) var uploadCallCount = 0
     private(set) var lastUploadedImage: UIImage?
-    private(set) var lastUploadFileName: String?
+    private(set) var lastUploadWishlistId: String?
 
-    func upload(image: UIImage, fileName: String) async throws -> String {
+    func upload(wishlistId: String, image: UIImage) async throws -> String {
         uploadCallCount += 1
         lastUploadedImage = image
-        lastUploadFileName = fileName
+        lastUploadWishlistId = wishlistId
         return try uploadResult.get()
     }
 

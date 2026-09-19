@@ -229,7 +229,8 @@ class WishlistDetailViewController: ObservableObject {
             let result = try await wishlistService.setMostDesired(wishlistId: wishlistId, itemId: itemSelected.id, isMostDesired: isDesired)
             switch result {
             case .success(_):
-                isShowLoading = false
+                showBottomSheet = false
+                await getDetailWishlist(wishlistId: wishlistId)
             case .failure(let error):
                 isShowLoading = false
                 errorMessage = error.localizedDescription

@@ -18,11 +18,12 @@ enum APIRoute: URLRequestConvertible {
     case uploadWishlistImage(wishlistId: String, imageData: Data)
     case editWishlistItem(wishlistId: String, itemId: String, wishItem: EditWishlistItemRequest)
     case getDetailWishlist(wishlistId: String)
+    case markItemDesired(wishlistId: String, itemId: String, isMostDesired: Bool)
     var method: HTTPMethod {
         switch self {
         case .getWishlists, .getProfile, .getDetailWishlist: return .get
         case .login, .signup, .refresh, .createWishlist, .uploadWishlistImage: return .post
-        case .uploadItemImage, .editWishlistItem: return .patch
+        case .uploadItemImage, .editWishlistItem, .markItemDesired: return .patch
         }
     }
 
@@ -38,13 +39,21 @@ enum APIRoute: URLRequestConvertible {
         case .uploadWishlistImage(let wishlistId, _): return "/wishlists/\(wishlistId)/items/image"
         case .editWishlistItem(let wishlistId, let wishListItemId, _): return "/wishlists/\(wishlistId)/items/\(wishListItemId)"
         case .getDetailWishlist(let wishlistId): return "/wishlists/\(wishlistId)"
+        case .markItemDesired(let wishlistId, let itemId, _): return "/wishlists/\(wishlistId)/items/\(itemId)/most-desired"
         }
     }
 
     var requiresAuth: Bool {
         switch self {
         case .login, .signup, .refresh: return false
-        case .getWishlists, .getProfile, .createWishlist, .uploadItemImage, .uploadWishlistImage, .editWishlistItem, .getDetailWishlist: return true
+        case .getWishlists,
+                .getProfile,
+                .createWishlist,
+                .uploadItemImage,
+                .uploadWishlistImage,
+                .editWishlistItem,
+                .getDetailWishlist,
+                .markItemDesired: return true
         }
     }
 
@@ -95,9 +104,11 @@ enum APIRoute: URLRequestConvertible {
             return request
         case .getWishlists, .getProfile, .uploadItemImage, .uploadWishlistImage, .getDetailWishlist:
             return request
-        case .editWishlistItem(_,_, let body):
+        case .editWishlistItem(_, _, let body):
             request.httpBody = try JSONEncoder().encode(body)
             return request
+        case .markItemDesired(_, _, let isMostDesired):
+            return try JSONEncoding.default.encode(request, with: ["isMostDesired": isMostDesired])
         }
     }
 }

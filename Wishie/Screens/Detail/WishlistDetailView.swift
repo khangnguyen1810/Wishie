@@ -623,7 +623,6 @@ struct WishlistDetailView: View {
                     wishlistId: viewModel.wishlistInfo.id,
                     isDesired: !viewModel.itemSelected.isMostDesired
                 )
-                viewModel.showBottomSheet = false
             }
         }
     }

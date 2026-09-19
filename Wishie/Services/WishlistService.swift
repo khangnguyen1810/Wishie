@@ -23,7 +23,7 @@ protocol WishlistServiceProtocol {
     func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<Bool, Error>
     func leaveWishlist(wishListId: String) async throws -> Result<Bool, Error>
     func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
-    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<Bool, Error>
+    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<WishlistItemResponse, Error>
     func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<Bool, Error>
     func observeUserWishlistIds(onChange: @escaping ([String]) -> Void) -> ListenerRegistration?
 }
@@ -344,20 +344,15 @@ class WishlistService: WishlistServiceProtocol {
         }
     }
 
-    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<Bool, any Error> {
+    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<WishlistItemResponse, any Error> {
         do {
-            let docRef = db.collection("wishList").document(wishlistId)
-            let snapshot = try await docRef.getDocument()
-            guard let items = snapshot.data()?["wishListItems"] as? [[String: Any]] else {
-                throw NSError(domain: "WishlistService", code: 404)
-            }
-            let updatedItems = MostDesiredRule.apply(
-                items: items,
-                itemId: itemId,
-                isMostDesired: isMostDesired
+            let response: WishlistItemResponse = try await apiService.send(
+                .markItemDesired(
+                    wishlistId: wishlistId,
+                    itemId: itemId,
+                    isMostDesired: isMostDesired)
             )
-            try await docRef.updateData(["wishListItems": updatedItems])
-            return .success(true)
+            return .success(response)
         } catch {
             return .failure(error)
         }

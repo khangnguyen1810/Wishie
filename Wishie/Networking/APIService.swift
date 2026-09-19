@@ -28,14 +28,18 @@ final class APIService: APIServiceProtocol {
         } else {
             request = session.request(route)
         }
+        #if DEBUG
         request.cURLDescription { curl in
-            print("➡️ [API] \(curl)")
+            print("➡️ [API] \(Self.redactAuthorization(in: curl))")
         }
+        #endif
         let dataResponse = await request
             .validate()
             .serializingData()
             .response
+        #if DEBUG
         print("⬅️ [API] \(dataResponse.response?.statusCode ?? 0) \(route.path)\n\(Self.prettyPrinted(dataResponse.data ?? Data()))")
+        #endif
 
         if let afError = dataResponse.error {
             if case .requestRetryFailed(let retryError, _) = afError, let apiError = retryError as? APIError {
@@ -69,5 +73,13 @@ final class APIService: APIServiceProtocol {
             return String(data: data, encoding: .utf8) ?? "<empty>"
         }
         return string
+    }
+
+    private static func redactAuthorization(in curl: String) -> String {
+        curl.replacingOccurrences(
+            of: "-H \"Authorization: [^\"]*\"",
+            with: "-H \"Authorization: Bearer <redacted>\"",
+            options: .regularExpression
+        )
     }
 }

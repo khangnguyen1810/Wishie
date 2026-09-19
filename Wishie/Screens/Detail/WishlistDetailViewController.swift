@@ -69,14 +69,16 @@ class WishlistDetailViewController: ObservableObject {
                 wishlistInfo = wishlist
                 await self.fetchMemberUsers()
             case .failure(let failure):
-                print(failure.localizedDescription)
+                errorMessage = failure.localizedDescription
+                isShowError = true
             }
         } catch {
             isShowLoading = false
-            print(error.localizedDescription)
+            errorMessage = error.localizedDescription
+            isShowError = true
         }
     }
-    
+
     func pickItem(wishlistId: String) async {
         do {
             isShowLoading = true

@@ -87,7 +87,9 @@ final class APIClient: APIClientProtocol {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
+        #if DEBUG
         print("➡️ [API] \(Self.curlCommand(for: request))")
+        #endif
 
         let data: Data
         let response: URLResponse
@@ -100,7 +102,9 @@ final class APIClient: APIClientProtocol {
         guard let http = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
+        #if DEBUG
         print("⬅️ [API] \(http.statusCode) \(endpoint.path)\n\(Self.prettyPrinted(data))")
+        #endif
         if http.statusCode == 401 {
             throw APIError.unauthorized(APIError.decodeServerError(data: data, statusCode: http.statusCode))
         }
@@ -127,7 +131,8 @@ final class APIClient: APIClientProtocol {
             components.append("-X \(method)")
         }
         for (key, value) in request.allHTTPHeaderFields ?? [:] {
-            components.append("-H \"\(key): \(value)\"")
+            let displayValue = key == "Authorization" ? "Bearer <redacted>" : value
+            components.append("-H \"\(key): \(displayValue)\"")
         }
         if let body = request.httpBody, let bodyString = String(data: body, encoding: .utf8) {
             let escaped = bodyString.replacingOccurrences(of: "\"", with: "\\\"")

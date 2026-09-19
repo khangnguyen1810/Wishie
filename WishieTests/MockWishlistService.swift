@@ -106,8 +106,21 @@ final class MockWishlistService: WishlistServiceProtocol {
         .success(true)
     }
 
-    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<Bool, Error> {
-        .success(true)
+    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<WishlistItemResponse, Error> {
+        .success(
+            WishlistItemResponse(
+                id: itemId,
+                wishlistId: wishlistId,
+                name: "",
+                description: "",
+                imageUrl: nil,
+                isPicked: false,
+                pickedBy: nil,
+                itemLink: "",
+                price: nil,
+                isMostDesired: isMostDesired
+            )
+        )
     }
 
     func observeUserWishlistIds(onChange: @escaping ([String]) -> Void) -> ListenerRegistration? {

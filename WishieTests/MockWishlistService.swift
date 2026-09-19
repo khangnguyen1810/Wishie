@@ -51,8 +51,8 @@ final class MockWishlistService: WishlistServiceProtocol {
 
     // MARK: - Unused by these tests; minimal stub bodies.
 
-    func getWishlist(by id: String) async throws -> (WishlistModel, UserModel) {
-        (WishlistModel(name: "", userCreateId: ""), UserModel())
+    func getWishlist(by id: String) async throws -> Result<WishlistModel, Error> {
+        .success(WishlistModel(name: "", userCreateId: ""))
     }
 
     func joinWishlist(wishListId: String) async throws -> Result<Bool, Error> {
@@ -82,8 +82,8 @@ final class MockWishlistService: WishlistServiceProtocol {
         .success(true)
     }
 
-    func updateWishlistItem(wishlistId: String, itemId: String, newName: String?, newDescription: String?, newImage: UIImage?, newPrice: String?) async throws -> Result<Bool, Error> {
-        .success(true)
+    func updateWishlistItem(wishlistId: String, itemId: String, newName: String?, newDescription: String?, newImage: UIImage?, newImageLink: String?, newPrice: String?, newLink: String?) async throws -> Result<WishlistItem, Error> {
+        .success(WishlistItem(id: itemId, name: newName ?? "", image: newImageLink))
     }
 
     func deleteWishlist(wishlistId: String) async throws -> Result<Bool, Error> {
@@ -108,10 +108,6 @@ final class MockWishlistService: WishlistServiceProtocol {
 
     func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<Bool, Error> {
         .success(true)
-    }
-
-    func observeWishlist(by id: String, onChange: @escaping (WishlistModel) -> Void, onError: @escaping (Error) -> Void) -> ListenerRegistration {
-        FakeListenerRegistration()
     }
 
     func observeUserWishlistIds(onChange: @escaping ([String]) -> Void) -> ListenerRegistration? {

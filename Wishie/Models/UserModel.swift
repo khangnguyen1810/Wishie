@@ -37,6 +37,16 @@ struct UserModel: Codable, Hashable {
 }
 
 extension UserModel {
+    init(memberProfile: WishlistMemberProfileResponse) {
+        self.init()
+        self.firstName = memberProfile.firstName
+        self.lastName = memberProfile.lastName
+        self.email = memberProfile.email
+        self.avatarUrl = memberProfile.avatarUrl
+    }
+}
+
+extension UserModel {
     init(profile: ProfileResponse) {
         self.init()
         self.firstName = profile.firstName

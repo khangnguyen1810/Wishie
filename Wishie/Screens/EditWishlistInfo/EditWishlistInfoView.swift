@@ -1,3 +1,4 @@
+
 //
 //  EditWishlistInfoScreen.swift
 //  Wishie
@@ -5,7 +6,7 @@
 
 import SwiftUI
 
-struct EditWishlistInfoScreen: View {
+struct EditWishlistInfoView: View {
     let wishlistId: String
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = EditWishlistInfoViewModel()
@@ -113,7 +114,7 @@ struct EditWishlistInfoScreen: View {
 }
 
 #Preview {
-    EditWishlistInfoScreen(
+    EditWishlistInfoView(
         wishlistId: "136D375B-7015-4C9A-97BE-830C5C46F24A"
     )
 }

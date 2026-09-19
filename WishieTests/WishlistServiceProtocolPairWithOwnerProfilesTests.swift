@@ -4,8 +4,8 @@ import Foundation
 @testable import Wishie
 
 struct WishlistServiceProtocolPairWithOwnerProfilesTests {
-    private func wishlist(id: String, ownerId: String) -> WishlistModel {
-        WishlistModel(id: id, name: "List \(id)", userCreateId: ownerId, members: [ownerId: .owner])
+    private func wishlist(id: String, ownerId: String, ownerName: String = "") -> WishlistModel {
+        WishlistModel(id: id, name: "List \(id)", userCreateId: ownerId, members: [ownerId: .owner], ownerName: ownerName)
     }
 
     @Test func pairsEachWishlistWithItsOwnersProfile() async throws {
@@ -39,7 +39,7 @@ struct WishlistServiceProtocolPairWithOwnerProfilesTests {
         #expect(mock.requestedProfileIds.isEmpty)
     }
 
-    @Test func omitsOnlyTheWishlistWhoseOwnerProfileFetchFailed() async throws {
+    @Test func fallsBackToOwnerNameForTheWishlistWhoseOwnerProfileFetchFailed() async throws {
         let mock = MockWishlistService()
         mock.profilesById = [
             "u1": UserModel(dictionary: ["firstName": "Ada"]),
@@ -48,15 +48,15 @@ struct WishlistServiceProtocolPairWithOwnerProfilesTests {
         mock.getProfileErrorsById = ["u2": NSError(domain: "WishlistServiceTests", code: 404)]
         let wishlists = [
             wishlist(id: "w1", ownerId: "u1"),
-            wishlist(id: "w2", ownerId: "u2"),
+            wishlist(id: "w2", ownerId: "u2", ownerName: "Bob"),
             wishlist(id: "w3", ownerId: "u3")
         ]
 
         let pairs = await mock.pairWithOwnerProfiles(wishlists)
 
-        #expect(pairs.map(\.0.id).sorted() == ["w1", "w3"])
+        #expect(pairs.map(\.0.id).sorted() == ["w1", "w2", "w3"])
         #expect(pairs.first(where: { $0.0.id == "w1" })?.1.firstName == "Ada")
         #expect(pairs.first(where: { $0.0.id == "w3" })?.1.firstName == "Grace")
-        #expect(pairs.contains { $0.0.id == "w2" } == false)
+        #expect(pairs.first(where: { $0.0.id == "w2" })?.1.firstName == "Bob")
     }
 }

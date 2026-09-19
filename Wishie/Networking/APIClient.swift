@@ -87,6 +87,10 @@ final class APIClient: APIClientProtocol {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
+        #if DEBUG
+        print("➡️ [API] \(Self.curlCommand(for: request))")
+        #endif
+
         let data: Data
         let response: URLResponse
         do {
@@ -98,6 +102,9 @@ final class APIClient: APIClientProtocol {
         guard let http = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
+        #if DEBUG
+        print("⬅️ [API] \(http.statusCode) \(endpoint.path)\n\(Self.prettyPrinted(data))")
+        #endif
         if http.statusCode == 401 {
             throw APIError.unauthorized(APIError.decodeServerError(data: data, statusCode: http.statusCode))
         }
@@ -105,5 +112,33 @@ final class APIClient: APIClientProtocol {
             throw APIError.decodeServerError(data: data, statusCode: http.statusCode)
         }
         return data
+    }
+
+    private static func prettyPrinted(_ data: Data) -> String {
+        guard let json = try? JSONSerialization.jsonObject(with: data),
+              let pretty = try? JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted]),
+              let string = String(data: pretty, encoding: .utf8) else {
+            return String(data: data, encoding: .utf8) ?? "<empty>"
+        }
+        return string
+    }
+
+    private static func curlCommand(for request: URLRequest) -> String {
+        guard let url = request.url else { return "curl <invalid request>" }
+        var components = ["curl -v"]
+        let method = request.httpMethod ?? "GET"
+        if method != "GET" {
+            components.append("-X \(method)")
+        }
+        for (key, value) in request.allHTTPHeaderFields ?? [:] {
+            let displayValue = key == "Authorization" ? "Bearer <redacted>" : value
+            components.append("-H \"\(key): \(displayValue)\"")
+        }
+        if let body = request.httpBody, let bodyString = String(data: body, encoding: .utf8) {
+            let escaped = bodyString.replacingOccurrences(of: "\"", with: "\\\"")
+            components.append("-d \"\(escaped)\"")
+        }
+        components.append("\"\(url.absoluteString)\"")
+        return components.joined(separator: " ")
     }
 }

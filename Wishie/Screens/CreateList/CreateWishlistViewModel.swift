@@ -37,7 +37,7 @@ class CreateWishlistViewModel: ObservableObject {
             dueDate: dueDate,
             items: items,
             themeColor: selectedTheme?.rawValue,
-            userCreateId: userId)
+            userCreateId: userId, ownerName: "")
         return try await createWishListService.createWishlist(wishList: wishList)
     }
 

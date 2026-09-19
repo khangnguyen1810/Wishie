@@ -15,7 +15,7 @@ struct WishlistResponseMappingTests {
         WishlistResponse(
             id: "w1", name: "Birthday", description: "Party", ownerId: "u1",
             dueDate: "2026-09-01T00:00:00.000Z", colorTheme: "sunset", isArchived: isArchived,
-            createdAt: "2026-01-01T00:00:00.000Z", members: members, items: items
+            createdAt: "2026-01-01T00:00:00.000Z", members: members, items: items, ownerName: "Owner Name"
         )
     }
 
@@ -59,7 +59,7 @@ struct WishlistResponseMappingTests {
         let response = WishlistResponse(
             id: "w1", name: "Birthday", description: "Party", ownerId: "u1",
             dueDate: "2026-09-01T00:00:00.000Z", colorTheme: nil, isArchived: false,
-            createdAt: "2026-01-01T00:00:00.000Z", members: nil, items: nil
+            createdAt: "2026-01-01T00:00:00.000Z", members: nil, items: nil, ownerName: "Owner Name"
         )
         let wishlist = WishlistModel(response: response)
 

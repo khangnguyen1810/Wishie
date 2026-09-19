@@ -479,6 +479,7 @@
 				INFOPLIST_FILE = Wishie/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Wishie need your camera permission to scan Qr";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Wishie uses your location to suggest gifts and shopping links suited to the country you're in.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need access to your photo library to scan QR codes from images.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -523,6 +524,7 @@
 				INFOPLIST_FILE = Wishie/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Wishie need your camera permission to scan Qr";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Wishie uses your location to suggest gifts and shopping links suited to the country you're in.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need access to your photo library to scan QR codes from images.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;

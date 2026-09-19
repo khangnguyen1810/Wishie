@@ -28,10 +28,14 @@ final class APIService: APIServiceProtocol {
         } else {
             request = session.request(route)
         }
+        request.cURLDescription { curl in
+            print("➡️ [API] \(curl)")
+        }
         let dataResponse = await request
             .validate()
             .serializingData()
             .response
+        print("⬅️ [API] \(dataResponse.response?.statusCode ?? 0) \(route.path)\n\(Self.prettyPrinted(dataResponse.data ?? Data()))")
 
         if let afError = dataResponse.error {
             if case .requestRetryFailed(let retryError, _) = afError, let apiError = retryError as? APIError {
@@ -56,5 +60,14 @@ final class APIService: APIServiceProtocol {
         } catch {
             throw APIError.invalidResponse
         }
+    }
+
+    private static func prettyPrinted(_ data: Data) -> String {
+        guard let json = try? JSONSerialization.jsonObject(with: data),
+              let pretty = try? JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted]),
+              let string = String(data: pretty, encoding: .utf8) else {
+            return String(data: data, encoding: .utf8) ?? "<empty>"
+        }
+        return string
     }
 }

@@ -9,7 +9,7 @@ struct WishlistServiceAPITests {
         WishlistResponse(
             id: id, name: "Birthday", description: "Party", ownerId: ownerId,
             dueDate: "2026-09-01T00:00:00.000Z", colorTheme: nil, isArchived: false,
-            createdAt: "2026-01-01T00:00:00.000Z", members: [], items: []
+            createdAt: "2026-01-01T00:00:00.000Z", members: [], items: [], ownerName: "Owner Name"
         )
     }
 
@@ -120,5 +120,49 @@ struct WishlistServiceAPITests {
         } catch let error as APIError {
             #expect(error == .server(statusCode: 400, message: "Invalid item", code: nil))
         }
+    }
+
+    @Test func updateWishlistItemUploadsTheNewImageUnderTheWishlistId() async throws {
+        let stub = StubAPIService()
+        stub.sendResults = [
+            WishlistItemResponse(id: "i1", wishlistId: "w1", name: "Lego", description: "", imageUrl: "https://x/old.jpg", isPicked: false, pickedBy: nil, itemLink: "", price: nil, isMostDesired: false),
+            WishlistItemResponse(id: "i1", wishlistId: "w1", name: "Lego", description: "", imageUrl: "https://x/new.jpg", isPicked: false, pickedBy: nil, itemLink: "", price: nil, isMostDesired: false)
+        ]
+        let service = WishlistService(apiService: stub)
+
+        let result = try await service.updateWishlistItem(
+            wishlistId: "w1", itemId: "i1", newName: "Lego", newDescription: "",
+            newImage: testImage(), newImageLink: "https://x/old.jpg", newPrice: nil, newLink: nil
+        )
+
+        #expect(stub.sentRoutes.count == 2)
+        guard case .uploadItemImage(let wishlistId, let itemId, _) = stub.sentRoutes[1] else {
+            Issue.record("expected .uploadItemImage route")
+            return
+        }
+        #expect(wishlistId == "w1")
+        #expect(itemId == "i1")
+        #expect(try result.get().image == "https://x/new.jpg")
+    }
+
+    @Test func updateWishlistItemKeepsTheExistingImageLinkWhenNoNewImageIsPicked() async throws {
+        let stub = StubAPIService()
+        stub.sendResults = [
+            WishlistItemResponse(id: "i1", wishlistId: "w1", name: "Lego", description: "", imageUrl: "https://x/old.jpg", isPicked: false, pickedBy: nil, itemLink: "", price: nil, isMostDesired: false)
+        ]
+        let service = WishlistService(apiService: stub)
+
+        let result = try await service.updateWishlistItem(
+            wishlistId: "w1", itemId: "i1", newName: "Lego", newDescription: "",
+            newImage: nil, newImageLink: "https://x/old.jpg", newPrice: nil, newLink: nil
+        )
+
+        #expect(stub.sentRoutes.count == 1)
+        guard case .editWishlistItem(_, _, let body) = stub.sentRoutes[0] else {
+            Issue.record("expected .editWishlistItem route")
+            return
+        }
+        #expect(body.imageLink == "https://x/old.jpg")
+        #expect(try result.get().image == "https://x/old.jpg")
     }
 }

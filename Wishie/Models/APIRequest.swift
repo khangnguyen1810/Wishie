@@ -42,3 +42,11 @@ struct CreateWishlistRequest: Encodable {
         self.items = wishlist.items.map(CreateWishlistItemRequest.init)
     }
 }
+
+struct EditWishlistItemRequest: Encodable {
+    let name: String?
+    let description: String?
+    let price: String?
+    let link: String?
+    let imageLink: String?
+}

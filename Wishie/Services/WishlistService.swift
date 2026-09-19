@@ -12,12 +12,12 @@ import Supabase
 protocol WishlistServiceProtocol {
     func createWishlist(wishList: WishlistModel) async throws -> WishlistModel
     func upload(wishlistId: String, image: UIImage) async throws -> String
-    func getWishlist(by id: String) async throws -> (WishlistModel, UserModel)
+    func getWishlist(by id: String) async throws -> Result<WishlistModel, Error>
     func joinWishlist(wishListId: String) async throws  -> Result<Bool, Error>
     func getUserWishlists() async throws -> [WishlistModel]
     func getProfile(id: String) async throws -> UserModel
     func pickItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
-    func updateWishlistItem(wishlistId: String, itemId: String, newName: String?, newDescription: String?, newImage: UIImage?, newPrice: String?) async throws -> Result<Bool, Error>
+    func updateWishlistItem(wishlistId: String,itemId: String,newName: String?,newDescription: String?,newImage: UIImage?,newImageLink: String?,newPrice: String?, newLink: String?) async throws -> Result<WishlistItem, any Error>
     func deleteWishlist(wishlistId: String) async throws -> Result<Bool, Error>
     func updateWishlistInfo(wishlistId: String, name: String, description: String, dueDate: Date, themeColor: String?) async throws -> Result<Bool, Error>
     func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<Bool, Error>
@@ -25,7 +25,6 @@ protocol WishlistServiceProtocol {
     func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
     func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<Bool, Error>
     func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<Bool, Error>
-    func observeWishlist(by id: String, onChange: @escaping (WishlistModel) -> Void, onError: @escaping (Error) -> Void) -> ListenerRegistration
     func observeUserWishlistIds(onChange: @escaping ([String]) -> Void) -> ListenerRegistration?
 }
 
@@ -35,9 +34,10 @@ extension WishlistServiceProtocol {
     /// resolution isn't duplicated per screen.
     ///
     /// Individual `getProfile` failures (e.g. a 404 or timeout for one friend's profile) are
-    /// swallowed rather than propagated, so one bad profile only drops that one wishlist from the
-    /// result instead of failing the whole screen — see `HomeViewModel.getListWishlist()`, which
-    /// awaits both the owned and joined calls together.
+    /// swallowed rather than propagated, and fall back to a `UserModel` built from the wishlist's
+    /// own `ownerName` (already included in `WishlistResponse`) so a bad/unavailable profile
+    /// fetch never drops the wishlist itself from the result — only the richer profile fields
+    /// (avatar, email, etc.) are missing for that entry.
     func pairWithOwnerProfiles(_ wishlists: [WishlistModel]) async -> [(WishlistModel, UserModel)] {
         let ownerIds = Set(wishlists.map(\.userCreateId))
         let profilesByOwnerId = await withTaskGroup(of: (String, UserModel?).self) { group in
@@ -50,8 +50,10 @@ extension WishlistServiceProtocol {
             }
             return result
         }
-        return wishlists.compactMap { wishlist in
-            profilesByOwnerId[wishlist.userCreateId].map { (wishlist, $0) }
+        return wishlists.map { wishlist in
+            let profile = profilesByOwnerId[wishlist.userCreateId]
+                ?? UserModel(dictionary: ["firstName": wishlist.ownerName ?? ""])
+            return (wishlist, profile)
         }
     }
 }
@@ -92,6 +94,40 @@ class WishlistService: WishlistServiceProtocol {
 
         return model
     }
+    
+    func updateWishlistItem(
+        wishlistId: String,
+        itemId: String,
+        newName: String?,
+        newDescription: String?,
+        newImage: UIImage?,
+        newImageLink: String?,
+        newPrice: String?,
+        newLink: String?
+    ) async throws -> Result<WishlistItem, any Error> {
+        do {
+            let response: WishlistItemResponse = try await apiService
+                .send(.editWishlistItem(
+                    wishlistId: wishlistId,
+                    itemId: itemId,
+                    wishItem: EditWishlistItemRequest(
+                        name: newName,
+                        description: newDescription,
+                        price: newPrice,
+                        link: newLink,
+                        imageLink: newImageLink
+                    )
+                ))
+            var model = WishlistItem(response: response)
+            if let newImage {
+                model.image = try await self.uploadItemImage(wishlistId: wishlistId, itemId: itemId, image: newImage)
+            }
+           
+            return .success(model)
+        } catch {
+            return .failure(error)
+        }
+    }
 
     /// Best-effort — a failed upload here doesn't fail `createWishlist`, since the wishlist and
     /// its items already exist server-side by the time this runs. Mirrors the swallow-per-item
@@ -119,34 +155,14 @@ class WishlistService: WishlistServiceProtocol {
         )
         return response.imageUrl
     }
-    func getWishlist(by id: String) async throws -> (WishlistModel, UserModel) {
-        
-        let snapshot = try await db
-            .collection("wishList")
-            .document(id)
-            .getDocument()
-        
-        guard let data = snapshot.data() else {
-            throw NSError(
-                domain: "WishlistService",
-                code: 404,
-                userInfo: [NSLocalizedDescriptionKey: "Wishlist not found"]
-            )
+    func getWishlist(by id: String) async throws -> Result<WishlistModel, Error> {
+        do {
+            let response: WishlistResponse = try await apiService.send(.getDetailWishlist(wishlistId: id))
+            let model = WishlistModel(response: response)
+            return .success(model)
+        } catch {
+            return .failure(error)
         }
-        
-        let wishlist = try WishlistModel(dictionary: data)
-        let ownerSnapshot = try await db.collection(
-            WishieConstants.firebaseUserPath
-        ).document(wishlist.userCreateId).getDocument()
-        guard let userData = ownerSnapshot.data() else {
-            throw NSError(
-                domain: "WishlistService",
-                code: 404,
-                userInfo: [NSLocalizedDescriptionKey: "User not found"]
-            )
-        }
-        let owner = UserModel(dictionary: userData)
-        return (wishlist, owner)
     }
     func joinWishlist(wishListId: String) async throws -> Result<Bool, any Error> {
         do {
@@ -208,54 +224,6 @@ class WishlistService: WishlistServiceProtocol {
             try await docRef.updateData([
                 "wishListItems": items
             ])
-            return .success(true)
-        } catch {
-            return .failure(error)
-        }
-    }
-    func updateWishlistItem(
-        wishlistId: String,
-        itemId: String,
-        newName: String?,
-        newDescription: String?,
-        newImage: UIImage?,
-        newPrice: String?
-    ) async throws -> Result<Bool, any Error> {
-        do {
-            let docRef = db.collection("wishList")
-                .document(wishlistId)
-            let snapshot = try await docRef.getDocument()
-            guard var items: [[String: Any]] = snapshot.data()?["wishListItems"] as? [[String: Any]] else {
-                throw NSError(domain: "WishlistService", code: 404)
-            }
-            for index in items.indices {
-                if let id = items[index]["id"] as? String, id == itemId {
-                    if let newName {
-                        items[index]["name"] = newName
-                    }
-                    if let newDescription {
-                        items[index]["description"] = newDescription
-                    }
-                    if let newImage {
-                        // Uploads to the same `wishlist/<itemId>.jpg` storage path (upsert),
-                        // overwriting any existing image in place via the backend's service-role
-                        // client — avoids a separate direct-to-Supabase delete of the old image,
-                        // which ran as the `authenticated` role and hit the same `storage.objects`
-                        // RLS restriction documented on `upload(wishlistId:image:)` above.
-                        if let newUrl = try await uploadItemImage(wishlistId: wishlistId, itemId: itemId, image: newImage) {
-                            items[index]["imageUrl"] = newUrl
-                        }
-                    }
-                    if let newPrice {
-                        items[index]["price"] = newPrice
-                    }
-                    break
-                }
-            }
-            try await docRef.updateData([
-                "wishListItems": items
-            ])
-            
             return .success(true)
         } catch {
             return .failure(error)
@@ -414,18 +382,6 @@ class WishlistService: WishlistServiceProtocol {
             return .success(true)
         } catch {
             return .failure(error)
-        }
-    }
-
-    func observeWishlist(by id: String, onChange: @escaping (WishlistModel) -> Void, onError: @escaping (Error) -> Void) -> ListenerRegistration {
-        return db.collection("wishList").document(id).addSnapshotListener { snapshot, error in
-            if let error = error {
-                onError(error)
-                return
-            }
-            guard let data = snapshot?.data(),
-                  let wishlist = try? WishlistModel(dictionary: data) else { return }
-            onChange(wishlist)
         }
     }
 

@@ -22,8 +22,9 @@ struct WishlistModel: Identifiable, Hashable {
     var themeColor: String?
     var userCreateId: String
     let members: [String: WishlistRole]
+    var memberProfiles: [String: UserModel]
     var isArchived: Bool
-    
+    var ownerName: String?
     init(
         id: String = UUID().uuidString,
         name: String,
@@ -33,7 +34,9 @@ struct WishlistModel: Identifiable, Hashable {
         themeColor :String? = nil,
         userCreateId: String,
         members: [String: WishlistRole] = [:],
-        isArchived: Bool = false) {
+        memberProfiles: [String: UserModel] = [:],
+        isArchived: Bool = false,
+        ownerName: String = "") {
             self.id = id
             self.name = name
             self.description = description
@@ -42,7 +45,9 @@ struct WishlistModel: Identifiable, Hashable {
             self.userCreateId = userCreateId
             self.themeColor = themeColor
             self.members = members
+            self.memberProfiles = memberProfiles
             self.isArchived = isArchived
+            self.ownerName = ownerName
         }
    func isOwner() -> Bool {
        guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else { return false }
@@ -94,11 +99,13 @@ extension WishlistModel {
         } else {
             self.members = [:]
         }
+        self.memberProfiles = [:]
         if let itemsData = dictionary["wishListItems"] as? [[String: Any]] {
             self.items = try itemsData.map { try WishlistItem(dictionary: $0) }
         } else {
             self.items = []
         }
+        self.ownerName = dictionary["ownerName"] as? String ?? ""
     }
 }
 
@@ -115,9 +122,14 @@ extension WishlistModel {
             self.members = Dictionary(uniqueKeysWithValues: members.compactMap { member in
                 WishlistRole(rawValue: member.role).map { (member.userId, $0) }
             })
+            self.memberProfiles = Dictionary(uniqueKeysWithValues: members.compactMap { member in
+                member.profile.map { (member.userId, UserModel(memberProfile: $0)) }
+            })
         } else {
             self.members = [:]
+            self.memberProfiles = [:]
         }
         self.items = (response.items ?? []).map(WishlistItem.init(response:))
+        self.ownerName = response.ownerName ?? ""
     }
 }

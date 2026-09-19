@@ -42,6 +42,24 @@ extension UserDefaultsSharingTests {
         #expect(viewModel.myFriendWishlists.isEmpty)
     }
 
+    @Test func keepsWishlistsWhenOwnerProfileFetchFails() async throws {
+        UserDefaults.standard.set("me", forKey: WishieConstants.userIdKey)
+        defer { UserDefaults.standard.removeObject(forKey: WishieConstants.userIdKey) }
+        let mock = MockWishlistService()
+        mock.wishlistsResult = .success([
+            WishlistModel(id: "owned", name: "Mine", userCreateId: "me", members: ["me": .owner], ownerName: "Me")
+        ])
+        // No profile fetch can succeed (e.g. the profiles endpoint isn't available yet) — the
+        // wishlist itself must still show up, using the ownerName already on WishlistResponse.
+        mock.getProfileError = APIError.server(statusCode: 404, message: "Not found", code: nil)
+
+        let viewModel = HomeViewModel(service: mock)
+        await viewModel.getListWishlist()
+
+        #expect(viewModel.myWishlists.map(\.0.id) == ["owned"])
+        #expect(viewModel.myWishlists.first?.1.firstName == "Me")
+    }
+
     @Test func surfacesAPIErrorMessageOnFailure() async throws {
         UserDefaults.standard.set("me", forKey: WishieConstants.userIdKey)
         defer { UserDefaults.standard.removeObject(forKey: WishieConstants.userIdKey) }

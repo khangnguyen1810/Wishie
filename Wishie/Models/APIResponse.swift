@@ -1,10 +1,26 @@
 import Foundation
 
+struct WishlistMemberProfileResponse: Decodable {
+    let firstName: String
+    let lastName: String
+    let email: String
+    let avatarUrl: String?
+}
+
 struct WishlistMemberResponse: Decodable {
     let wishlistId: String
     let userId: String
     let role: String   // "owner" | "member"
     let joinedAt: String
+    let profile: WishlistMemberProfileResponse?
+
+    init(wishlistId: String, userId: String, role: String, joinedAt: String, profile: WishlistMemberProfileResponse? = nil) {
+        self.wishlistId = wishlistId
+        self.userId = userId
+        self.role = role
+        self.joinedAt = joinedAt
+        self.profile = profile
+    }
 }
 
 struct WishlistItemResponse: Decodable {
@@ -35,6 +51,7 @@ struct WishlistResponse: Decodable {
     let createdAt: String
     let members: [WishlistMemberResponse]?
     let items: [WishlistItemResponse]?
+    let ownerName: String?
 }
 
 struct ProfileResponse: Decodable {

@@ -232,7 +232,8 @@ struct HomeItemViewCell: View {
         items: [item1, item2, item3],
         themeColor: "sunset",
         userCreateId: "1",
-        members: [:]
+        members: [:],
+        ownerName: "Test Name"
     )
     let userModel = UserModel()
     HomeItemViewCell(item: (wishListModel, userModel))

@@ -21,7 +21,8 @@ class WishlistDetailViewController: ObservableObject {
     @Published var selectedImage: UIImage? = nil
     @Published var wishlistInfo: WishlistModel = WishlistModel(
         name: "",
-        userCreateId: ""
+        userCreateId: "",
+        ownerName: ""
     )
     @Published var showBottomSheet = false
     @Published var showReserveConfirmation: Bool = false
@@ -58,22 +59,22 @@ class WishlistDetailViewController: ObservableObject {
         wishlistListener?.remove()
     }
 
-    func startObservingWishlist(wishlistId: String, showInitialLoading: Bool = false) {
-        isShowLoading = showInitialLoading
-        wishlistListener?.remove()
-        wishlistListener = wishlistService.observeWishlist(by: wishlistId, onChange: { [weak self] updatedWishlist in
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.wishlistInfo = updatedWishlist
-                self.isShowLoading = false
+    func getDetailWishlist(wishlistId: String, showInitialLoading: Bool = false) async {
+        do {
+            isShowLoading = showInitialLoading
+            let result = try await wishlistService.getWishlist(by: wishlistId)
+            isShowLoading = false
+            switch result {
+            case .success(let wishlist):
+                wishlistInfo = wishlist
                 await self.fetchMemberUsers()
+            case .failure(let failure):
+                print(failure.localizedDescription)
             }
-        }, onError: { [weak self] _ in
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.isShowLoading = false
-            }
-        })
+        } catch {
+            isShowLoading = false
+            print(error.localizedDescription)
+        }
     }
     
     func pickItem(wishlistId: String) async {
@@ -97,21 +98,12 @@ class WishlistDetailViewController: ObservableObject {
             isShowError = true
         }
     }
-    func getWishlistInfo(wishListId: String) async {
-        do {
-            isShowLoading = true
-            wishlistInfo = try await wishlistService
-                .getWishlist(by: wishListId).0
-            await fetchMemberUsers()
-            isShowLoading = false
-        } catch {
-            isShowLoading = false
-            errorMessage = error.localizedDescription
-            isShowError = true
-        }
-    }
     
     func fetchMemberUsers() async {
+        if !wishlistInfo.memberProfiles.isEmpty {
+            memberUsers = Array(wishlistInfo.memberProfiles.values)
+            return
+        }
         let memberIds = Array(wishlistInfo.members.keys)
         var users: [UserModel] = []
         for userId in memberIds {
@@ -140,11 +132,19 @@ class WishlistDetailViewController: ObservableObject {
                     newName: newItemName,
                     newDescription: newItemDescription,
                     newImage: newItemImage,
-                    newPrice: newItemPrice
+                    newImageLink: newItemRemoteImageUrl,
+                    newPrice: newItemPrice, newLink: newItemLink
                 )
             switch result {
-            case .success(_):
+            case .success(let modifiedItem):
+                itemSelected = modifiedItem
+                // The sheet sits on top of the item list, so the edited row keeps rendering the
+                // pre-edit name/image until the list's own copy is replaced too.
+                if let index = wishlistInfo.items.firstIndex(where: { $0.id == modifiedItem.id }) {
+                    wishlistInfo.items[index] = modifiedItem
+                }
                 isShowLoading = false
+            
             case .failure(let failure):
                 isShowLoading = false
                 errorMessage = failure.localizedDescription

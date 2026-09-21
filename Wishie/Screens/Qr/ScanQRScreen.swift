@@ -16,13 +16,16 @@ struct ScanQRScreen: View {
     @Binding var path: NavigationPath
     var body: some View {
         ZStack (alignment: .topLeading) {
-            QRScannerView { value in
-                viewModel.handleResult(value)
-            }
-            .onChange(of: viewModel.result) {_, payload in
+            QRScannerView(onResult: { value in
+                Task {
+                   await viewModel.handleResult(value)
+                }
+            }, restartScanning: $viewModel.shouldRestartScanning)
+            .onChange(of: viewModel.result) {_, wishlistId in
+                guard !wishlistId.isEmpty else { return }
                 path.append(
                     Route.wishListInfoScreen(
-                        wishlistId: payload.wishListId,
+                        wishlistId: wishlistId,
                     )
                 )
             }
@@ -34,7 +37,15 @@ struct ScanQRScreen: View {
             .overlay {
                 ScannerAreaView(animate: $animate)
             }
-            
+            .overlay {
+                if viewModel.isScanning {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .tint(.white)
+                        .scaleEffect(1.5)
+                }
+            }
+
             VStack {
                 HStack {
                     Circle()

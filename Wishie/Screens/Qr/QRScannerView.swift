@@ -11,6 +11,7 @@ import SwiftUI
 struct QRScannerView: UIViewControllerRepresentable {
 
     var onResult: (String) -> Void
+    @Binding var restartScanning: Bool
 
     func makeUIViewController(context: Context) -> QRScannerViewController {
         let vc = QRScannerViewController()
@@ -21,5 +22,11 @@ struct QRScannerView: UIViewControllerRepresentable {
     func updateUIViewController(
         _ uiViewController: QRScannerViewController,
         context: Context
-    ) {}
+    ) {
+        guard restartScanning else { return }
+        uiViewController.restartScanning()
+        DispatchQueue.main.async {
+            restartScanning = false
+        }
+    }
 }

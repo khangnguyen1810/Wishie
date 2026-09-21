@@ -11,16 +11,7 @@ struct WishlistQRCodeView: View {
     
     let wishlistId: String
     var qrImage: UIImage? {
-        let payload = WishlistQRPayload(
-            wishListId: wishlistId
-        )
-
-        guard
-            let data = try? JSONEncoder().encode(payload)
-        else { return nil }
-
-        let base64 = data.base64EncodedString()
-        let link = "wishie://wishlist?data=\(base64)"
+        let link = "https://wishie-web.vercel.app/join/\(wishlistId)"
 
         return QRCodeGenerator.generate(from: link)
     }

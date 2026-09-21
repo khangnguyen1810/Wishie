@@ -66,3 +66,12 @@ struct ProfileResponse: Decodable {
     let hasCompletedInterestsSetup: Bool
     let createdAt: String
 }
+
+struct WishlistInfoResponse: Decodable {
+    let id: String
+    let name: String
+    let description: String
+    let dueDate: String
+    let colorTheme: String?
+    let itemCount: Int
+}

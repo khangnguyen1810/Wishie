@@ -16,7 +16,7 @@ private struct SheetHeightPreferenceKey: PreferenceKey {
     }
 }
 
-struct WishlistDetailScreen: View {
+struct WishlistDetailView: View {
     @State private var offsetY: CGFloat = 0
     @State private var channelExpnand: Bool = true
     @State private var appExpnand: Bool = true
@@ -250,7 +250,7 @@ struct WishlistDetailScreen: View {
         .task {
             let id = wishlistId ?? wishlist?.id
             guard let id else { return }
-            viewModel.startObservingWishlist(wishlistId: id, showInitialLoading: wishlist == nil)
+            await viewModel.getDetailWishlist(wishlistId: id, showInitialLoading: wishlist == nil)
         }
         .onAppear(perform: {
             guard let wishlist else { return }
@@ -496,12 +496,12 @@ struct WishlistDetailScreen: View {
             if let selectedImage = viewModel.selectedImage {
                 Image(uiImage: selectedImage)
                     .resizable()
-                    .scaledToFill()
+                    .scaledToFit()
             } else {
                 WebImage(url: URL(string: viewModel.itemSelected.image ?? ""), content: { image in
                     image
                         .resizable()
-                        .scaledToFill()
+                        .scaledToFit()
                 }, placeholder: {
                     placeholderColor
                         .overlay {
@@ -516,7 +516,7 @@ struct WishlistDetailScreen: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 140)
+        .frame(height: 300)
         .background(placeholderColor)
         .clipShape(RoundedRectangle(cornerRadius: 18))
         .overlay(alignment: .topTrailing) {
@@ -623,7 +623,6 @@ struct WishlistDetailScreen: View {
                     wishlistId: viewModel.wishlistInfo.id,
                     isDesired: !viewModel.itemSelected.isMostDesired
                 )
-                viewModel.showBottomSheet = false
             }
         }
     }
@@ -651,6 +650,8 @@ struct WishlistDetailScreen: View {
                 let itemSelected = viewModel.itemSelected
                 viewModel.newItemName = itemSelected.name
                 viewModel.newItemRemoteImageUrl = itemSelected.image
+                // Cleared so a photo picked during a previous edit can't leak into this one.
+                viewModel.newItemImage = nil
                 viewModel.newItemLink = itemSelected.itemLink
                 viewModel.newItemDescription = itemSelected.description
                 viewModel.newItemPrice = itemSelected.price ?? ""

@@ -64,7 +64,7 @@ struct HomeView: View {
             ],
             themeColor: "sunset",
             userCreateId: userId,
-            members: [userId: .owner]
+            members: [userId: .owner], ownerName: ""
         )
         return (exampleWishlist, authViewModel.userInfo)
     }
@@ -141,7 +141,7 @@ struct HomeView: View {
                                     case .myList:
                                         ForEach(Array(homeViewModel.myWishlists.enumerated()), id: \.element.0) { index, wishlist in
                                             NavigationLink {
-                                                WishlistDetailScreen(
+                                                WishlistDetailView(
                                                     navigationPath: $path,
                                                     wishlist: wishlist.0,
                                                     owner: wishlist.1
@@ -187,7 +187,7 @@ struct HomeView: View {
                                     case .friendsList:
                                         ForEach(Array(homeViewModel.myFriendWishlists.enumerated()), id: \.element.0) { index, wishlist in
                                             NavigationLink {
-                                                WishlistDetailScreen(
+                                                WishlistDetailView(
                                                     navigationPath: $path,
                                                     wishlist: wishlist.0,
                                                     owner: wishlist.1
@@ -245,9 +245,9 @@ struct HomeView: View {
                 case .wishListInfoScreen(wishlistId: let id):
                     WishListInformationView(wishlistId: id, path: $path)
                 case .editWishlistInfo(wishlistId: let id):
-                    EditWishlistInfoScreen(wishlistId: id)
+                    EditWishlistInfoView(wishlistId: id)
                 case .wishListDetailScreen(wishlistId: let id, isFromInfo: let isFromInfo):
-                    WishlistDetailScreen(
+                    WishlistDetailView(
                         navigationPath: $path,
                         wishlistId: id,
                         isFromInfo: isFromInfo
@@ -258,7 +258,7 @@ struct HomeView: View {
             }
             .task {
                 await authViewModel.getUserInfo()
-                homeViewModel.startObservingWishlists()
+                await homeViewModel.getListWishlist()
             }
             .onAppear {
                 celebrationFloat = true
@@ -315,6 +315,7 @@ struct HomeView: View {
             showLeaveConfirm = false
         })
         .showFullScreenDialog($homeViewModel.isGettingList)
+        .showFullScreenDialog($authViewModel.isShowProgress)
     }
 
     @ViewBuilder

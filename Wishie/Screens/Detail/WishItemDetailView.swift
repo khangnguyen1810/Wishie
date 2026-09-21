@@ -47,6 +47,19 @@ struct WishItemDetailView: View {
             viewModel.newItemLink = wishItem?.itemLink ?? ""
         }
     }
+    private var hasImage: Bool {
+        viewModel.newItemImage != nil || viewModel.newItemRemoteImageUrl?.isEmpty == false
+    }
+
+    private var editPhotoBadge: some View {
+        Image(systemName: "pencil")
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(Color(hex: "#5B4A32"))
+            .frame(width: 36, height: 36)
+            .background(Circle().fill(Color.white))
+            .shadow(color: .black.opacity(0.18), radius: 6, x: 0, y: 2)
+    }
+
     var body: some View {
         let primaryColor =  Color(hex: viewModel.wishlistInfo.theme.primary)
         let secondaryColor =  Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.85)
@@ -64,19 +77,14 @@ struct WishItemDetailView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 16)
-                if isEdit && viewModel.itemSelected.localImage == nil {
-                    WishieWebImage(url: viewModel.newItemRemoteImageUrl ?? "", contentMode: .fit)
-                        .frame(height: 160)
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .shadow(color: secondaryColor.opacity(0.65), radius: 30, x: 0, y: 10)
-                        .padding(.bottom, 20)
-                } else {
-                    ImagePickerBox(height: 160, selectedImage: $viewModel.newItemImage) {
-                        ZStack {
-                            if let image = viewModel.newItemImage {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
+                ImagePickerBox(height: 160, selectedImage: $viewModel.newItemImage) {
+                    ZStack(alignment: .bottomTrailing) {
+                        Group {
+                            if hasImage {
+                                WishieProductImage(
+                                    localImage: viewModel.newItemImage,
+                                    url: viewModel.newItemRemoteImageUrl
+                                )
                             } else {
                                 VStack(spacing: 8) {
                                     Image("upload")
@@ -94,10 +102,18 @@ struct WishItemDetailView: View {
                         .background(Color.wishiePink)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .shadow(color: secondaryColor.opacity(0.65), radius: 30, x: 0, y: 10)
+
+                        // Sits half outside the artwork, so it stays legible over a busy photo.
+                        if hasImage {
+                            editPhotoBadge
+                                .offset(x: 14, y: 14)
+                        }
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 12)
+                    .padding(.trailing, 14)
+                    .padding(.bottom, 14)
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
                 Text("TITLE")
                     .font(.wishies(.bold, 12))
                     .foregroundStyle(Color(hex: "#8C7A5A"))
@@ -190,5 +206,6 @@ struct WishItemDetailView: View {
         .onTapGesture {
             hideKeyboard()
         }
+        .showFullScreenDialog($viewModel.isShowLoading)
     }
 }

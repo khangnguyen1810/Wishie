@@ -17,26 +17,15 @@ class ArchivedWishlistsViewModel: ObservableObject {
     }
 
     func loadArchivedWishlists() async {
+        guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else { return }
+        isLoading = true
+        defer { isLoading = false }
         do {
-            isLoading = true
-            guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else {
-                isLoading = false
-                return
-            }
-            let result = try await service.getUserWishlists()
-            switch result {
-            case .success(let list):
-                isLoading = false
-                self.archivedWishlists = list.filter {
-                    $0.0.members[userId] == .owner && $0.0.isArchived
-                }
-            case .failure(let error):
-                isLoading = false
-                self.errorMessage = error.localizedDescription
-            }
+            let wishlists = try await service.getUserWishlists()
+            let owned = wishlists.filter { $0.members[userId] == .owner && $0.isArchived }
+            archivedWishlists = await service.pairWithOwnerProfiles(owned)
         } catch {
-            isLoading = false
-            self.errorMessage = error.localizedDescription
+            errorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
         }
     }
 

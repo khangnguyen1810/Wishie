@@ -85,7 +85,7 @@ struct WishListInformationView: View {
                                     .resizable()
                                     .frame(width: 20, height: 20)
                             }
-                        Text(viewModel.ownerInfo.getFullName())
+                        Text(viewModel.wishlistInfo.ownerName ?? "")
                             .multilineTextAlignment(.leading)
                             .font(.wishies(.regular, 16))
                     }

@@ -5,7 +5,6 @@
 
 import Testing
 import UIKit
-import Combine
 @testable import Wishie
 
 struct AuthViewModelGoogleLoginTests {
@@ -15,8 +14,8 @@ struct AuthViewModelGoogleLoginTests {
 
     @Test func failureShowsErrorDialogWithMessage() async throws {
         let mockService = MockAuthenticateService()
-        mockService.loginWithGoogleResult = Fail(error: SampleError()).eraseToAnyPublisher()
-        let viewModel = AuthViewModel(authService: mockService)
+        mockService.loginWithGoogleResult = .failure(SampleError())
+        let viewModel = AuthViewModel(authService: mockService, sessionStore: SessionStore(keychain: InMemoryKeychain()))
 
         viewModel.loginWithGoogle(presentingViewController: UIViewController())
         try await Task.sleep(for: .milliseconds(200))
@@ -29,10 +28,8 @@ struct AuthViewModelGoogleLoginTests {
 
     @Test func cancelDoesNotShowErrorDialog() async throws {
         let mockService = MockAuthenticateService()
-        mockService.loginWithGoogleResult = Fail(
-            error: NSError(domain: "com.google.GIDSignIn", code: -5)
-        ).eraseToAnyPublisher()
-        let viewModel = AuthViewModel(authService: mockService)
+        mockService.loginWithGoogleResult = .failure(NSError(domain: "com.google.GIDSignIn", code: -5))
+        let viewModel = AuthViewModel(authService: mockService, sessionStore: SessionStore(keychain: InMemoryKeychain()))
 
         viewModel.loginWithGoogle(presentingViewController: UIViewController())
         try await Task.sleep(for: .milliseconds(200))
@@ -43,8 +40,7 @@ struct AuthViewModelGoogleLoginTests {
 
     @Test func settingLoginInProgressShowsProgressImmediately() {
         let mockService = MockAuthenticateService()
-        mockService.loginWithGoogleResult = Empty().eraseToAnyPublisher()
-        let viewModel = AuthViewModel(authService: mockService)
+        let viewModel = AuthViewModel(authService: mockService, sessionStore: SessionStore(keychain: InMemoryKeychain()))
 
         viewModel.loginWithGoogle(presentingViewController: UIViewController())
 

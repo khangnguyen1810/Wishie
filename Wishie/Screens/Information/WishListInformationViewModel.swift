@@ -10,8 +10,7 @@ import FirebaseFirestore
 
 @MainActor
 class WishListInformationViewModel: ObservableObject {
-    @Published var wishlistInfo: WishlistModel = WishlistModel(name: "", userCreateId: "")
-    @Published var ownerInfo: UserModel = UserModel()
+    @Published var wishlistInfo: WishlistModel = WishlistModel(name: "", userCreateId: "", ownerName: "")
     @Published var isLoading: Bool = false
    
     private var service: WishlistServiceProtocol
@@ -21,8 +20,13 @@ class WishListInformationViewModel: ObservableObject {
     func getWishlistInfo(wishListId: String) async {
         do {
             isLoading = true
-            wishlistInfo = try await service.getWishlist(by: wishListId).0
-            ownerInfo = try await service.getWishlist(by: wishListId).1
+            let result = try await service.getWishlist(by: wishListId)
+            switch result {
+            case .success(let success):
+                wishlistInfo = success
+            case .failure(let failure):
+                print(failure.localizedDescription)
+            }
             isLoading = false
         } catch {
             isLoading = false

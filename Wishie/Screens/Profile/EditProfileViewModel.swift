@@ -58,8 +58,7 @@ class EditProfileViewModel: ObservableObject {
                 firstName: firstName,
                 lastName: lastName,
                 phone: phone,
-                dateOfBirth: dateOfBirth,
-                avatarUrl: avatarUrl
+                dateOfBirth: dateOfBirth
             )
             var model = UserModel()
             model.firstName = firstName.trimmingCharacters(in: .whitespaces)

@@ -13,6 +13,7 @@ struct CreateWishListScreen: View {
     @State private var progressTabIndex: Int = 0
     @Binding var path: NavigationPath
     @State private var errorMessage: String = ""
+    @State private var showError: Bool = false
     @State private var creating: Bool = false
     var body: some View {
         BaseWishieScreen {
@@ -68,18 +69,18 @@ struct CreateWishListScreen: View {
                             } else {
                                 Task {
                                     creating = true
-                                    let result = await createWishlistViewModel.saveItem()
-                                    switch result {
-                                    case .success(let id):
+                                    do {
+                                        let wishlist = try await createWishlistViewModel.saveItem()
                                         creating = false
                                         path.append(
                                             Route.createSuccess(
-                                                wishListId: id
+                                                wishListId: wishlist.id
                                             )
                                         )
-                                    case .failure(let failure):
+                                    } catch {
                                         creating = false
-                                        errorMessage = failure.localizedDescription
+                                        errorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
+                                        showError = true
                                     }
                                 }
                             }
@@ -91,6 +92,7 @@ struct CreateWishListScreen: View {
             .ignoresSafeArea(.keyboard, edges: .bottom)
         }
         .showFullScreenDialog($creating)
+        .showDialogIfNeeded($showError, title: "Couldn't create wishlist", message: errorMessage)
     }
     @ViewBuilder
     func stepProgress() -> some View {

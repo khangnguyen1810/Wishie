@@ -22,12 +22,19 @@ class EditWishlistInfoViewModel: ObservableObject {
     func load(wishlistId: String) async {
         do {
             isLoading = true
-            let wishlist = try await service.getWishlist(by: wishlistId).0
-            name = wishlist.name
-            description = wishlist.description
-            dueDate = wishlist.dueDate
-            selectedTheme = wishlist.theme
-            isLoading = false
+            let result = try await service.getWishlist(by: wishlistId)
+            switch result {
+            case .success(let wishlist):
+                name = wishlist.name
+                description = wishlist.description
+                dueDate = wishlist.dueDate
+                selectedTheme = wishlist.theme
+                isLoading = false
+            case .failure(let failure):
+                print(failure.localizedDescription)
+                isLoading = false
+            }
+            
         } catch {
             isLoading = false
             print(error)

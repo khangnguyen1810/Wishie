@@ -71,3 +71,18 @@ extension WishlistItem {
         self.price = dictionary["price"] as? String
     }
 }
+
+extension WishlistItem {
+    init(response: WishlistItemResponse) {
+        self.id = response.id
+        self.name = response.name
+        self.description = response.description
+        self.image = response.imageUrl
+        self.isPicked = response.isPicked
+        self.pickedUserId = response.pickedBy
+        self.isMostDesired = response.isMostDesired
+        self.localImage = nil
+        self.itemLink = response.itemLink
+        self.price = response.price
+    }
+}

@@ -106,6 +106,7 @@ struct ProfileView: View {
                 }
             }
         }
+        .showFullScreenDialog($authViewModel.isShowProgress)
     }
 
     @ViewBuilder

@@ -19,12 +19,12 @@ final class MockWishlistService: WishlistServiceProtocol {
     var uploadResult: Result<String, Error> = .success("https://uploaded.example.com/img.jpg")
     private(set) var uploadCallCount = 0
     private(set) var lastUploadedImage: UIImage?
-    private(set) var lastUploadFileName: String?
+    private(set) var lastUploadWishlistId: String?
 
-    func upload(image: UIImage, fileName: String) async throws -> String {
+    func upload(wishlistId: String, image: UIImage) async throws -> String {
         uploadCallCount += 1
         lastUploadedImage = image
-        lastUploadFileName = fileName
+        lastUploadWishlistId = wishlistId
         return try uploadResult.get()
     }
 
@@ -37,29 +37,53 @@ final class MockWishlistService: WishlistServiceProtocol {
         return addWishlistItemResult
     }
 
-    // MARK: - Unused by these tests; minimal stub bodies.
-    func createWishlist(wishList: WishlistModel) async throws -> Result<String, Error> {
-        .success(wishList.id)
+    // MARK: - createWishlist
+    var createWishlistResult: Result<WishlistModel, Error>?
+    private(set) var lastCreatedWishlist: WishlistModel?
+
+    func createWishlist(wishList: WishlistModel) async throws -> WishlistModel {
+        lastCreatedWishlist = wishList
+        if let createWishlistResult {
+            return try createWishlistResult.get()
+        }
+        return wishList
     }
 
-    func getWishlist(by id: String) async throws -> (WishlistModel, UserModel) {
-        (WishlistModel(name: "", userCreateId: ""), UserModel())
+    // MARK: - Unused by these tests; minimal stub bodies.
+
+    func getWishlist(by id: String) async throws -> Result<WishlistModel, Error> {
+        .success(WishlistModel(name: "", userCreateId: ""))
     }
 
     func joinWishlist(wishListId: String) async throws -> Result<Bool, Error> {
         .success(true)
     }
 
-    func getUserWishlists() async throws -> Result<[(WishlistModel, UserModel)], Error> {
-        .success([])
+    var wishlistsResult: Result<[WishlistModel], Error> = .success([])
+    func getUserWishlists() async throws -> [WishlistModel] {
+        try wishlistsResult.get()
+    }
+
+    var profilesById: [String: UserModel] = [:]
+    /// Fails every `getProfile` call, regardless of id. For failing only a specific owner's
+    /// fetch (e.g. to simulate one friend's profile 404ing) use `getProfileErrorsById` instead.
+    var getProfileError: Error?
+    /// Per-id error injection: only `getProfile(id:)` calls for a key present here throw.
+    var getProfileErrorsById: [String: Error] = [:]
+    private(set) var requestedProfileIds: [String] = []
+    func getProfile(id: String) async throws -> UserModel {
+        requestedProfileIds.append(id)
+        if let getProfileError { throw getProfileError }
+        if let idError = getProfileErrorsById[id] { throw idError }
+        return profilesById[id] ?? UserModel()
     }
 
     func pickItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error> {
         .success(true)
     }
 
-    func updateWishlistItem(wishlistId: String, itemId: String, newName: String?, newDescription: String?, newImage: UIImage?, newPrice: String?) async throws -> Result<Bool, Error> {
-        .success(true)
+    func updateWishlistItem(wishlistId: String, itemId: String, newName: String?, newDescription: String?, newImage: UIImage?, newImageLink: String?, newPrice: String?, newLink: String?) async throws -> Result<WishlistItem, Error> {
+        .success(WishlistItem(id: itemId, name: newName ?? "", image: newImageLink))
     }
 
     func deleteWishlist(wishlistId: String) async throws -> Result<Bool, Error> {
@@ -82,12 +106,21 @@ final class MockWishlistService: WishlistServiceProtocol {
         .success(true)
     }
 
-    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<Bool, Error> {
-        .success(true)
-    }
-
-    func observeWishlist(by id: String, onChange: @escaping (WishlistModel) -> Void, onError: @escaping (Error) -> Void) -> ListenerRegistration {
-        FakeListenerRegistration()
+    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<WishlistItemResponse, Error> {
+        .success(
+            WishlistItemResponse(
+                id: itemId,
+                wishlistId: wishlistId,
+                name: "",
+                description: "",
+                imageUrl: nil,
+                isPicked: false,
+                pickedBy: nil,
+                itemLink: "",
+                price: nil,
+                isMostDesired: isMostDesired
+            )
+        )
     }
 
     func observeUserWishlistIds(onChange: @escaping ([String]) -> Void) -> ListenerRegistration? {

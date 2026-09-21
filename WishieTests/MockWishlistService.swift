@@ -59,6 +59,13 @@ final class MockWishlistService: WishlistServiceProtocol {
         .success(true)
     }
 
+    var getWishlistInfoByCodeResult: Result<WishlistInfoResponse, Error> = .success(
+        WishlistInfoResponse(id: "", name: "", description: "", dueDate: "", colorTheme: nil, itemCount: 0)
+    )
+    func getWishlistInfoByCode(by code: String) async throws -> Result<WishlistInfoResponse, Error> {
+        getWishlistInfoByCodeResult
+    }
+
     var wishlistsResult: Result<[WishlistModel], Error> = .success([])
     func getUserWishlists() async throws -> [WishlistModel] {
         try wishlistsResult.get()

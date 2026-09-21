@@ -12,6 +12,7 @@ enum APIRoute: URLRequestConvertible {
     case signup(SignUpRequest)
     case refresh(refreshToken: String)
     case getWishlists
+    case getWishlistInfoByCode(code: String)
     case getProfile(id: String)
     case createWishlist(CreateWishlistRequest)
     case uploadItemImage(wishlistId: String, itemId: String, imageData: Data)
@@ -21,7 +22,7 @@ enum APIRoute: URLRequestConvertible {
     case markItemDesired(wishlistId: String, itemId: String, isMostDesired: Bool)
     var method: HTTPMethod {
         switch self {
-        case .getWishlists, .getProfile, .getDetailWishlist: return .get
+        case .getWishlists, .getProfile, .getDetailWishlist, .getWishlistInfoByCode: return .get
         case .login, .signup, .refresh, .createWishlist, .uploadWishlistImage: return .post
         case .uploadItemImage, .editWishlistItem, .markItemDesired: return .patch
         }
@@ -40,6 +41,7 @@ enum APIRoute: URLRequestConvertible {
         case .editWishlistItem(let wishlistId, let wishListItemId, _): return "/wishlists/\(wishlistId)/items/\(wishListItemId)"
         case .getDetailWishlist(let wishlistId): return "/wishlists/\(wishlistId)"
         case .markItemDesired(let wishlistId, let itemId, _): return "/wishlists/\(wishlistId)/items/\(itemId)/most-desired"
+        case .getWishlistInfoByCode(let code): return "/wishlists/join/\(code)"
         }
     }
 
@@ -53,7 +55,8 @@ enum APIRoute: URLRequestConvertible {
                 .uploadWishlistImage,
                 .editWishlistItem,
                 .getDetailWishlist,
-                .markItemDesired: return true
+                .markItemDesired,
+                .getWishlistInfoByCode: return true
         }
     }
 
@@ -102,7 +105,7 @@ enum APIRoute: URLRequestConvertible {
         case .createWishlist(let body):
             request.httpBody = try JSONEncoder().encode(body)
             return request
-        case .getWishlists, .getProfile, .uploadItemImage, .uploadWishlistImage, .getDetailWishlist:
+        case .getWishlists, .getProfile, .uploadItemImage, .uploadWishlistImage, .getDetailWishlist, .getWishlistInfoByCode:
             return request
         case .editWishlistItem(_, _, let body):
             request.httpBody = try JSONEncoder().encode(body)

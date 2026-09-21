@@ -13,6 +13,7 @@ protocol WishlistServiceProtocol {
     func createWishlist(wishList: WishlistModel) async throws -> WishlistModel
     func upload(wishlistId: String, image: UIImage) async throws -> String
     func getWishlist(by id: String) async throws -> Result<WishlistModel, Error>
+    func getWishlistInfoByCode(by code: String) async throws -> Result<WishlistInfoResponse, Error>
     func joinWishlist(wishListId: String) async throws  -> Result<Bool, Error>
     func getUserWishlists() async throws -> [WishlistModel]
     func getProfile(id: String) async throws -> UserModel
@@ -405,5 +406,13 @@ class WishlistService: WishlistServiceProtocol {
             .storage
             .from("Wishie")
             .remove(paths: [path])
+    }
+    func getWishlistInfoByCode(by code: String) async throws -> Result<WishlistInfoResponse, any Error> {
+        do {
+            let response: WishlistInfoResponse = try await apiService.send(.getWishlistInfoByCode(code: code))
+            return .success(response)
+        } catch {
+            return .failure(error)
+        }
     }
 }

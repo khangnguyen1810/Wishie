@@ -49,6 +49,11 @@ final class QRScannerViewController: UIViewController {
         super.viewWillDisappear(animated)
         captureSession.stopRunning()
     }
+
+    func restartScanning() {
+        guard !captureSession.isRunning else { return }
+        captureSession.startRunning()
+    }
 }
 
 extension QRScannerViewController: AVCaptureMetadataOutputObjectsDelegate {

@@ -12,7 +12,7 @@ enum Route: Hashable {
     case scanQRCode
     case createSuccess(wishListId: String)
     case qrCodeScreen(wishlistId: String)
-    case wishListInfoScreen(wishlistId: String)
+    case wishListInfoScreen(preview: WishlistJoinPreview)
     case wishListDetailScreen(wishlistId: String, isFromInfo: Bool)
     case editProfile
     case editInterests

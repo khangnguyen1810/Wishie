@@ -55,15 +55,28 @@ final class MockWishlistService: WishlistServiceProtocol {
         .success(WishlistModel(name: "", userCreateId: ""))
     }
 
-    func joinWishlist(wishListId: String) async throws -> Result<Bool, Error> {
-        .success(true)
+    var joinWishlistResult: Result<String, Error> = .success("w1")
+    private(set) var joinedCodes: [String] = []
+    func joinWishlist(code: String) async -> Result<String, Error> {
+        joinedCodes.append(code)
+        return joinWishlistResult
     }
 
     var getWishlistInfoByCodeResult: Result<WishlistInfoResponse, Error> = .success(
-        WishlistInfoResponse(id: "", name: "", description: "", dueDate: "", colorTheme: nil, itemCount: 0)
+        WishlistInfoResponse(id: "", name: "", description: "", dueDate: "", colorTheme: nil, itemCount: 0, ownerName: nil)
     )
-    func getWishlistInfoByCode(by code: String) async throws -> Result<WishlistInfoResponse, Error> {
-        getWishlistInfoByCodeResult
+    /// Recorded so tests can prove the *scanned* code is what reaches the preview call.
+    private(set) var previewedCodes: [String] = []
+    func getWishlistInfoByCode(by code: String) async -> Result<WishlistInfoResponse, Error> {
+        previewedCodes.append(code)
+        return getWishlistInfoByCodeResult
+    }
+
+    var inviteCodeResult: Result<String, Error> = .success("K7XQPM2Z")
+    private(set) var inviteCodeRequestedWishlistIds: [String] = []
+    func getInviteCode(wishlistId: String) async -> Result<String, Error> {
+        inviteCodeRequestedWishlistIds.append(wishlistId)
+        return inviteCodeResult
     }
 
     var wishlistsResult: Result<[WishlistModel], Error> = .success([])

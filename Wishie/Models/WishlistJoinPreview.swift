@@ -27,7 +27,7 @@ struct WishlistJoinPreview: Hashable {
     let ownerName: String?
 
     var theme: GradientTheme {
-        GradientTheme(rawValue: themeColor ?? "sunset") ?? .sunset
+        GradientTheme(rawValue: themeColor ?? "coral") ?? .coral
     }
 }
 

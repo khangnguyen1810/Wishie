@@ -55,7 +55,7 @@ struct WishlistModel: Identifiable, Hashable {
     }
     var theme: GradientTheme {
         get {
-            GradientTheme(rawValue: themeColor ?? "sunset") ?? .sunset
+            GradientTheme(rawValue: themeColor ?? "coral") ?? .coral
         }
         set {
             themeColor = newValue.rawValue

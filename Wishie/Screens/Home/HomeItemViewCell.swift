@@ -230,7 +230,7 @@ struct HomeItemViewCell: View {
         description: "Things I'd love to receive for my special day!",
         dueDate: Calendar.current.date(byAdding: .day, value: 5, to: Date()) ?? Date(),
         items: [item1, item2, item3],
-        themeColor: "sunset",
+        themeColor: "coral",
         userCreateId: "1",
         members: [:],
         ownerName: "Test Name"

@@ -62,7 +62,7 @@ struct HomeView: View {
                     itemLink: ""
                 )
             ],
-            themeColor: "sunset",
+            themeColor: "coral",
             userCreateId: userId,
             members: [userId: .owner], ownerName: ""
         )

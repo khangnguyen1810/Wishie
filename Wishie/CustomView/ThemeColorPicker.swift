@@ -42,6 +42,6 @@ struct ThemeColorPicker: View {
 }
 
 #Preview {
-    ThemeColorPicker(selectedTheme: .constant(.sunset))
+    ThemeColorPicker(selectedTheme: .constant(.coral))
         .padding()
 }

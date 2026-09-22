@@ -28,9 +28,6 @@ class WishlistDetailViewController: ObservableObject {
     @Published var showReserveConfirmation: Bool = false
     @Published var showDeleteConfirmation: Bool = false
     @Published var showReplaceMostDesiredConfirmation: Bool = false
-    @Published var joinSucceed: Bool = false
-    @Published var joinFailed: Bool = false
-    @Published var joinErrorMessage: String = ""
     @Published var memberUsers: [UserModel] = []
     @Published var showAddItemOptionSheet: Bool = false
     @Published var showAddItemManualSheet: Bool = false
@@ -173,26 +170,6 @@ class WishlistDetailViewController: ObservableObject {
             }
         }
     }
-    func joinWishlist(wishListId: String) async {
-        do {
-            isShowLoading = true
-            let result = try await wishlistService.joinWishlist(wishListId: wishListId)
-            switch result {
-            case .success(_):
-                isShowLoading = false
-                joinSucceed = true
-            case .failure(_):
-                isShowLoading = false
-                joinFailed = true
-                joinErrorMessage = "You currently can't join this wishlist. Please try again."
-            }
-        } catch {
-            isShowLoading = false
-            joinFailed = true
-            joinErrorMessage = "There are something wrong. Please try again."
-        }
-    }
-
     func deleteWishlistItem(wishlistId: String) async {
         do {
             isShowLoading = true

@@ -21,13 +21,12 @@ struct ScanQRScreen: View {
                    await viewModel.handleResult(value)
                 }
             }, restartScanning: $viewModel.shouldRestartScanning)
-            .onChange(of: viewModel.result) {_, wishlistId in
-                guard !wishlistId.isEmpty else { return }
-                path.append(
-                    Route.wishListInfoScreen(
-                        wishlistId: wishlistId,
-                    )
-                )
+            .onChange(of: viewModel.preview) { _, preview in
+                guard let preview else { return }
+                path.append(Route.wishListInfoScreen(preview: preview))
+                // `preview` is consumed by the push above; clearing it lets a later scan of the
+                // same code produce a fresh change notification.
+                viewModel.didNavigateToPreview()
             }
             .onChange(of: selectedImage) { _, newImage in
                 guard let image = newImage else { return }
@@ -88,6 +87,12 @@ struct ScanQRScreen: View {
         }
         .navigationBarBackButtonHidden()
         .showDialogIfNeeded($viewModel.showError, title: viewModel.errorTitle, message: viewModel.errorMessage)
+        // Observing the flag rather than passing `onOk:` — `DialogView` also dismisses on a
+        // tap outside, which never calls the confirm handler and would leave the camera frozen.
+        .onChange(of: viewModel.showError) { _, isShowing in
+            guard !isShowing else { return }
+            viewModel.didDismissError()
+        }
     }
 }
 

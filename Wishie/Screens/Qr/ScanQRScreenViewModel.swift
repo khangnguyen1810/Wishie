@@ -11,48 +11,45 @@ import Vision
 
 @MainActor
 class ScanQRScreenViewModel: ObservableObject {
-    static let joinHost = "wishie-web.vercel.app"
-
     @Published var showError: Bool = false
     @Published var errorMessage: String = ""
     @Published var isScanning: Bool = false
     @Published var errorTitle: String = ""
-    @Published var result: String = ""
+    @Published var preview: WishlistJoinPreview?
+    /// Set only when the user dismisses the error dialog. Restarting the capture session while
+    /// the dialog is still up put the same bad QR straight back through `handleResult`, looping
+    /// error → restart → error and pinning the dialog on screen.
     @Published var shouldRestartScanning: Bool = false
     private let wishlistService: WishlistServiceProtocol
 
     init(wishlistService: WishlistServiceProtocol = WishlistService()) {
         self.wishlistService = wishlistService
     }
-    func handleResult(_ value: String) async {
 
+    func handleResult(_ value: String) async {
         guard let url = URL(string: value),
-              url.scheme == "https",
-              url.host == Self.joinHost else {
+              let code = WishieLinks.joinCode(from: url) else {
             showInvalidURLError()
             return
         }
-        if let payload = decodePayload(from: url) {
-            result = await getWishlistInfoByCode(by: payload.wishListId)
-            return
-        }
-        showInvalidURLError()
+        preview = await loadPreview(code: code)
     }
-    private func showInvalidURLError() {
-        showError = true
-        errorTitle = "Invalid URL"
-        errorMessage = "Please scan a valid Wishie wishlist QR."
+
+    /// Called once the view has consumed `preview` to navigate. Without this, re-scanning the
+    /// same code produces an identical value, `onChange` never fires, and the screen silently
+    /// does nothing.
+    func didNavigateToPreview() {
+        preview = nil
+    }
+
+    /// The capture session stops on every decoded frame, so it has to be told to resume once the
+    /// user has acknowledged the error and is still on this screen.
+    func didDismissError() {
         shouldRestartScanning = true
     }
-    private func decodePayload(from url: URL) -> WishlistQRPayload? {
-        let component = url.pathComponents
-        guard let joinIndex = component.firstIndex(of: "join"),
-              component.count > joinIndex + 1 else {
-            return nil
-        }
-        let code = component[joinIndex + 1]
 
-        return code.isEmpty ? nil : WishlistQRPayload(wishListId: code)
+    private func showInvalidURLError() {
+        showError(title: "Invalid URL", message: "Please scan a valid Wishie wishlist QR.")
     }
 
     func detectQRCode(from image: UIImage) {
@@ -96,24 +93,25 @@ class ScanQRScreenViewModel: ObservableObject {
         errorMessage = message
     }
 
-    /// Only the wishlist id is needed to navigate to the detail screen, which re-fetches full details itself.
-    private func getWishlistInfoByCode(by code: String) async -> String {
+    /// Returns `nil` when the lookup fails, which also clears `preview` so the screen never
+    /// navigates to an info screen built from placeholder data.
+    private func loadPreview(code: String) async -> WishlistJoinPreview? {
         isScanning = true
         defer { isScanning = false }
-        do {
-            let result = try await wishlistService.getWishlistInfoByCode(by: code)
-            switch result {
-            case .success(let response):
-                return response.id
-            case .failure(let failure):
+
+        switch await wishlistService.getWishlistInfoByCode(by: code) {
+        case .success(let response):
+            return WishlistJoinPreview(code: code, response: response)
+        case .failure(let failure):
+            if case .server(404, _, _)? = failure as? APIError {
+                showError(
+                    title: "Invite no longer valid",
+                    message: "This QR code has expired or been revoked. Ask for a new one."
+                )
+            } else {
                 showError(title: "Can't get wishlist info", message: failure.localizedDescription)
-                shouldRestartScanning = true
-                return ""
             }
-        } catch {
-            showError(title: "Can't get wishlist info", message: error.localizedDescription)
-            shouldRestartScanning = true
-            return ""
+            return nil
         }
     }
 }

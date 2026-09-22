@@ -9,11 +9,13 @@
 import SwiftUI
 
 struct WishListInformationView: View {
-    var wishlistId: String
+    /// Everything shown here comes from the scanned join code's preview response — the screen
+    /// deliberately does not re-fetch, because the caller is not a member yet and the full
+    /// wishlist endpoint would reject them.
+    var preview: WishlistJoinPreview
     @Binding var path: NavigationPath
     @Environment(\.dismiss) var dismiss
     @StateObject private var viewModel: WishListInformationViewModel = WishListInformationViewModel()
-    @State private var showLoading = false
     var body: some View {
         BaseWishieScreen {
             TopAppBar {
@@ -42,7 +44,7 @@ struct WishListInformationView: View {
                         .font(.wishies(.regular, 16))
                         .foregroundStyle(.black)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(viewModel.wishlistInfo.name)
+                    Text(preview.name)
                         .multilineTextAlignment(.leading)
                         .font(.wishies(.bold, 17))
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -58,7 +60,7 @@ struct WishListInformationView: View {
                         .font(.wishies(.regular, 16))
                         .foregroundStyle(.black)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(viewModel.wishlistInfo.description)
+                    Text(preview.description)
                         .multilineTextAlignment(.leading)
                         .disabled(true)
                         .font(.wishies(.regular, 17))
@@ -71,32 +73,36 @@ struct WishListInformationView: View {
                         )
                 }
                 .padding(.bottom,20)
-                VStack(spacing: 30) {
-                    Text("Created by")
-                        .font(.wishies(.regular, 16))
-                        .foregroundStyle(.black)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    HStack (spacing: 15) {
-                        Circle()
-                            .fill(.lightYellow1)
-                            .frame(width: 50, height: 50)
-                            .overlay {
-                                Image(systemName: "person.fill")
-                                    .resizable()
-                                    .frame(width: 20, height: 20)
-                            }
-                        Text(viewModel.wishlistInfo.ownerName ?? "")
-                            .multilineTextAlignment(.leading)
+                // `API.md` doesn't list an owner on the join-preview response, so this section is
+                // dropped entirely when it's absent rather than rendering a labelled blank.
+                if let ownerName = preview.ownerName, !ownerName.isEmpty {
+                    VStack(spacing: 30) {
+                        Text("Created by")
                             .font(.wishies(.regular, 16))
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        HStack (spacing: 15) {
+                            Circle()
+                                .fill(.lightYellow1)
+                                .frame(width: 50, height: 50)
+                                .overlay {
+                                    Image(systemName: "person.fill")
+                                        .resizable()
+                                        .frame(width: 20, height: 20)
+                                }
+                            Text(ownerName)
+                                .multilineTextAlignment(.leading)
+                                .font(.wishies(.regular, 16))
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal,15)
+                        .background {
+                            RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
+                                .frame(height: 80)
+                        }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal,15)
-                    .background {
-                        RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
-                            .frame(height: 80)
-                    }
+                    .padding(.bottom, 30)
                 }
-                .padding(.bottom, 30)
                 VStack(spacing: 30) {
                     Text("Due date")
                         .font(.wishies(.regular, 16))
@@ -106,7 +112,7 @@ struct WishListInformationView: View {
                         Image("date_wishlist")
                             .resizable()
                             .frame(width: 20, height: 20)
-                        Text(viewModel.wishlistInfo.dueDate.toShortDateString())
+                        Text(preview.dueDate.toShortDateString())
                             .multilineTextAlignment(.leading)
                             .font(.wishies(.regular, 16))
                     }
@@ -118,57 +124,37 @@ struct WishListInformationView: View {
                     }
                 }
                 .padding(.bottom, 60)
-                
-                HStack (spacing: 15) {
-                    itemWishlistInfo(
-                        value: "\(viewModel.wishlistInfo.items.count)",
-                        title: "Items"
-                    )
-                    Spacer()
-                    Rectangle()
-                        .fill(.darkGrey)
-                        .frame(width: 1)
-                    Spacer()
-                    itemWishlistInfo(
-                        value: "\(viewModel.wishlistInfo.members.count)",
-                        title: "Members"
-                    )
-                    Spacer()
-                    Rectangle()
-                        .fill(.darkGrey)
-                        .frame(width: 1)
-                    Spacer()
-                    itemWishlistInfo(
-                        value: "\(viewModel.wishlistInfo.getItemsRemaining())",
-                        title: "Remaining"
-                    )
-                }
-                .padding(.horizontal,25)
+
+                // The join preview carries only `itemCount` — member and remaining-item counts
+                // aren't known until the caller is actually a member, so they aren't shown here.
+                itemWishlistInfo(
+                    value: "\(preview.itemCount)",
+                    title: "Items"
+                )
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
                 .background {
                     RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
-                        .frame(height: 76)
                 }
             }
             WishieButton(
-                title: "Next",
-                enabled: true,
+                title: "Join",
+                enabled: !viewModel.isLoading,
                 action: {
-                    path
-                        .append(
-                            Route
-                                .wishListDetailScreen(
-                                    wishlistId: wishlistId,
-                                    isFromInfo: true
-                                )
-                        )
+                    Task { await viewModel.join(code: preview.code, wishlistId: preview.id) }
                 }
             )
-            
         }
         .showFullScreenDialog($viewModel.isLoading)
-//        .showDialogIfNeeded($viewModel.joinFailed, title: "Can not join", message: viewModel.joinErrorMessage)
-        .task {
-            await viewModel.getWishlistInfo(wishListId: wishlistId)
+        .showDialogIfNeeded($viewModel.joinFailed, title: "Can not join", message: viewModel.joinErrorMessage)
+        .onChange(of: viewModel.joinedWishlistId) { _, wishlistId in
+            guard let wishlistId else { return }
+            path.append(
+                Route.wishListDetailScreen(
+                    wishlistId: wishlistId,
+                    isFromInfo: true
+                )
+            )
         }
     }
     @ViewBuilder
@@ -186,7 +172,16 @@ struct WishListInformationView: View {
 
 #Preview {
     WishListInformationView(
-        wishlistId: "136D375B-7015-4C9A-97BE-830C5C46F24A",
+        preview: WishlistJoinPreview(
+            code: "ABC123",
+            id: "136D375B-7015-4C9A-97BE-830C5C46F24A",
+            name: "Birthday wishlist",
+            description: "A few things I'd love this year.",
+            dueDate: Date(),
+            themeColor: nil,
+            itemCount: 12,
+            ownerName: "Ann Nguyen"
+        ),
         path: .constant(NavigationPath())
     )
 }

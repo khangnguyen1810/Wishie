@@ -44,7 +44,9 @@ struct WishlistDetailView: View {
                 buttonColor: viewModel.wishlistInfo.theme.secondary,
                 titlePage: "Wishlist detail",
                 wishlistTitle: viewModel.wishlistInfo.name,
-                owner: owner?.getFullName()
+                // Reached by route (QR join, deep link) there is no `owner` model to pass in;
+                // fall back to the owner name the detail response already carries.
+                owner: owner?.getFullName() ?? viewModel.wishlistInfo.ownerName
             ) {
                 if isFromInfo {
                     navigationPath.removeLast(navigationPath.count)
@@ -63,19 +65,6 @@ struct WishlistDetailView: View {
                     listContent()
                 }
                 .padding(.bottom, 100)
-            }
-            if viewModel.wishlistInfo.isUserJoined() == false {
-                WishieButton(
-                    title: "Join wishlist",
-                    enabled: true,
-                    height: 50,
-                    horizontalPadding: 15
-                ) {
-                    Task {
-                        await viewModel
-                            .joinWishlist(wishListId: wishlistId ?? "")
-                    }
-                }
             }
             if viewModel.wishlistInfo.isOwner() {
                 Button {

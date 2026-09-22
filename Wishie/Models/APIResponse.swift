@@ -74,4 +74,19 @@ struct WishlistInfoResponse: Decodable {
     let dueDate: String
     let colorTheme: String?
     let itemCount: Int
+    /// Not listed in `API.md` for the join-preview route, so it's optional: a backend that omits
+    /// it must still decode rather than fail the whole scan. The info screen hides the owner row
+    /// rather than rendering a labelled blank when it's missing.
+    let ownerName: String?
+}
+
+struct JoinWishlistResponse: Decodable {
+    let success: Bool
+    let wishlistId: String
+}
+
+/// `GET /wishlists/:id/share`. The backend returns the raw code only — turning it into a link or
+/// QR image is the client's job (`WishieLinks.joinURL(code:)`).
+struct InviteCodeResponse: Decodable {
+    let inviteCode: String
 }

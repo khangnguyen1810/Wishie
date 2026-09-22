@@ -20,10 +20,13 @@ enum APIRoute: URLRequestConvertible {
     case editWishlistItem(wishlistId: String, itemId: String, wishItem: EditWishlistItemRequest)
     case getDetailWishlist(wishlistId: String)
     case markItemDesired(wishlistId: String, itemId: String, isMostDesired: Bool)
+    case joinWishlist(code: String)
+    case getInviteCode(wishlistId: String)
+
     var method: HTTPMethod {
         switch self {
-        case .getWishlists, .getProfile, .getDetailWishlist, .getWishlistInfoByCode: return .get
-        case .login, .signup, .refresh, .createWishlist, .uploadWishlistImage: return .post
+        case .getWishlists, .getProfile, .getDetailWishlist, .getWishlistInfoByCode, .getInviteCode: return .get
+        case .login, .signup, .refresh, .createWishlist, .uploadWishlistImage, .joinWishlist: return .post
         case .uploadItemImage, .editWishlistItem, .markItemDesired: return .patch
         }
     }
@@ -41,13 +44,17 @@ enum APIRoute: URLRequestConvertible {
         case .editWishlistItem(let wishlistId, let wishListItemId, _): return "/wishlists/\(wishlistId)/items/\(wishListItemId)"
         case .getDetailWishlist(let wishlistId): return "/wishlists/\(wishlistId)"
         case .markItemDesired(let wishlistId, let itemId, _): return "/wishlists/\(wishlistId)/items/\(itemId)/most-desired"
-        case .getWishlistInfoByCode(let code): return "/wishlists/join/\(code)"
+        case .getWishlistInfoByCode(let code), .joinWishlist(let code): return "/wishlists/join/\(code)"
+        case .getInviteCode(let wishlistId): return "/wishlists/\(wishlistId)/share"
         }
     }
 
     var requiresAuth: Bool {
         switch self {
-        case .login, .signup, .refresh: return false
+        // `GET /wishlists/join/:code` is documented as public (API.md) — sending it through the
+        // auth path would make `WishieRequestInterceptor` fail the request with `.sessionExpired`
+        // before it leaves the device whenever there's no session.
+        case .login, .signup, .refresh, .getWishlistInfoByCode: return false
         case .getWishlists,
                 .getProfile,
                 .createWishlist,
@@ -56,7 +63,8 @@ enum APIRoute: URLRequestConvertible {
                 .editWishlistItem,
                 .getDetailWishlist,
                 .markItemDesired,
-                .getWishlistInfoByCode: return true
+                .getInviteCode,
+                .joinWishlist: return true
         }
     }
 
@@ -105,13 +113,15 @@ enum APIRoute: URLRequestConvertible {
         case .createWishlist(let body):
             request.httpBody = try JSONEncoder().encode(body)
             return request
-        case .getWishlists, .getProfile, .uploadItemImage, .uploadWishlistImage, .getDetailWishlist, .getWishlistInfoByCode:
+        case .getWishlists, .getProfile, .uploadItemImage, .uploadWishlistImage, .getDetailWishlist, .getWishlistInfoByCode, .getInviteCode:
             return request
         case .editWishlistItem(_, _, let body):
             request.httpBody = try JSONEncoder().encode(body)
             return request
         case .markItemDesired(_, _, let isMostDesired):
             return try JSONEncoding.default.encode(request, with: ["isMostDesired": isMostDesired])
+        case .joinWishlist:
+            return request
         }
     }
 }

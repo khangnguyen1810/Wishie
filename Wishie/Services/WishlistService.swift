@@ -13,8 +13,16 @@ protocol WishlistServiceProtocol {
     func createWishlist(wishList: WishlistModel) async throws -> WishlistModel
     func upload(wishlistId: String, image: UIImage) async throws -> String
     func getWishlist(by id: String) async throws -> Result<WishlistModel, Error>
-    func getWishlistInfoByCode(by code: String) async throws -> Result<WishlistInfoResponse, Error>
-    func joinWishlist(wishListId: String) async throws  -> Result<Bool, Error>
+    /// Not `throws`: the implementation funnels every failure into `.failure`, so a `throws` here
+    /// would only force callers to write `catch` blocks that can never run.
+    func getWishlistInfoByCode(by code: String) async -> Result<WishlistInfoResponse, Error>
+    /// `code` is the invite code from `GET /wishlists/:id/share`, carried in the QR link —
+    /// `POST /wishlists/join/:code` does not accept a wishlist UUID. Returns the joined
+    /// wishlist's id.
+    func joinWishlist(code: String) async -> Result<String, Error>
+    /// Owner-only. Returns the wishlist's current invite code, minting one server-side on first
+    /// call. Idempotent — safe to call every time the owner opens the share screen.
+    func getInviteCode(wishlistId: String) async -> Result<String, Error>
     func getUserWishlists() async throws -> [WishlistModel]
     func getProfile(id: String) async throws -> UserModel
     func pickItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
@@ -165,38 +173,24 @@ class WishlistService: WishlistServiceProtocol {
             return .failure(error)
         }
     }
-    func joinWishlist(wishListId: String) async throws -> Result<Bool, any Error> {
+    func joinWishlist(code: String) async -> Result<String, any Error> {
         do {
-            guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else {
-                throw NSError(domain: "WishlistService", code: 404)
+            let response: JoinWishlistResponse = try await apiService.send(.joinWishlist(code: code))
+            // A 200 carrying `success: false` would otherwise be reported to the user as a
+            // successful join and navigate them into a wishlist they aren't a member of.
+            guard response.success else {
+                return .failure(APIError.invalidResponse)
             }
-            
-            let batch = db.batch()
-            
-            let wishListDoc = db
-                .collection("wishList")
-                .document(wishListId)
-            
-            let userDoc = db
-                .collection("users")
-                .document(userId)
-                .collection("wishlists")
-                .document(wishListId)
-            
-            let userWishlistData: [String: Any] = [
-                "role": "member",
-                "joinedAt": Timestamp()
-            ]
-            
-            batch.updateData([
-                "members.\(userId)": "member"
-            ], forDocument: wishListDoc)
-            
-            batch.setData(userWishlistData, forDocument: userDoc)
-            
-            try await batch.commit()
-            
-            return .success(true)
+            return .success(response.wishlistId)
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    func getInviteCode(wishlistId: String) async -> Result<String, any Error> {
+        do {
+            let response: InviteCodeResponse = try await apiService.send(.getInviteCode(wishlistId: wishlistId))
+            return .success(response.inviteCode)
         } catch {
             return .failure(error)
         }
@@ -407,7 +401,7 @@ class WishlistService: WishlistServiceProtocol {
             .from("Wishie")
             .remove(paths: [path])
     }
-    func getWishlistInfoByCode(by code: String) async throws -> Result<WishlistInfoResponse, any Error> {
+    func getWishlistInfoByCode(by code: String) async -> Result<WishlistInfoResponse, any Error> {
         do {
             let response: WishlistInfoResponse = try await apiService.send(.getWishlistInfoByCode(code: code))
             return .success(response)

@@ -86,6 +86,9 @@ class WishlistDetailViewController: ObservableObject {
             case .success(_):
                 isShowLoading = false
                 isChoosed = true
+                Task {
+                    await getDetailWishlist(wishlistId: wishlistId)
+                }
             case .failure(let failure):
                 isShowLoading = false
                 errorMessage = failure.localizedDescription

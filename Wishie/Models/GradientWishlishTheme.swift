@@ -6,45 +6,55 @@
 //
 import SwiftUI
 enum GradientTheme: String, CaseIterable {
-    case sunset
-    case ocean
-    case forest
-    case purpleDream
+    case coral
+    case mint
+    case grape
+    case gold
+    case green
 
     var primary: String {
         switch self {
-        case .sunset:
-            return "#FF9A76"
-        case .ocean:
-            return "#6FE3D0"
-        case .forest:
-            return "#8DE0A0"
-        case .purpleDream:
-            return "#B79CF2"
+        case .coral:
+            return "#E07856"
+        case .mint:
+            return "#3FC7A8"
+        case .grape:
+            return "#9C7FE8"
+        case .gold:
+            return "#C79A3D"
+        case .green:
+            return "#5E9A62"
         }
     }
     var secondary: String {
+        primary
+    }
+    var background: Color {
         switch self {
-        case .sunset:
-            return "#F4667A"
-        case .ocean:
-            return "#38B7B0"
-        case .forest:
-            return "#3FAE72"
-        case .purpleDream:
-            return "#9C7BE0"
+        case .coral:
+            return Color(.sRGB, red: 232 / 255, green: 132 / 255, blue: 107 / 255, opacity: 0.15)
+        case .mint:
+            return Color(.sRGB, red: 63 / 255, green: 199 / 255, blue: 168 / 255, opacity: 0.18)
+        case .grape:
+            return Color(.sRGB, red: 156 / 255, green: 127 / 255, blue: 232 / 255, opacity: 0.18)
+        case .gold:
+            return Color(.sRGB, red: 242 / 255, green: 199 / 255, blue: 123 / 255, opacity: 0.25)
+        case .green:
+            return Color(.sRGB, red: 143 / 255, green: 174 / 255, blue: 139 / 255, opacity: 0.18)
         }
     }
     var imageName: String {
         switch self {
-        case .sunset:
+        case .coral:
             return "sunset"
-        case .ocean:
-            return "ocean"
-        case .forest:
+        case .mint:
             return "forest"
-        case .purpleDream:
+        case .grape:
             return "purpleDream"
+        case .gold:
+            return "ocean"
+        case .green:
+            return "forest"
         }
     }
 }

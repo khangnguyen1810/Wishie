@@ -14,7 +14,7 @@ struct WishlistResponseMappingTests {
     private func sampleResponse(members: [WishlistMemberResponse] = [], items: [WishlistItemResponse] = [], isArchived: Bool = false) -> WishlistResponse {
         WishlistResponse(
             id: "w1", name: "Birthday", description: "Party", ownerId: "u1",
-            dueDate: "2026-09-01T00:00:00.000Z", colorTheme: "sunset", isArchived: isArchived,
+            dueDate: "2026-09-01T00:00:00.000Z", colorTheme: "coral", isArchived: isArchived,
             createdAt: "2026-01-01T00:00:00.000Z", members: members, items: items, ownerName: "Owner Name"
         )
     }
@@ -26,7 +26,7 @@ struct WishlistResponseMappingTests {
         #expect(wishlist.name == "Birthday")
         #expect(wishlist.description == "Party")
         #expect(wishlist.userCreateId == "u1")
-        #expect(wishlist.themeColor == "sunset")
+        #expect(wishlist.themeColor == "coral")
         #expect(wishlist.isArchived == false)
     }
 

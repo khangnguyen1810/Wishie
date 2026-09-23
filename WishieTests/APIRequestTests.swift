@@ -27,7 +27,7 @@ struct APIRequestTests {
             description: "Party",
             dueDate: dueDate,
             items: [item],
-            themeColor: "sunset",
+            themeColor: "coral",
             userCreateId: "u1"
         )
         let request = CreateWishlistRequest(wishlist)
@@ -39,7 +39,7 @@ struct APIRequestTests {
         #expect(json["name"] as? String == "Birthday")
         #expect(json["description"] as? String == "Party")
         #expect(json["dueDate"] as? String == "2026-09-01")
-        #expect(json["colorTheme"] as? String == "sunset")
+        #expect(json["colorTheme"] as? String == "coral")
         let items = try #require(json["items"] as? [[String: Any]])
         #expect(items.count == 1)
         #expect(items[0]["id"] as? String == "i1")

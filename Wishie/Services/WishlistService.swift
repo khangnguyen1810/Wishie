@@ -25,7 +25,7 @@ protocol WishlistServiceProtocol {
     func getInviteCode(wishlistId: String) async -> Result<String, Error>
     func getUserWishlists() async throws -> [WishlistModel]
     func getProfile(id: String) async throws -> UserModel
-    func pickItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
+    func pickItem(wishlistId: String, itemId: String) async throws -> Result<WishlistItem, Error>
     func updateWishlistItem(wishlistId: String,itemId: String,newName: String?,newDescription: String?,newImage: UIImage?,newImageLink: String?,newPrice: String?, newLink: String?) async throws -> Result<WishlistItem, any Error>
     func deleteWishlist(wishlistId: String) async throws -> Result<Bool, Error>
     func updateWishlistInfo(wishlistId: String, name: String, description: String, dueDate: Date, themeColor: String?) async throws -> Result<Bool, Error>
@@ -195,31 +195,11 @@ class WishlistService: WishlistServiceProtocol {
             return .failure(error)
         }
     }
-    func pickItem(wishlistId: String, itemId: String) async throws -> Result<Bool, any Error> {
+    func pickItem(wishlistId: String, itemId: String) async throws -> Result<WishlistItem, any Error> {
         do {
-            guard let userId = UserDefaults.standard.string(
-                forKey: WishieConstants.userIdKey
-            ) else {
-                throw NSError(domain: "WishlistService", code: 404)
-            }
-            let docRef = db.collection("wishList").document(wishlistId)
-            let snapshot = try await docRef.getDocument()
-            guard let data = snapshot.data(),
-                  var items = data["wishListItems"] as? [[String: Any]] else {
-                throw NSError(domain: "WishlistService", code: 404)
-            }
-            for index in items.indices {
-                if let id = items[index]["id"] as? String, id == itemId {
-                    items[index]["isPicked"] = true
-                    items[index]["pickedBy"] = userId
-                    break
-                }
-            }
-            
-            try await docRef.updateData([
-                "wishListItems": items
-            ])
-            return .success(true)
+            let response: WishlistItemResponse = try await apiService.send(.pickItem(wishlistId: wishlistId, itemId: itemId))
+            let model = WishlistItem(response: response)
+            return .success(model)
         } catch {
             return .failure(error)
         }

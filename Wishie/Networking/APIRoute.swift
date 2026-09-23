@@ -22,11 +22,11 @@ enum APIRoute: URLRequestConvertible {
     case markItemDesired(wishlistId: String, itemId: String, isMostDesired: Bool)
     case joinWishlist(code: String)
     case getInviteCode(wishlistId: String)
-
+    case pickItem(wishlistId: String, itemId: String)
     var method: HTTPMethod {
         switch self {
         case .getWishlists, .getProfile, .getDetailWishlist, .getWishlistInfoByCode, .getInviteCode: return .get
-        case .login, .signup, .refresh, .createWishlist, .uploadWishlistImage, .joinWishlist: return .post
+        case .login, .signup, .refresh, .createWishlist, .uploadWishlistImage, .joinWishlist, .pickItem: return .post
         case .uploadItemImage, .editWishlistItem, .markItemDesired: return .patch
         }
     }
@@ -46,6 +46,7 @@ enum APIRoute: URLRequestConvertible {
         case .markItemDesired(let wishlistId, let itemId, _): return "/wishlists/\(wishlistId)/items/\(itemId)/most-desired"
         case .getWishlistInfoByCode(let code), .joinWishlist(let code): return "/wishlists/join/\(code)"
         case .getInviteCode(let wishlistId): return "/wishlists/\(wishlistId)/share"
+        case .pickItem(let wishlistId, let itemId): return "/wishlists/\(wishlistId)/items/\(itemId)/pick"
         }
     }
 
@@ -64,7 +65,8 @@ enum APIRoute: URLRequestConvertible {
                 .getDetailWishlist,
                 .markItemDesired,
                 .getInviteCode,
-                .joinWishlist: return true
+                .joinWishlist,
+                .pickItem: return true
         }
     }
 
@@ -120,7 +122,7 @@ enum APIRoute: URLRequestConvertible {
             return request
         case .markItemDesired(_, _, let isMostDesired):
             return try JSONEncoding.default.encode(request, with: ["isMostDesired": isMostDesired])
-        case .joinWishlist:
+        case .joinWishlist,.pickItem:
             return request
         }
     }

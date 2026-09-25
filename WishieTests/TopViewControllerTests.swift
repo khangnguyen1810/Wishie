@@ -7,6 +7,7 @@ import Testing
 import UIKit
 @testable import Wishie
 
+@MainActor
 struct TopViewControllerTests {
     @Test func returnsBaseWhenNoChildrenOrPresentation() {
         let vc = UIViewController()

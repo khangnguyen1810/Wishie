@@ -90,3 +90,7 @@ struct JoinWishlistResponse: Decodable {
 struct InviteCodeResponse: Decodable {
     let inviteCode: String
 }
+
+struct DeleteResponse: Decodable {
+    let success: Bool
+}

@@ -179,6 +179,8 @@ class WishlistDetailViewController: ObservableObject {
             let result = try await wishlistService.deleteWishlistItem(wishlistId: wishlistId, itemId: itemSelected.id)
             switch result {
             case .success(_):
+                showBottomSheet = false
+                await getDetailWishlist(wishlistId: wishlistId)
                 isShowLoading = false
             case .failure(let error):
                 isShowLoading = false

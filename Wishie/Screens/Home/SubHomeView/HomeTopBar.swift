@@ -7,7 +7,6 @@ import SwiftUI
 
 struct HomeTopBar: View {
     var firstName: String
-    var celebrationFloat: Bool
     var homeAppeared: Bool
     var onAddTapped: () -> Void
     var onProfileTapped: () -> Void
@@ -19,10 +18,6 @@ struct HomeTopBar: View {
                     Text(firstName.isEmpty ? "Hey there!" : "Hey, \(firstName)!")
                         .font(.wishiesDisplay(.extraBold, 28))
                         .foregroundColor(Color(hex: "#5B3F0F"))
-                    Text("🎉")
-                        .font(.system(size: 24))
-                        .offset(y: celebrationFloat ? -6 : 0)
-                        .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: celebrationFloat)
                 }
                 .opacity(homeAppeared ? 1 : 0)
                 .offset(y: homeAppeared ? 0 : 26)

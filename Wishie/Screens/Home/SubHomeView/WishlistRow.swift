@@ -11,7 +11,17 @@ struct WishlistRow<Menu: View>: View {
     var animation: Namespace.ID
     @Binding var path: NavigationPath
     var homeAppeared: Bool
+    var heroHeight: CGFloat
     var contextMenu: () -> Menu
+
+    @State private var rowMinY: CGFloat = .infinity
+    private let fadeDistance: CGFloat = 90
+
+    private var fadeProgress: CGFloat {
+        guard rowMinY.isFinite else { return 0 }
+        let progress = (heroHeight - rowMinY) / fadeDistance
+        return min(max(progress, 0), 1)
+    }
 
     init(
         wishlist: (WishlistModel, UserModel),
@@ -19,6 +29,7 @@ struct WishlistRow<Menu: View>: View {
         animation: Namespace.ID,
         path: Binding<NavigationPath>,
         homeAppeared: Bool,
+        heroHeight: CGFloat,
         @ViewBuilder contextMenu: @escaping () -> Menu
     ) {
         self.wishlist = wishlist
@@ -26,6 +37,7 @@ struct WishlistRow<Menu: View>: View {
         self.animation = animation
         self._path = path
         self.homeAppeared = homeAppeared
+        self.heroHeight = heroHeight
         self.contextMenu = contextMenu
     }
 
@@ -54,5 +66,12 @@ struct WishlistRow<Menu: View>: View {
         )
         .matchedTransitionSource(id: wishlist.0.id, in: animation)
         .contextMenu { contextMenu() }
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.frame(in: .scrollView).minY
+        } action: { newValue in
+            rowMinY = newValue
+        }
+        .scaleEffect(1 - fadeProgress * 0.12)
+        .opacity(1 - fadeProgress)
     }
 }

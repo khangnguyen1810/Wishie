@@ -6,8 +6,6 @@
 import SwiftUI
 
 struct HomeBackgroundDecoration: View {
-    var celebrationFloat: Bool
-
     var body: some View {
         ZStack {
             LinearGradient(
@@ -31,21 +29,11 @@ struct HomeBackgroundDecoration: View {
                 .frame(width: 10, height: 10)
                 .rotationEffect(.degrees(20))
                 .offset(x: -140, y: -300)
-            Circle()
-                .fill(Color(hex: "#F4667A").opacity(0.7))
-                .frame(width: 8, height: 8)
-                .offset(x: 140, y: -270)
             RoundedRectangle(cornerRadius: 2)
                 .fill(Color(hex: "#B79CF2").opacity(0.75))
                 .frame(width: 9, height: 9)
                 .rotationEffect(.degrees(-15))
                 .offset(x: 95, y: -330)
-            Circle()
-                .fill(Color(hex: "#E7B65A").opacity(0.7))
-                .frame(width: 7, height: 7)
-                .offset(x: -120, y: -200)
-                .offset(y: celebrationFloat ? -6 : 0)
-                .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: celebrationFloat)
         }
         .allowsHitTesting(false)
     }

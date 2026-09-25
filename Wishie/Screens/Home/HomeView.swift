@@ -22,12 +22,12 @@ struct HomeView: View {
     @State private var activeSheet: SheetType?
     @State private var isShowProfile: Bool = false
     @Namespace private var animation
+    @Namespace private var heroCardAnimation
     @State private var selectedWishlist: (WishlistModel, UserModel)?
     @State private var isShowWishlistDetail: Bool = false
     @State private var showDeleteConfirm = false
     @State private var showLeaveConfirm = false
     @AppStorage(WishieConstants.hasSeenHomeTutorial) private var hasSeenHomeTutorial: Bool = false
-    @State private var celebrationFloat: Bool = false
     @State private var homeAppeared: Bool = false
     @State private var heroProgress: CGFloat = 0
     @State private var heroHeight: CGFloat = 170 // approximate expanded height, corrected once measured
@@ -87,12 +87,11 @@ struct HomeView: View {
         NavigationStack(path: $path) {
             BaseWishieScreen(
                 background: {
-                    HomeBackgroundDecoration(celebrationFloat: celebrationFloat)
+                    HomeBackgroundDecoration()
                 },
                 topBar: {
                     HomeTopBar(
                         firstName: authViewModel.userInfo.firstName,
-                        celebrationFloat: celebrationFloat,
                         homeAppeared: homeAppeared,
                         onAddTapped: { activeSheet = .add },
                         onProfileTapped: { isShowProfile = true }
@@ -164,7 +163,6 @@ struct HomeView: View {
                 await homeViewModel.getListWishlist()
             }
             .onAppear {
-                celebrationFloat = true
                 homeAppeared = true
             }
             .onDisappear {
@@ -253,7 +251,8 @@ struct HomeView: View {
                                     index: index,
                                     animation: animation,
                                     path: $path,
-                                    homeAppeared: homeAppeared
+                                    homeAppeared: homeAppeared,
+                                    heroHeight: heroProgress
                                 ) {
                                     Button {
                                         path.append(Route.editWishlistInfo(wishlistId: wishlist.0.id))
@@ -272,6 +271,7 @@ struct HomeView: View {
                                         Label("Delete", systemImage: "trash")
                                     }
                                 }
+                                
                             }
                         case .friendsList:
                             ForEach(Array(homeViewModel.myFriendWishlists.enumerated()), id: \.element.0) { index, wishlist in
@@ -280,7 +280,8 @@ struct HomeView: View {
                                     index: index,
                                     animation: animation,
                                     path: $path,
-                                    homeAppeared: homeAppeared
+                                    homeAppeared: homeAppeared,
+                                    heroHeight: heroProgress
                                 ) {
                                     Button(role: .destructive) {
                                         selectedWishlist = wishlist
@@ -308,21 +309,16 @@ struct HomeView: View {
                 HomeHeroCard(
                     wishlist: highlighted,
                     progress: heroProgress,
+                    path: $path,
+                    animation: heroCardAnimation,
                     selectedTab: selectedTab,
                     statusOwner: selectedTab == .myList ? authViewModel.userInfo : highlighted.1,
-                    homeAppeared: homeAppeared,
-                    onCTATapped: {
-                        path.append(Route.wishListDetailScreen(wishlistId: highlighted.0.id, isFromInfo: false))
-                    }
+                    homeAppeared: homeAppeared
                 )
                 .padding(.horizontal, 10)
                 .padding(.bottom, 5)
                 .background(
                     GeometryReader { proxy in
-                        // Only capture the card's fully-expanded height (progress ~0).
-                        // Re-measuring on every frame while the card is shrinking would
-                        // shrink the in-list spacer in lockstep, moving the scroll content
-                        // underneath the user's finger mid-drag.
                         Color.clear
                             .onAppear {
                                 if heroProgress <= 0.01 { heroHeight = proxy.size.height }

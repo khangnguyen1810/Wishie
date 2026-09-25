@@ -305,14 +305,10 @@ class WishlistService: WishlistServiceProtocol {
     
     func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, any Error> {
         do {
-            let docRef = db.collection("wishList").document(wishlistId)
-            let snapshot = try await docRef.getDocument()
-            guard let data = snapshot.data(),
-                  let items = data["wishListItems"] as? [[String: Any]] else {
-                throw NSError(domain: "WishlistService", code: 404)
+            let response: DeleteResponse = try await apiService.send(.deleteItem(wishlistId: wishlistId, itemId: itemId))
+            guard response.success else {
+                return .failure(APIError.invalidResponse)
             }
-            let filteredItems = items.filter { ($0["id"] as? String) != itemId }
-            try await docRef.updateData(["wishListItems": filteredItems])
             return .success(true)
         } catch {
             return .failure(error)

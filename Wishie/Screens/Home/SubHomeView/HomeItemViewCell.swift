@@ -163,8 +163,9 @@ struct HomeItemViewCell: View {
                     .truncationMode(.tail)
                     .font(.wishiesDisplay(.extraBold, 19))
                 HStack(spacing: 4) {
-                    Text("📅")
+                    Image(systemName: "calendar")
                         .font(.system(size: 11))
+                        .foregroundStyle(Color.white)
                     Text(item.0.dueDate.toShortDateString())
                         .font(.wishiesDisplay(.semiBold, 13))
                         .foregroundStyle(Color.white.opacity(0.9))

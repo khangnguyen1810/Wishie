@@ -114,8 +114,8 @@ final class MockWishlistService: WishlistServiceProtocol {
         .success(true)
     }
 
-    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<Bool, Error> {
-        .success(true)
+    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<WishlistModel, Error> {
+        .success(WishlistModel(id: wishlistId, name: "", userCreateId: "", isArchived: isArchived))
     }
 
     func leaveWishlist(wishListId: String) async throws -> Result<Bool, Error> {

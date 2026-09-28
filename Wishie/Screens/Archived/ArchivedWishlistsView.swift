@@ -103,6 +103,7 @@ struct ArchivedWishlistsView: View {
                 showDeleteConfirm = false
             }
         )
+        .showDialogIfNeeded($viewModel.isShowError, title: "Something went wrong", message: viewModel.errorMessage)
         .task {
             await viewModel.loadArchivedWishlists()
         }

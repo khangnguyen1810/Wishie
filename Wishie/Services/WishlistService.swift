@@ -29,7 +29,10 @@ protocol WishlistServiceProtocol {
     func updateWishlistItem(wishlistId: String,itemId: String,newName: String?,newDescription: String?,newImage: UIImage?,newImageLink: String?,newPrice: String?, newLink: String?) async throws -> Result<WishlistItem, any Error>
     func deleteWishlist(wishlistId: String) async throws -> Result<Bool, Error>
     func updateWishlistInfo(wishlistId: String, name: String, description: String, dueDate: Date, themeColor: String?) async throws -> Result<Bool, Error>
-    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<Bool, Error>
+    /// The returned model comes from `PATCH /wishlists/:id/archive`, whose response omits
+    /// `members` and `items` — so `members`, `items`, `memberProfiles` and `ownerName` are
+    /// empty. Re-fetch the list rather than swapping this model into it.
+    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<WishlistModel, Error>
     func leaveWishlist(wishListId: String) async throws -> Result<Bool, Error>
     func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
     func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<WishlistItemResponse, Error>
@@ -257,13 +260,11 @@ class WishlistService: WishlistServiceProtocol {
         }
     }
 
-    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<Bool, any Error> {
+    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<WishlistModel, any Error> {
         do {
-            let docRef = db.collection("wishList").document(wishlistId)
-            try await docRef.updateData([
-                "isArchived": isArchived
-            ])
-            return .success(true)
+            let response: WishlistResponse = try await apiService.send(.archiveWishlist(wishlistId: wishlistId, isArchived: isArchived))
+            let model = WishlistModel(response: response)
+            return .success(model)
         } catch {
             return .failure(error)
         }

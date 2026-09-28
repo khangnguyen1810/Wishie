@@ -9,7 +9,10 @@ import Foundation
 class ArchivedWishlistsViewModel: ObservableObject {
     @Published var archivedWishlists: [(WishlistModel, UserModel)] = []
     @Published var isLoading: Bool = false
-    @Published var errorMessage: String = ""
+    @Published var errorMessage: String = "" {
+        didSet { isShowError = !errorMessage.isEmpty }
+    }
+    @Published var isShowError: Bool = false
 
     private var service: WishlistServiceProtocol
     init(service: WishlistServiceProtocol = WishlistService()) {

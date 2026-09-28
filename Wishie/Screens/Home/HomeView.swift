@@ -227,6 +227,7 @@ struct HomeView: View {
         })
         .showFullScreenDialog($homeViewModel.isGettingList)
         .showFullScreenDialog($authViewModel.isShowProgress)
+        .showDialogIfNeeded($homeViewModel.isShowError, title: "Something went wrong", message: homeViewModel.errorMessage)
     }
 
     @ViewBuilder

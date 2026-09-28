@@ -12,7 +12,10 @@ class HomeViewModel: ObservableObject {
     @Published var myWishlists: [(WishlistModel, UserModel)] = []
     @Published var myFriendWishlists: [(WishlistModel, UserModel)] = []
     @Published var isGettingList: Bool = false
-    @Published var errorMessage: String = ""
+    @Published var errorMessage: String = "" {
+        didSet { isShowError = !errorMessage.isEmpty }
+    }
+    @Published var isShowError: Bool = false
     private var service: WishlistServiceProtocol
 
     init(service: WishlistServiceProtocol = WishlistService()) {

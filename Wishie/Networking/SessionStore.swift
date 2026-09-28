@@ -11,7 +11,9 @@ extension KeychainManager: KeychainStoring {}
 actor SessionStore {
     static let shared = SessionStore()
 
-    private let keychain: KeychainStoring
+    /// Immutable and backed by the thread-safe Security framework, so `storedSession()` may read it
+    /// synchronously off the actor.
+    private nonisolated(unsafe) let keychain: KeychainStoring
     private let accessTokenKey = "wishie.auth.accessToken"
     private let refreshTokenKey = "wishie.auth.refreshToken"
     private let userIdKey = "wishie.auth.userId"
@@ -31,15 +33,21 @@ actor SessionStore {
         if let cachedSession {
             return cachedSession
         }
+        guard let session = storedSession() else { return nil }
+        cachedSession = session
+        return session
+    }
+
+    /// Reads the persisted session straight from the Keychain without hopping onto the actor, so
+    /// app launch can decide synchronously whether the user is signed in.
+    nonisolated func storedSession() -> AuthSession? {
         guard let accessToken = keychain.load(key: accessTokenKey),
               let refreshToken = keychain.load(key: refreshTokenKey),
               let userId = keychain.load(key: userIdKey),
               let email = keychain.load(key: emailKey) else {
             return nil
         }
-        let session = AuthSession(accessToken: accessToken, refreshToken: refreshToken, userId: userId, email: email)
-        cachedSession = session
-        return session
+        return AuthSession(accessToken: accessToken, refreshToken: refreshToken, userId: userId, email: email)
     }
 
     func save(_ session: AuthSession) {

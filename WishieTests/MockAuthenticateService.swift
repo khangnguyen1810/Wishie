@@ -14,6 +14,7 @@ final class MockAuthenticateService: AuthenticateServiceProtocol {
     var resetPasswordResult: Result<Bool, Error> = .success(true)
     var userToReturn: UserModel? = nil
     var getUserInfoError: Error? = nil
+    var getUserInfoDelay: Duration? = nil
 
     func signUp(_ request: SignUpRequest) async throws -> AuthSession {
         try signUpResult.get()
@@ -30,6 +31,7 @@ final class MockAuthenticateService: AuthenticateServiceProtocol {
     func logout() async throws {
     }
     func getUserInfo() async throws -> UserModel? {
+        if let getUserInfoDelay { try await Task.sleep(for: getUserInfoDelay) }
         if let getUserInfoError { throw getUserInfoError }
         return userToReturn
     }

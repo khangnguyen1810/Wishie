@@ -1,6 +1,7 @@
 import Testing
 
-/// `HomeViewModelGetListWishlistTests` and `ArchivedWishlistsViewModelTests` both mutate the
+/// `HomeViewModelGetListWishlistTests`, `ArchivedWishlistsViewModelTests` and
+/// `AuthViewModelCheckTokenTests` mutate (and `WishlistResponseMappingTests` reads) the
 /// shared `UserDefaults.standard` entry at `WishieConstants.userIdKey`: each test sets it up
 /// front and removes it in a `defer`. `.serialized` only serializes tests within a suite's own
 /// subtree, so two independent top-level `.serialized` (or unserialized) suites can still run

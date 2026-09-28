@@ -9,6 +9,10 @@ import UIKit
 final class AuthViewModel: ObservableObject {
     private let authService: AuthenticateServiceProtocol
     private let sessionStore: SessionStore
+    private let profileCache: UserProfileCaching
+    /// Bumped on the main thread by `logOut()` so a launch `checkToken()` whose `/profiles/me`
+    /// response lands after the user logged out can detect it and not log them back in.
+    private var logoutGeneration = 0
     @Published var email: String = ""
     @Published var password: String = ""
     @Published var isLoggedIn: Bool = false
@@ -20,18 +24,36 @@ final class AuthViewModel: ObservableObject {
     @Published var errorMessage: String = ""
     @Published var isShowProgress: Bool = false
     @Published var request = SignUpRequest()
-    @Published var userInfo = UserModel(dictionary: [:])
+    @Published var userInfo = UserModel(dictionary: [:]) {
+        didSet {
+            // Keep the launch cache in sync with every profile load and local edit.
+            if isLoggedIn { profileCache.save(userInfo) }
+        }
+    }
     @Published var isSentEmail: Bool = false
     @Published var forgotenEmail: String = ""
     @Published var userInfoError: String = ""
 
-    init(authService: AuthenticateServiceProtocol = AuthenticateService(), sessionStore: SessionStore = .shared) {
+    init(authService: AuthenticateServiceProtocol = AuthenticateService(), sessionStore: SessionStore = .shared, profileCache: UserProfileCaching = UserProfileCache()) {
         self.authService = authService
         self.sessionStore = sessionStore
+        self.profileCache = profileCache
+        restoreCachedLogin()
         checkToken()
     }
 
+    /// Opens straight into the signed-in state when both the Keychain session and a cached
+    /// profile exist, so launch doesn't wait on `/profiles/me`. `checkToken()` then refreshes the
+    /// profile in the background and logs out only if the session turns out to be expired.
+    private func restoreCachedLogin() {
+        guard let session = sessionStore.storedSession(), let cachedProfile = profileCache.load() else { return }
+        userInfo = cachedProfile
+        UserDefaults.standard.setValue(session.userId, forKey: userid)
+        isLoggedIn = true
+    }
+
     func checkToken() {
+        let startGeneration = logoutGeneration
         Task {
             guard let session = await sessionStore.current() else { return }
             do {
@@ -40,10 +62,12 @@ final class AuthViewModel: ObservableObject {
                     return
                 }
                 await MainActor.run {
-                    self.userInfo = result
+                    guard self.logoutGeneration == startGeneration else { return }
                     UserDefaults.standard.set(result.hasCompletedInterestsSetup, forKey: "hasCompletedInterestsSetup")
                     UserDefaults.standard.setValue(session.userId, forKey: self.userid)
                     self.isLoggedIn = true
+                    // Assigned after isLoggedIn so userInfo's didSet caches it for the next launch.
+                    self.userInfo = result
                 }
             } catch {
                 if let apiError = error as? APIError, apiError == .sessionExpired {
@@ -52,7 +76,8 @@ final class AuthViewModel: ObservableObject {
                 // Any other error (transport/offline, decode failure, unexpected server error) is
                 // not proof the session itself is invalid — leave the stored refresh token alone so
                 // a later launch (once back online) can restore the session via checkToken() again.
-                // The user simply isn't logged in for *this* launch.
+                // With a cached profile the user stays on Home; without one they simply aren't
+                // logged in for *this* launch.
             }
         }
     }
@@ -64,6 +89,7 @@ final class AuthViewModel: ObservableObject {
         await sessionStore.clear()
         await MainActor.run {
             self.isLoggedIn = false
+            self.profileCache.clear()
             UserDefaults.standard.removeObject(forKey: self.userid)
         }
     }
@@ -147,6 +173,7 @@ final class AuthViewModel: ObservableObject {
     }
 
     func logOut() {
+        logoutGeneration += 1
         self.isShowProgress = true
         Task {
             try? await authService.logout()
@@ -154,6 +181,7 @@ final class AuthViewModel: ObservableObject {
                 UserDefaults.standard.removeObject(forKey: self.userid)
                 self.isLoggedIn = false
                 self.userInfo = UserModel()
+                self.profileCache.clear()
                 self.userInfoError = ""
                 self.isShowProgress = false
             }

@@ -4,12 +4,13 @@
 //
 
 import SwiftUI
-
+import SDWebImageSwiftUI
 struct HomeTopBar: View {
     var firstName: String
     var homeAppeared: Bool
     var onAddTapped: () -> Void
     var onProfileTapped: () -> Void
+    var avatarUrl: String
 
     var body: some View {
         TopAppBar {
@@ -63,10 +64,9 @@ struct HomeTopBar: View {
                                 lineWidth: 2
                             )
                         )
-                    Image("user")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
+                    WishieWebImage(url:  avatarUrl)
+                        .frame(width: 42, height: 42)
+                        .clipShape(Circle())
                 }
                 .onTapGesture(perform: onProfileTapped)
             }

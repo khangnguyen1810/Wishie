@@ -220,23 +220,3 @@ struct HomeItemViewCell: View {
         }
     }
 }
-
-#Preview {
-    let item1 = WishlistItem(id: "1", name: "Leather journal", isPicked: true)
-    let item2 = WishlistItem(id: "2", name: "Gold earrings")
-    let item3 = WishlistItem(id: "3", name: "Scented candle set")
-    let wishListModel = WishlistModel(
-        id: "1",
-        name: "Birthday Celebrations",
-        description: "Things I'd love to receive for my special day!",
-        dueDate: Calendar.current.date(byAdding: .day, value: 5, to: Date()) ?? Date(),
-        items: [item1, item2, item3],
-        themeColor: "coral",
-        userCreateId: "1",
-        members: [:],
-        ownerName: "Test Name"
-    )
-    let userModel = UserModel()
-    HomeItemViewCell(item: (wishListModel, userModel))
-        .padding()
-}

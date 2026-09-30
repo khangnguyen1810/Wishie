@@ -94,7 +94,8 @@ struct HomeView: View {
                         firstName: authViewModel.userInfo.firstName,
                         homeAppeared: homeAppeared,
                         onAddTapped: { activeSheet = .add },
-                        onProfileTapped: { isShowProfile = true }
+                        onProfileTapped: { isShowProfile = true },
+                        avatarUrl: authViewModel.userInfo.avatarUrl ?? ""
                     )
                 },
                 content: {

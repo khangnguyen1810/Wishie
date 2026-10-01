@@ -34,7 +34,7 @@ class HomeViewModel: ObservableObject {
             async let joinedPairs = service.pairWithOwnerProfiles(joined)
             (myWishlists, myFriendWishlists) = await (ownedPairs, joinedPairs)
         } catch {
-            errorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
+            errorMessage = (error as? WishieError)?.errorDescription ?? error.localizedDescription
         }
     }
 

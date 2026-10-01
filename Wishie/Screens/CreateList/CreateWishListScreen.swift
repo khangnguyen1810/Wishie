@@ -79,7 +79,7 @@ struct CreateWishListScreen: View {
                                         )
                                     } catch {
                                         creating = false
-                                        errorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
+                                        errorMessage = (error as? WishieError)?.errorDescription ?? error.localizedDescription
                                         showError = true
                                     }
                                 }

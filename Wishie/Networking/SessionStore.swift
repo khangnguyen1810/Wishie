@@ -75,7 +75,7 @@ actor SessionStore {
             task = refreshTask
         } else {
             guard let refreshToken = current()?.refreshToken else {
-                throw APIError.sessionExpired
+                throw WishieError.sessionExpired
             }
             let newTask = Task<AuthSession, Error> {
                 try await refresher(refreshToken)
@@ -89,7 +89,7 @@ actor SessionStore {
             // If clear() ran while we were suspended awaiting the refresh (e.g. the user logged
             // out), do not resurrect the session by saving the now-stale refreshed tokens.
             guard generation == startGeneration else {
-                throw APIError.sessionExpired
+                throw WishieError.sessionExpired
             }
             save(newSession)
             return newSession
@@ -98,7 +98,7 @@ actor SessionStore {
             if generation == startGeneration {
                 clear()
             }
-            throw APIError.sessionExpired
+            throw WishieError.sessionExpired
         }
     }
 }

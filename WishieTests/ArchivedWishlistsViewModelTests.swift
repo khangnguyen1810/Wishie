@@ -25,11 +25,11 @@ extension UserDefaultsSharingTests {
         #expect(viewModel.isLoading == false)
     }
 
-    @Test func surfacesAPIErrorMessageOnFailure() async throws {
+    @Test func surfacesWishieErrorMessageOnFailure() async throws {
         UserDefaults.standard.set("me", forKey: WishieConstants.userIdKey)
         defer { UserDefaults.standard.removeObject(forKey: WishieConstants.userIdKey) }
         let mock = MockWishlistService()
-        mock.wishlistsResult = .failure(APIError.server(statusCode: 500, message: "Server exploded", code: nil))
+        mock.wishlistsResult = .failure(WishieError.server(statusCode: 500, message: "Server exploded", code: nil))
         let viewModel = ArchivedWishlistsViewModel(service: mock)
 
         await viewModel.loadArchivedWishlists()

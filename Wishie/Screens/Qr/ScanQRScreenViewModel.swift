@@ -103,7 +103,7 @@ class ScanQRScreenViewModel: ObservableObject {
         case .success(let response):
             return WishlistJoinPreview(code: code, response: response)
         case .failure(let failure):
-            if case .server(404, _, _)? = failure as? APIError {
+            if case .server(404, _, _, _) = failure {
                 showError(
                     title: "Invite no longer valid",
                     message: "This QR code has expired or been revoked. Ask for a new one."

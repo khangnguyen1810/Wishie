@@ -98,7 +98,7 @@ struct WishlistServiceAPITests {
         let item = WishlistItem(id: "i1", name: "Lego", localImage: testImage())
         stub.sendResults = [
             sampleWishlistResponse(id: "w1"),
-            APIError.transport("network down")
+            WishieError.transport("network down")
         ]
         let service = WishlistService(apiService: stub)
         let wishlist = WishlistModel(name: "Birthday", dueDate: Date(), items: [item], userCreateId: "u1")
@@ -110,14 +110,14 @@ struct WishlistServiceAPITests {
 
     @Test func createWishlistPropagatesAFailureFromTheInitialCreateCall() async throws {
         let stub = StubAPIService()
-        stub.sendResults = [APIError.server(statusCode: 400, message: "Invalid item", code: nil)]
+        stub.sendResults = [WishieError.server(statusCode: 400, message: "Invalid item", code: nil)]
         let service = WishlistService(apiService: stub)
         let wishlist = WishlistModel(name: "Birthday", dueDate: Date(), userCreateId: "u1")
 
         do {
             _ = try await service.createWishlist(wishList: wishlist)
             Issue.record("expected an error to be thrown")
-        } catch let error as APIError {
+        } catch let error as WishieError {
             #expect(error == .server(statusCode: 400, message: "Invalid item", code: nil))
         }
     }
@@ -164,5 +164,44 @@ struct WishlistServiceAPITests {
         }
         #expect(body.imageLink == "https://x/old.jpg")
         #expect(try result.get().image == "https://x/old.jpg")
+    }
+
+    @Test func updateWishlistInfoSendsTheEditRouteWithADateOnlyDueDate() async throws {
+        let stub = StubAPIService()
+        stub.sendResults = [sampleWishlistResponse(id: "w1")]
+        let service = WishlistService(apiService: stub)
+        let dueDate = try #require(WishieDateFormatting.dateOnly.date(from: "2026-09-01"))
+
+        let result = try await service.updateWishlistInfo(
+            wishlistId: "w1", name: "Birthday", description: "Party", dueDate: dueDate, themeColor: "coral"
+        )
+
+        #expect(try result.get().id == "w1")
+        #expect(stub.sentRoutes.count == 1)
+        guard case .editWishlist(let wishlistId, let body) = stub.sentRoutes[0] else {
+            Issue.record("expected .editWishlist route")
+            return
+        }
+        #expect(wishlistId == "w1")
+        #expect(body.name == "Birthday")
+        #expect(body.description == "Party")
+        #expect(body.dueDate == "2026-09-01")
+        #expect(body.colorTheme == "coral")
+    }
+
+    @Test func updateWishlistInfoReturnsTheWishieErrorOnFailure() async throws {
+        let stub = StubAPIService()
+        stub.sendResults = [WishieError.server(statusCode: 404, message: "Wishlist w1 not found", error: "Not Found")]
+        let service = WishlistService(apiService: stub)
+
+        let result = try await service.updateWishlistInfo(
+            wishlistId: "w1", name: "Birthday", description: "", dueDate: Date(), themeColor: nil
+        )
+
+        guard case .failure(let error) = result else {
+            Issue.record("expected a failure")
+            return
+        }
+        #expect(error == .server(statusCode: 404, message: "Wishlist w1 not found", error: "Not Found"))
     }
 }

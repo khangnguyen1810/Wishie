@@ -16,7 +16,7 @@ final class FakeListenerRegistration: NSObject, ListenerRegistration {
 
 final class MockWishlistService: WishlistServiceProtocol {
     // MARK: - upload
-    var uploadResult: Result<String, Error> = .success("https://uploaded.example.com/img.jpg")
+    var uploadResult: Result<String, WishieError> = .success("https://uploaded.example.com/img.jpg")
     private(set) var uploadCallCount = 0
     private(set) var lastUploadedImage: UIImage?
     private(set) var lastUploadWishlistId: String?
@@ -29,16 +29,16 @@ final class MockWishlistService: WishlistServiceProtocol {
     }
 
     // MARK: - addWishlistItem
-    var addWishlistItemResult: Result<Bool, Error> = .success(true)
+    var addWishlistItemResult: Result<Bool, WishieError> = .success(true)
     private(set) var addedItems: [WishlistItem] = []
 
-    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<Bool, Error> {
+    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<Bool, WishieError> {
         addedItems.append(item)
         return addWishlistItemResult
     }
 
     // MARK: - createWishlist
-    var createWishlistResult: Result<WishlistModel, Error>?
+    var createWishlistResult: Result<WishlistModel, WishieError>?
     private(set) var lastCreatedWishlist: WishlistModel?
 
     func createWishlist(wishList: WishlistModel) async throws -> WishlistModel {
@@ -51,35 +51,35 @@ final class MockWishlistService: WishlistServiceProtocol {
 
     // MARK: - Unused by these tests; minimal stub bodies.
 
-    func getWishlist(by id: String) async throws -> Result<WishlistModel, Error> {
+    func getWishlist(by id: String) async throws -> Result<WishlistModel, WishieError> {
         .success(WishlistModel(name: "", userCreateId: ""))
     }
 
-    var joinWishlistResult: Result<String, Error> = .success("w1")
+    var joinWishlistResult: Result<String, WishieError> = .success("w1")
     private(set) var joinedCodes: [String] = []
-    func joinWishlist(code: String) async -> Result<String, Error> {
+    func joinWishlist(code: String) async -> Result<String, WishieError> {
         joinedCodes.append(code)
         return joinWishlistResult
     }
 
-    var getWishlistInfoByCodeResult: Result<WishlistInfoResponse, Error> = .success(
+    var getWishlistInfoByCodeResult: Result<WishlistInfoResponse, WishieError> = .success(
         WishlistInfoResponse(id: "", name: "", description: "", dueDate: "", colorTheme: nil, itemCount: 0, ownerName: nil)
     )
     /// Recorded so tests can prove the *scanned* code is what reaches the preview call.
     private(set) var previewedCodes: [String] = []
-    func getWishlistInfoByCode(by code: String) async -> Result<WishlistInfoResponse, Error> {
+    func getWishlistInfoByCode(by code: String) async -> Result<WishlistInfoResponse, WishieError> {
         previewedCodes.append(code)
         return getWishlistInfoByCodeResult
     }
 
-    var inviteCodeResult: Result<String, Error> = .success("K7XQPM2Z")
+    var inviteCodeResult: Result<String, WishieError> = .success("K7XQPM2Z")
     private(set) var inviteCodeRequestedWishlistIds: [String] = []
-    func getInviteCode(wishlistId: String) async -> Result<String, Error> {
+    func getInviteCode(wishlistId: String) async -> Result<String, WishieError> {
         inviteCodeRequestedWishlistIds.append(wishlistId)
         return inviteCodeResult
     }
 
-    var wishlistsResult: Result<[WishlistModel], Error> = .success([])
+    var wishlistsResult: Result<[WishlistModel], WishieError> = .success([])
     func getUserWishlists() async throws -> [WishlistModel] {
         try wishlistsResult.get()
     }
@@ -98,35 +98,44 @@ final class MockWishlistService: WishlistServiceProtocol {
         return profilesById[id] ?? UserModel()
     }
 
-    func pickItem(wishlistId: String, itemId: String) async throws -> Result<WishlistItem, Error> {
+    func pickItem(wishlistId: String, itemId: String) async throws -> Result<WishlistItem, WishieError> {
         .success(WishlistItem(id: itemId, name: ""))
     }
 
-    func updateWishlistItem(wishlistId: String, itemId: String, newName: String?, newDescription: String?, newImage: UIImage?, newImageLink: String?, newPrice: String?, newLink: String?) async throws -> Result<WishlistItem, Error> {
+    func updateWishlistItem(wishlistId: String, itemId: String, newName: String?, newDescription: String?, newImage: UIImage?, newImageLink: String?, newPrice: String?, newLink: String?) async throws -> Result<WishlistItem, WishieError> {
         .success(WishlistItem(id: itemId, name: newName ?? "", image: newImageLink))
     }
 
-    func deleteWishlist(wishlistId: String) async throws -> Result<Bool, Error> {
+    func deleteWishlist(wishlistId: String) async throws -> Result<Bool, WishieError> {
         .success(true)
     }
 
-    func updateWishlistInfo(wishlistId: String, name: String, description: String, dueDate: Date, themeColor: String?) async throws -> Result<Bool, Error> {
-        .success(true)
+    /// When set, returned instead of the default success echoing the arguments back.
+    var updateWishlistInfoResult: Result<WishlistResponse, WishieError>?
+    private(set) var updatedWishlistIds: [String] = []
+    func updateWishlistInfo(wishlistId: String, name: String, description: String, dueDate: Date, themeColor: String?) async throws -> Result<WishlistResponse, WishieError> {
+        updatedWishlistIds.append(wishlistId)
+        if let updateWishlistInfoResult { return updateWishlistInfoResult }
+        return .success(WishlistResponse(
+            id: wishlistId, name: name, description: description, ownerId: "",
+            dueDate: WishieDateFormatting.dateOnly.string(from: dueDate), colorTheme: themeColor,
+            isArchived: false, createdAt: "", members: nil, items: nil, ownerName: nil
+        ))
     }
 
-    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<WishlistModel, Error> {
+    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<WishlistModel, WishieError> {
         .success(WishlistModel(id: wishlistId, name: "", userCreateId: "", isArchived: isArchived))
     }
 
-    func leaveWishlist(wishListId: String) async throws -> Result<Bool, Error> {
+    func leaveWishlist(wishListId: String) async throws -> Result<Bool, WishieError> {
         .success(true)
     }
 
-    func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error> {
+    func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, WishieError> {
         .success(true)
     }
 
-    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<WishlistItemResponse, Error> {
+    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<WishlistItemResponse, WishieError> {
         .success(
             WishlistItemResponse(
                 id: itemId,

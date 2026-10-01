@@ -42,27 +42,27 @@ final class APIService: APIServiceProtocol {
         #endif
 
         if let afError = dataResponse.error {
-            if case .requestRetryFailed(let retryError, _) = afError, let apiError = retryError as? APIError {
+            if case .requestRetryFailed(let retryError, _) = afError, let apiError = retryError as? WishieError {
                 throw apiError
             }
-            if case .requestAdaptationFailed(let adaptError) = afError, let apiError = adaptError as? APIError {
+            if case .requestAdaptationFailed(let adaptError) = afError, let apiError = adaptError as? WishieError {
                 throw apiError
             }
             guard let httpResponse = dataResponse.response else {
-                throw APIError.transport(afError.localizedDescription)
+                throw WishieError.transport(afError.localizedDescription)
             }
             let data = dataResponse.data ?? Data()
             if httpResponse.statusCode == 401 {
-                throw APIError.unauthorized(APIError.decodeServerError(data: data, statusCode: httpResponse.statusCode))
+                throw WishieError.unauthorized(WishieError.decodeServerError(data: data, statusCode: httpResponse.statusCode))
             }
-            throw APIError.decodeServerError(data: data, statusCode: httpResponse.statusCode)
+            throw WishieError.decodeServerError(data: data, statusCode: httpResponse.statusCode)
         }
 
         let data = dataResponse.data ?? Data()
         do {
             return try JSONDecoder().decode(T.self, from: data)
         } catch {
-            throw APIError.invalidResponse
+            throw WishieError.invalidResponse
         }
     }
 

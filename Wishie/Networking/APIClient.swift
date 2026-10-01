@@ -29,7 +29,7 @@ final class APIClient: APIClientProtocol {
         do {
             return try JSONDecoder().decode(T.self, from: data)
         } catch {
-            throw APIError.invalidResponse
+            throw WishieError.invalidResponse
         }
     }
 
@@ -40,11 +40,11 @@ final class APIClient: APIClientProtocol {
     private func executeWithRefresh(_ endpoint: Endpoint) async throws -> Data {
         do {
             return try await execute(endpoint)
-        } catch let error as APIError {
+        } catch let error as WishieError {
             guard case .unauthorized = error else { throw error }
             guard endpoint.requiresAuth else { throw error }
             _ = try await sessionStore.refreshedSession { [weak self] refreshToken in
-                guard let self else { throw APIError.sessionExpired }
+                guard let self else { throw WishieError.sessionExpired }
                 return try await self.performRefresh(refreshToken: refreshToken)
             }
             return try await execute(endpoint)
@@ -82,7 +82,7 @@ final class APIClient: APIClientProtocol {
 
         if endpoint.requiresAuth {
             guard let token = await sessionStore.current()?.accessToken else {
-                throw APIError.sessionExpired
+                throw WishieError.sessionExpired
             }
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
@@ -96,20 +96,20 @@ final class APIClient: APIClientProtocol {
         do {
             (data, response) = try await session.data(for: request)
         } catch {
-            throw APIError.transport(error.localizedDescription)
+            throw WishieError.transport(error.localizedDescription)
         }
 
         guard let http = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
+            throw WishieError.invalidResponse
         }
         #if DEBUG
         print("⬅️ [API] \(http.statusCode) \(endpoint.path)\n\(Self.prettyPrinted(data))")
         #endif
         if http.statusCode == 401 {
-            throw APIError.unauthorized(APIError.decodeServerError(data: data, statusCode: http.statusCode))
+            throw WishieError.unauthorized(WishieError.decodeServerError(data: data, statusCode: http.statusCode))
         }
         guard (200..<300).contains(http.statusCode) else {
-            throw APIError.decodeServerError(data: data, statusCode: http.statusCode)
+            throw WishieError.decodeServerError(data: data, statusCode: http.statusCode)
         }
         return data
     }

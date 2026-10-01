@@ -22,7 +22,7 @@ struct WishListInformationViewModelTests {
 
     @Test func joinFailureSurfacesErrorAndDoesNotNavigate() async throws {
         let mockService = MockWishlistService()
-        mockService.joinWishlistResult = .failure(APIError.transport("no network"))
+        mockService.joinWishlistResult = .failure(WishieError.transport("no network"))
         let viewModel = WishListInformationViewModel(service: mockService)
 
         await viewModel.join(code: "abc123", wishlistId: "w1")
@@ -36,7 +36,7 @@ struct WishListInformationViewModelTests {
     @Test func joinReportsARevokedInviteAsUnrecoverable() async throws {
         let mockService = MockWishlistService()
         mockService.joinWishlistResult = .failure(
-            APIError.server(statusCode: 404, message: "Not found", code: nil)
+            WishieError.server(statusCode: 404, message: "Not found", code: nil)
         )
         let viewModel = WishListInformationViewModel(service: mockService)
 
@@ -51,7 +51,7 @@ struct WishListInformationViewModelTests {
     /// a wishlist they aren't a member of and the detail fetch then 403s.
     @Test func joinTreatsAnUnsuccessfulBodyAsFailure() async throws {
         let mockService = MockWishlistService()
-        mockService.joinWishlistResult = .failure(APIError.invalidResponse)
+        mockService.joinWishlistResult = .failure(WishieError.invalidResponse)
         let viewModel = WishListInformationViewModel(service: mockService)
 
         await viewModel.join(code: "abc123", wishlistId: "w1")
@@ -86,7 +86,7 @@ struct WishListInformationViewModelTests {
     @Test func joinTreatsAlreadyAMemberAsSuccess() async throws {
         let mockService = MockWishlistService()
         mockService.joinWishlistResult = .failure(
-            APIError.server(statusCode: 409, message: "Already a member", code: nil)
+            WishieError.server(statusCode: 409, message: "Already a member", code: nil)
         )
         let viewModel = WishListInformationViewModel(service: mockService)
 

@@ -102,6 +102,20 @@ struct APIRouteTests {
         #expect(encodedString.contains("Content-Type: image/jpeg"))
     }
 
+    @Test func editWishlistBuildsAnAuthenticatedPATCHWithTheEditedFields() throws {
+        let edit = EditWishlistRequest(name: "Birthday", description: "Party", dueDate: "2026-09-01", colorTheme: "coral")
+
+        let request = try APIRoute.editWishlist(wishlistId: "w1", wishlist: edit).asURLRequest()
+
+        #expect(request.httpMethod == "PATCH")
+        #expect(request.url?.path == "/wishlists/w1")
+        #expect(request.value(forHTTPHeaderField: APIRoute.requiresAuthHeader) == "true")
+        #expect(request.value(forHTTPHeaderField: "Content-Type") == "application/json")
+        let body = try #require(request.httpBody)
+        let json = try JSONSerialization.jsonObject(with: body) as? [String: String]
+        #expect(json == ["name": "Birthday", "description": "Party", "dueDate": "2026-09-01", "colorTheme": "coral"])
+    }
+
     @Test func nonUploadRoutesHaveNoMultipartFormData() {
         #expect(APIRoute.getWishlists.multipartFormData == nil)
     }

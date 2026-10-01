@@ -12,31 +12,31 @@ import Supabase
 protocol WishlistServiceProtocol {
     func createWishlist(wishList: WishlistModel) async throws -> WishlistModel
     func upload(wishlistId: String, image: UIImage) async throws -> String
-    func getWishlist(by id: String) async throws -> Result<WishlistModel, Error>
+    func getWishlist(by id: String) async throws -> Result<WishlistModel, WishieError>
     /// Not `throws`: the implementation funnels every failure into `.failure`, so a `throws` here
     /// would only force callers to write `catch` blocks that can never run.
-    func getWishlistInfoByCode(by code: String) async -> Result<WishlistInfoResponse, Error>
+    func getWishlistInfoByCode(by code: String) async -> Result<WishlistInfoResponse, WishieError>
     /// `code` is the invite code from `GET /wishlists/:id/share`, carried in the QR link —
     /// `POST /wishlists/join/:code` does not accept a wishlist UUID. Returns the joined
     /// wishlist's id.
-    func joinWishlist(code: String) async -> Result<String, Error>
+    func joinWishlist(code: String) async -> Result<String, WishieError>
     /// Owner-only. Returns the wishlist's current invite code, minting one server-side on first
     /// call. Idempotent — safe to call every time the owner opens the share screen.
-    func getInviteCode(wishlistId: String) async -> Result<String, Error>
+    func getInviteCode(wishlistId: String) async -> Result<String, WishieError>
     func getUserWishlists() async throws -> [WishlistModel]
     func getProfile(id: String) async throws -> UserModel
-    func pickItem(wishlistId: String, itemId: String) async throws -> Result<WishlistItem, Error>
-    func updateWishlistItem(wishlistId: String,itemId: String,newName: String?,newDescription: String?,newImage: UIImage?,newImageLink: String?,newPrice: String?, newLink: String?) async throws -> Result<WishlistItem, any Error>
-    func deleteWishlist(wishlistId: String) async throws -> Result<Bool, Error>
-    func updateWishlistInfo(wishlistId: String, name: String, description: String, dueDate: Date, themeColor: String?) async throws -> Result<Bool, Error>
+    func pickItem(wishlistId: String, itemId: String) async throws -> Result<WishlistItem, WishieError>
+    func updateWishlistItem(wishlistId: String,itemId: String,newName: String?,newDescription: String?,newImage: UIImage?,newImageLink: String?,newPrice: String?, newLink: String?) async throws -> Result<WishlistItem, WishieError>
+    func deleteWishlist(wishlistId: String) async throws -> Result<Bool, WishieError>
+    func updateWishlistInfo(wishlistId: String, name: String, description: String, dueDate: Date, themeColor: String?) async throws -> Result<WishlistResponse, WishieError>
     /// The returned model comes from `PATCH /wishlists/:id/archive`, whose response omits
     /// `members` and `items` — so `members`, `items`, `memberProfiles` and `ownerName` are
     /// empty. Re-fetch the list rather than swapping this model into it.
-    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<WishlistModel, Error>
-    func leaveWishlist(wishListId: String) async throws -> Result<Bool, Error>
-    func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, Error>
-    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<WishlistItemResponse, Error>
-    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<Bool, Error>
+    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<WishlistModel, WishieError>
+    func leaveWishlist(wishListId: String) async throws -> Result<Bool, WishieError>
+    func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, WishieError>
+    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<WishlistItemResponse, WishieError>
+    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<Bool, WishieError>
     func observeUserWishlistIds(onChange: @escaping ([String]) -> Void) -> ListenerRegistration?
 }
 
@@ -116,7 +116,7 @@ class WishlistService: WishlistServiceProtocol {
         newImageLink: String?,
         newPrice: String?,
         newLink: String?
-    ) async throws -> Result<WishlistItem, any Error> {
+    ) async throws -> Result<WishlistItem, WishieError> {
         do {
             let response: WishlistItemResponse = try await apiService
                 .send(.editWishlistItem(
@@ -137,7 +137,7 @@ class WishlistService: WishlistServiceProtocol {
            
             return .success(model)
         } catch {
-            return .failure(error)
+            return .failure(WishieError(error))
         }
     }
 
@@ -167,48 +167,48 @@ class WishlistService: WishlistServiceProtocol {
         )
         return response.imageUrl
     }
-    func getWishlist(by id: String) async throws -> Result<WishlistModel, Error> {
+    func getWishlist(by id: String) async throws -> Result<WishlistModel, WishieError> {
         do {
             let response: WishlistResponse = try await apiService.send(.getDetailWishlist(wishlistId: id))
             let model = WishlistModel(response: response)
             return .success(model)
         } catch {
-            return .failure(error)
+            return .failure(WishieError(error))
         }
     }
-    func joinWishlist(code: String) async -> Result<String, any Error> {
+    func joinWishlist(code: String) async -> Result<String, WishieError> {
         do {
             let response: JoinWishlistResponse = try await apiService.send(.joinWishlist(code: code))
             // A 200 carrying `success: false` would otherwise be reported to the user as a
             // successful join and navigate them into a wishlist they aren't a member of.
             guard response.success else {
-                return .failure(APIError.invalidResponse)
+                return .failure(WishieError.invalidResponse)
             }
             return .success(response.wishlistId)
         } catch {
-            return .failure(error)
+            return .failure(WishieError(error))
         }
     }
 
-    func getInviteCode(wishlistId: String) async -> Result<String, any Error> {
+    func getInviteCode(wishlistId: String) async -> Result<String, WishieError> {
         do {
             let response: InviteCodeResponse = try await apiService.send(.getInviteCode(wishlistId: wishlistId))
             return .success(response.inviteCode)
         } catch {
-            return .failure(error)
+            return .failure(WishieError(error))
         }
     }
-    func pickItem(wishlistId: String, itemId: String) async throws -> Result<WishlistItem, any Error> {
+    func pickItem(wishlistId: String, itemId: String) async throws -> Result<WishlistItem, WishieError> {
         do {
             let response: WishlistItemResponse = try await apiService.send(.pickItem(wishlistId: wishlistId, itemId: itemId))
             let model = WishlistItem(response: response)
             return .success(model)
         } catch {
-            return .failure(error)
+            return .failure(WishieError(error))
         }
     }
     
-    func deleteWishlist(wishlistId: String) async throws -> Result<Bool, any Error> {
+    func deleteWishlist(wishlistId: String) async throws -> Result<Bool, WishieError> {
         do {
             let docRef = db.collection("wishList").document(wishlistId)
             let snapshot = try await docRef.getDocument()
@@ -235,7 +235,7 @@ class WishlistService: WishlistServiceProtocol {
             try await batch.commit()
             return .success(true)
         } catch {
-            return .failure(error)
+            return .failure(WishieError(error))
         }
     }
 
@@ -245,32 +245,31 @@ class WishlistService: WishlistServiceProtocol {
         description: String,
         dueDate: Date,
         themeColor: String?
-    ) async throws -> Result<Bool, any Error> {
+    ) async throws -> Result<WishlistResponse, WishieError> {
         do {
-            let docRef = db.collection("wishList").document(wishlistId)
-            try await docRef.updateData([
-                "wishListName": name,
-                "description": description,
-                "dueDate": Timestamp(date: dueDate),
-                "colorTheme": themeColor ?? ""
-            ])
-            return .success(true)
+            let request = EditWishlistRequest(
+                name: name,
+                description: description,
+                dueDate: WishieDateFormatting.dateOnly.string(from: dueDate),
+                colorTheme: themeColor)
+            let response: WishlistResponse = try await apiService.send(.editWishlist(wishlistId: wishlistId, wishlist: request))
+            return .success(response)
         } catch {
-            return .failure(error)
+            return .failure(WishieError(error))
         }
     }
 
-    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<WishlistModel, any Error> {
+    func setArchived(wishlistId: String, isArchived: Bool) async throws -> Result<WishlistModel, WishieError> {
         do {
             let response: WishlistResponse = try await apiService.send(.archiveWishlist(wishlistId: wishlistId, isArchived: isArchived))
             let model = WishlistModel(response: response)
             return .success(model)
         } catch {
-            return .failure(error)
+            return .failure(WishieError(error))
         }
     }
 
-    func leaveWishlist(wishListId: String) async throws -> Result<Bool, any Error> {
+    func leaveWishlist(wishListId: String) async throws -> Result<Bool, WishieError> {
         do {
             guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else {
                 throw NSError(domain: "Wishie App Storage", code: 403)
@@ -300,23 +299,23 @@ class WishlistService: WishlistServiceProtocol {
             try await batch.commit()
             return .success(true)
         } catch {
-            return .failure(error)
+            return .failure(WishieError(error))
         }
     }
     
-    func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, any Error> {
+    func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, WishieError> {
         do {
             let response: DeleteResponse = try await apiService.send(.deleteItem(wishlistId: wishlistId, itemId: itemId))
             guard response.success else {
-                return .failure(APIError.invalidResponse)
+                return .failure(WishieError.invalidResponse)
             }
             return .success(true)
         } catch {
-            return .failure(error)
+            return .failure(WishieError(error))
         }
     }
 
-    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<WishlistItemResponse, any Error> {
+    func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<WishlistItemResponse, WishieError> {
         do {
             let response: WishlistItemResponse = try await apiService.send(
                 .markItemDesired(
@@ -326,11 +325,11 @@ class WishlistService: WishlistServiceProtocol {
             )
             return .success(response)
         } catch {
-            return .failure(error)
+            return .failure(WishieError(error))
         }
     }
 
-    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<Bool, Error> {
+    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<Bool, WishieError> {
         do {
             let itemData: [String: Any] = [
                 "id": item.id,
@@ -348,7 +347,7 @@ class WishlistService: WishlistServiceProtocol {
             ])
             return .success(true)
         } catch {
-            return .failure(error)
+            return .failure(WishieError(error))
         }
     }
 
@@ -378,12 +377,12 @@ class WishlistService: WishlistServiceProtocol {
             .from("Wishie")
             .remove(paths: [path])
     }
-    func getWishlistInfoByCode(by code: String) async -> Result<WishlistInfoResponse, any Error> {
+    func getWishlistInfoByCode(by code: String) async -> Result<WishlistInfoResponse, WishieError> {
         do {
             let response: WishlistInfoResponse = try await apiService.send(.getWishlistInfoByCode(code: code))
             return .success(response)
         } catch {
-            return .failure(error)
+            return .failure(WishieError(error))
         }
     }
 }

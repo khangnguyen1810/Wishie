@@ -13,6 +13,11 @@ class EditWishlistInfoViewModel: ObservableObject {
     @Published var selectedTheme: GradientTheme?
     @Published var isLoading: Bool = false
     @Published var didSave: Bool = false
+    @Published var isShowError: Bool = false
+    @Published var errorTitle: String = ""
+    @Published var errorMsg: String = ""
+
+    static let notFoundMessage = "This wishlist no longer exists. It may have been deleted."
 
     private var service: WishlistServiceProtocol
     init(service: WishlistServiceProtocol = WishlistService()) {
@@ -56,6 +61,9 @@ class EditWishlistInfoViewModel: ObservableObject {
             case .success:
                 didSave = true
             case .failure(let error):
+                isShowError = true
+                errorTitle = "Couldn't update info"
+                errorMsg = error.statusCode == 404 ? Self.notFoundMessage : error.message
                 print(error)
             }
         } catch {

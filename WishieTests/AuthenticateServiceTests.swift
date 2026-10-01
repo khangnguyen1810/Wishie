@@ -93,7 +93,7 @@ struct AuthenticateServiceTests {
 
     @Test func logoutClearsSessionEvenWhenTheNetworkCallFails() async throws {
         let stubClient = StubAPIClient()
-        stubClient.sendNoContentError = APIError.transport("offline")
+        stubClient.sendNoContentError = WishieError.transport("offline")
         let sessionStore = SessionStore(keychain: InMemoryKeychain())
         await sessionStore.save(sampleSession())
         let service = AuthenticateService(apiClient: stubClient, sessionStore: sessionStore)

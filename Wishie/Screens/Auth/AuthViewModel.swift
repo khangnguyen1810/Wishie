@@ -70,7 +70,7 @@ final class AuthViewModel: ObservableObject {
                     self.userInfo = result
                 }
             } catch {
-                if let apiError = error as? APIError, apiError == .sessionExpired {
+                if let apiError = error as? WishieError, apiError == .sessionExpired {
                     await clearSessionAndLogOut()
                 }
                 // Any other error (transport/offline, decode failure, unexpected server error) is
@@ -194,7 +194,7 @@ final class AuthViewModel: ObservableObject {
             guard let result = try await authService.getUserInfo() else { return }
             self.userInfo = result
         } catch {
-            if let apiError = error as? APIError, apiError == .sessionExpired {
+            if let apiError = error as? WishieError, apiError == .sessionExpired {
                 await clearSessionAndLogOut()
             } else {
                 self.userInfoError = error.localizedDescription

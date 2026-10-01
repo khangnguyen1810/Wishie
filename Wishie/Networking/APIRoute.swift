@@ -25,11 +25,12 @@ enum APIRoute: URLRequestConvertible {
     case pickItem(wishlistId: String, itemId: String)
     case deleteItem(wishlistId: String, itemId: String)
     case archiveWishlist(wishlistId: String, isArchived: Bool)
+    case editWishlist(wishlistId: String, wishlist: EditWishlistRequest)
     var method: HTTPMethod {
         switch self {
         case .getWishlists, .getProfile, .getDetailWishlist, .getWishlistInfoByCode, .getInviteCode: return .get
         case .login, .signup, .refresh, .createWishlist, .uploadWishlistImage, .joinWishlist, .pickItem: return .post
-        case .uploadItemImage, .editWishlistItem, .markItemDesired, .archiveWishlist: return .patch
+        case .uploadItemImage, .editWishlistItem, .markItemDesired, .archiveWishlist, .editWishlist: return .patch
         case .deleteItem: return .delete
         }
     }
@@ -52,6 +53,7 @@ enum APIRoute: URLRequestConvertible {
         case .pickItem(let wishlistId, let itemId): return "/wishlists/\(wishlistId)/items/\(itemId)/pick"
         case .deleteItem(let wishlistId, let itemId): return "/wishlists/\(wishlistId)/items/\(itemId)"
         case .archiveWishlist(let wishlistId, _): return "/wishlists/\(wishlistId)/archive"
+        case .editWishlist(let wishlistId, _): return "/wishlists/\(wishlistId)"
         }
     }
 
@@ -73,7 +75,8 @@ enum APIRoute: URLRequestConvertible {
                 .joinWishlist,
                 .pickItem,
                 .deleteItem,
-                .archiveWishlist: return true
+                .archiveWishlist,
+                .editWishlist: return true
         }
     }
 
@@ -140,6 +143,9 @@ enum APIRoute: URLRequestConvertible {
             return try JSONEncoding.default.encode(request, with: ["isMostDesired": isMostDesired])
         case .archiveWishlist(_, let isArchived):
             return try JSONEncoding.default.encode(request, with: ["isArchived": isArchived])
+        case .editWishlist(_, let wishlist):
+            request.httpBody = try JSONEncoder().encode(wishlist)
+            return request
         }
     }
 }

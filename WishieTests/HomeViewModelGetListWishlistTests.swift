@@ -51,7 +51,7 @@ extension UserDefaultsSharingTests {
         ])
         // No profile fetch can succeed (e.g. the profiles endpoint isn't available yet) — the
         // wishlist itself must still show up, using the ownerName already on WishlistResponse.
-        mock.getProfileError = APIError.server(statusCode: 404, message: "Not found", code: nil)
+        mock.getProfileError = WishieError.server(statusCode: 404, message: "Not found", code: nil)
 
         let viewModel = HomeViewModel(service: mock)
         await viewModel.getListWishlist()
@@ -60,11 +60,11 @@ extension UserDefaultsSharingTests {
         #expect(viewModel.myWishlists.first?.1.firstName == "Me")
     }
 
-    @Test func surfacesAPIErrorMessageOnFailure() async throws {
+    @Test func surfacesWishieErrorMessageOnFailure() async throws {
         UserDefaults.standard.set("me", forKey: WishieConstants.userIdKey)
         defer { UserDefaults.standard.removeObject(forKey: WishieConstants.userIdKey) }
         let mock = MockWishlistService()
-        mock.wishlistsResult = .failure(APIError.server(statusCode: 500, message: "Server exploded", code: nil))
+        mock.wishlistsResult = .failure(WishieError.server(statusCode: 500, message: "Server exploded", code: nil))
         let viewModel = HomeViewModel(service: mock)
 
         await viewModel.getListWishlist()

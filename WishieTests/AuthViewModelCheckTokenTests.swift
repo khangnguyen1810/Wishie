@@ -42,10 +42,10 @@ extension UserDefaultsSharingTests {
         }
 
         /// A transient error (offline, decode failure, unexpected 5xx) must not wipe a valid stored
-        /// session — only a confirmed-invalid session (APIError.sessionExpired) should trigger a clear.
+        /// session — only a confirmed-invalid session (WishieError.sessionExpired) should trigger a clear.
         @Test func transportErrorDuringCheckTokenLeavesStoredSessionIntact() async throws {
             let mockService = MockAuthenticateService()
-            mockService.getUserInfoError = APIError.transport("offline")
+            mockService.getUserInfoError = WishieError.transport("offline")
             let sessionStore = SessionStore(keychain: InMemoryKeychain())
             let session = sampleSession()
             await sessionStore.save(session)
@@ -61,7 +61,7 @@ extension UserDefaultsSharingTests {
         /// A confirmed-expired session should still be cleared and the user logged out.
         @Test func sessionExpiredErrorDuringCheckTokenClearsStoredSession() async throws {
             let mockService = MockAuthenticateService()
-            mockService.getUserInfoError = APIError.sessionExpired
+            mockService.getUserInfoError = WishieError.sessionExpired
             let sessionStore = SessionStore(keychain: InMemoryKeychain())
             await sessionStore.save(sampleSession())
 
@@ -77,7 +77,7 @@ extension UserDefaultsSharingTests {
         /// so the root coordinator opens Home immediately.
         @Test func storedSessionAndCachedProfileLogsInImmediately() async throws {
             let mockService = MockAuthenticateService()
-            mockService.getUserInfoError = APIError.transport("offline")
+            mockService.getUserInfoError = WishieError.transport("offline")
             let sessionStore = SessionStore(keychain: InMemoryKeychain())
             await sessionStore.save(sampleSession())
             let cache = makeProfileCache()
@@ -92,7 +92,7 @@ extension UserDefaultsSharingTests {
         /// Offline at launch with a cached profile keeps the user logged in on the cached data.
         @Test func transportErrorWithCachedProfileStaysLoggedIn() async throws {
             let mockService = MockAuthenticateService()
-            mockService.getUserInfoError = APIError.transport("offline")
+            mockService.getUserInfoError = WishieError.transport("offline")
             let sessionStore = SessionStore(keychain: InMemoryKeychain())
             await sessionStore.save(sampleSession())
             let cache = makeProfileCache()
@@ -125,7 +125,7 @@ extension UserDefaultsSharingTests {
         /// A confirmed-expired session sends a cached user back to login and drops the cached profile.
         @Test func sessionExpiredWithCachedProfileLogsOutAndClearsCache() async throws {
             let mockService = MockAuthenticateService()
-            mockService.getUserInfoError = APIError.sessionExpired
+            mockService.getUserInfoError = WishieError.sessionExpired
             let sessionStore = SessionStore(keychain: InMemoryKeychain())
             await sessionStore.save(sampleSession())
             let cache = makeProfileCache()

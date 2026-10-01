@@ -65,7 +65,7 @@ struct ScanQRScreenViewModelTests {
 
     @Test func handleResultSurfacesServiceFailure() async throws {
         let mockService = MockWishlistService()
-        mockService.getWishlistInfoByCodeResult = .failure(APIError.transport("no network"))
+        mockService.getWishlistInfoByCodeResult = .failure(WishieError.transport("no network"))
         let viewModel = ScanQRScreenViewModel(wishlistService: mockService)
 
         await viewModel.handleResult(joinURL(code: "abc123"))
@@ -79,7 +79,7 @@ struct ScanQRScreenViewModelTests {
     @Test func handleResultCallsOutRevokedInviteSeparately() async throws {
         let mockService = MockWishlistService()
         mockService.getWishlistInfoByCodeResult = .failure(
-            APIError.server(statusCode: 404, message: "Not found", code: nil)
+            WishieError.server(statusCode: 404, message: "Not found", code: nil)
         )
         let viewModel = ScanQRScreenViewModel(wishlistService: mockService)
 

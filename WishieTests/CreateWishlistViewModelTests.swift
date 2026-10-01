@@ -26,14 +26,14 @@ extension UserDefaultsSharingTests {
             UserDefaults.standard.set("u1", forKey: WishieConstants.userIdKey)
             defer { UserDefaults.standard.removeObject(forKey: WishieConstants.userIdKey) }
             let mockService = MockWishlistService()
-            mockService.createWishlistResult = .failure(APIError.transport("no network"))
+            mockService.createWishlistResult = .failure(WishieError.transport("no network"))
             let viewModel = CreateWishlistViewModel(createWishListService: mockService)
             viewModel.name = "Birthday"
 
             do {
                 _ = try await viewModel.saveItem()
                 Issue.record("expected an error to be thrown")
-            } catch let error as APIError {
+            } catch let error as WishieError {
                 #expect(error == .transport("no network"))
             }
         }

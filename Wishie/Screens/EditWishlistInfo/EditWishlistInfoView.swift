@@ -102,6 +102,7 @@ struct EditWishlistInfoView: View {
             .padding(.bottom, 20)
         }
         .showFullScreenDialog($viewModel.isLoading)
+        .showDialogIfNeeded($viewModel.isShowError, title: viewModel.errorTitle, message: viewModel.errorMsg)
         .task {
             await viewModel.load(wishlistId: wishlistId)
         }
@@ -111,10 +112,4 @@ struct EditWishlistInfoView: View {
             }
         }
     }
-}
-
-#Preview {
-    EditWishlistInfoView(
-        wishlistId: "136D375B-7015-4C9A-97BE-830C5C46F24A"
-    )
 }

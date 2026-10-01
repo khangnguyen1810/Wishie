@@ -36,7 +36,7 @@ final class WishlistQRCodeViewModel: ObservableObject {
             }
             qrImage = image
         case .failure(let error):
-            if case .server(403, _, _)? = error as? APIError {
+            if case .server(403, _, _, _) = error {
                 showError("Only the wishlist owner can share an invite code.")
             } else {
                 showError("Couldn't load the invite code. Please try again.")

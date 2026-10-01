@@ -74,9 +74,9 @@ extension MockURLProtocolSharingTests {
 
         do {
             let _: Sample = try await service.send(.getProfile(id: "u1"))
-            Issue.record("expected APIError.server to be thrown")
-        } catch let error as APIError {
-            #expect(error == .server(statusCode: 400, message: "Invalid id", code: nil))
+            Issue.record("expected WishieError.server to be thrown")
+        } catch let error as WishieError {
+            #expect(error == .server(statusCode: 400, message: "Invalid id", error: "Bad Request"))
         }
     }
 
@@ -127,8 +127,8 @@ extension MockURLProtocolSharingTests {
 
         do {
             let _: Sample = try await service.send(.getWishlists)
-            Issue.record("expected APIError.sessionExpired to be thrown")
-        } catch let error as APIError {
+            Issue.record("expected WishieError.sessionExpired to be thrown")
+        } catch let error as WishieError {
             #expect(error == .sessionExpired)
         }
         let cleared = await sessionStore.current()
@@ -152,10 +152,10 @@ extension MockURLProtocolSharingTests {
 
         do {
             let _: Sample = try await service.send(.login(email: "a@b.com", password: "wrong"))
-            Issue.record("expected APIError.unauthorized to be thrown")
-        } catch let error as APIError {
+            Issue.record("expected WishieError.unauthorized to be thrown")
+        } catch let error as WishieError {
             guard case .unauthorized = error else {
-                Issue.record("expected APIError.unauthorized, got \(error)")
+                Issue.record("expected WishieError.unauthorized, got \(error)")
                 return
             }
         }
@@ -192,8 +192,8 @@ extension MockURLProtocolSharingTests {
 
         do {
             let _: Sample = try await service.send(.getWishlists)
-            Issue.record("expected APIError.sessionExpired to be thrown")
-        } catch let error as APIError {
+            Issue.record("expected WishieError.sessionExpired to be thrown")
+        } catch let error as WishieError {
             #expect(error == .sessionExpired)
         }
     }

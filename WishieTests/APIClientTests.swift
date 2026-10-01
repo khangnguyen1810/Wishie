@@ -54,9 +54,9 @@ extension MockURLProtocolSharingTests {
 
         do {
             let _: Sample = try await client.send(.post("/auth/signup", json: Data()))
-            Issue.record("expected APIError.server to be thrown")
-        } catch let error as APIError {
-            #expect(error == .server(statusCode: 400, message: "Invalid email", code: nil))
+            Issue.record("expected WishieError.server to be thrown")
+        } catch let error as WishieError {
+            #expect(error == .server(statusCode: 400, message: "Invalid email", error: "Bad Request"))
         }
     }
 
@@ -107,8 +107,8 @@ extension MockURLProtocolSharingTests {
 
         do {
             let _: Sample = try await client.send(.get("/profiles/me"))
-            Issue.record("expected APIError.sessionExpired to be thrown")
-        } catch let error as APIError {
+            Issue.record("expected WishieError.sessionExpired to be thrown")
+        } catch let error as WishieError {
             #expect(error == .sessionExpired)
         }
         let cleared = await sessionStore.current()
@@ -188,10 +188,10 @@ extension MockURLProtocolSharingTests {
 
         do {
             let _: Sample = try await client.send(.post("/auth/login", json: Data(), requiresAuth: false))
-            Issue.record("expected APIError.unauthorized to be thrown")
-        } catch let error as APIError {
+            Issue.record("expected WishieError.unauthorized to be thrown")
+        } catch let error as WishieError {
             guard case .unauthorized(let underlying) = error else {
-                Issue.record("expected APIError.unauthorized, got \(error)")
+                Issue.record("expected WishieError.unauthorized, got \(error)")
                 return
             }
             // The server's error message must survive, not be discarded in favor of a generic string.

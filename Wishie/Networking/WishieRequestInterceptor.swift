@@ -21,7 +21,7 @@ final class WishieRequestInterceptor: RequestInterceptor {
             var request = urlRequest
             request.setValue(nil, forHTTPHeaderField: APIRoute.requiresAuthHeader)
             guard let token = await sessionStore.current()?.accessToken else {
-                completion(.failure(APIError.sessionExpired))
+                completion(.failure(WishieError.sessionExpired))
                 return
             }
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -52,12 +52,12 @@ final class WishieRequestInterceptor: RequestInterceptor {
                     case .success(let authSession):
                         return authSession
                     case .failure(let error):
-                        throw APIError.transport(error.localizedDescription)
+                        throw WishieError.transport(error.localizedDescription)
                     }
                 }
                 completion(.retry)
             } catch {
-                completion(.doNotRetryWithError(APIError.sessionExpired))
+                completion(.doNotRetryWithError(WishieError.sessionExpired))
             }
         }
     }

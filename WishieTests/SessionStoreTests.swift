@@ -93,7 +93,7 @@ struct SessionStoreTests {
                     throw SampleError()
                 }
                 Issue.record("expected refreshedSession to throw")
-            } catch let error as APIError {
+            } catch let error as WishieError {
                 #expect(error == .sessionExpired)
             } catch {
                 Issue.record("unexpected error type from first caller: \(error)")
@@ -107,7 +107,7 @@ struct SessionStoreTests {
                     throw SampleError()
                 }
                 Issue.record("expected refreshedSession to throw")
-            } catch let error as APIError {
+            } catch let error as WishieError {
                 #expect(error == .sessionExpired)
             } catch {
                 Issue.record("unexpected error type from second caller: \(error)")
@@ -150,7 +150,7 @@ struct SessionStoreTests {
                     return newSession
                 }
                 Issue.record("expected refreshedSession to throw sessionExpired once clear() ran during the await")
-            } catch let error as APIError {
+            } catch let error as WishieError {
                 #expect(error == .sessionExpired)
             } catch {
                 Issue.record("unexpected error type: \(error)")
@@ -173,10 +173,10 @@ struct SessionStoreTests {
         do {
             _ = try await store.refreshedSession { _ in
                 Issue.record("refresher should not be called with no stored session")
-                throw APIError.sessionExpired
+                throw WishieError.sessionExpired
             }
             Issue.record("expected sessionExpired to be thrown")
-        } catch let error as APIError {
+        } catch let error as WishieError {
             #expect(error == .sessionExpired)
         } catch {
             Issue.record("unexpected error type: \(error)")

@@ -38,20 +38,16 @@ class WishListInformationViewModel: ObservableObject {
         }
     }
 
-    private func handleJoinFailure(_ error: Error, wishlistId: String) {
-        guard let apiError = error as? APIError else {
-            showJoinError("Something went wrong. Please try again.")
-            return
-        }
-        switch apiError {
+    private func handleJoinFailure(_ error: WishieError, wishlistId: String) {
+        switch error {
         // 409 means the caller already joined. That's not a failure from the user's point of
         // view — re-scanning a code should just open the wishlist rather than dead-end on an
         // error dialog.
-        case .server(409, _, _):
+        case .server(409, _, _, _):
             joinedWishlistId = wishlistId
         // 404 means the invite code is invalid, revoked, or unknown. Retrying will never work,
         // so don't tell the user to try again.
-        case .server(404, _, _):
+        case .server(404, _, _, _):
             showJoinError("This invite link is no longer valid. Ask for a new one.")
         case .transport:
             showJoinError("Can't reach Wishie right now. Check your connection and try again.")

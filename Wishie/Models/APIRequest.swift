@@ -50,3 +50,10 @@ struct EditWishlistItemRequest: Encodable {
     let link: String?
     let imageLink: String?
 }
+
+struct EditWishlistRequest: Encodable {
+    let name: String?
+    let description: String?
+    let dueDate: String?
+    let colorTheme: String?
+}

@@ -76,8 +76,11 @@ centered inside it, below the top safe area.
 
 - Brand row: `Image("pen")` at 28×28 clipped to a rounded rectangle
   (radius 7), then "Wishie" in `.wishiesDisplay(.bold, 18)`, `obInk`.
-- Headline: "Make a list.\nShare one link." in
-  `.wishiesDisplay(.bold, 32)`, `obInk`, 8pt below the brand row.
+- Headline: "Make a list." and "Share one link." on two lines in
+  `.wishiesDisplay(.bold, 32)`, `obInk`, 8pt below the brand row. The
+  two lines are separate single-line `Text` views stacked with negative
+  spacing, because Baloo 2's tall line box leaves too wide a gap when
+  one `Text` wraps; VoiceOver reads them as one element.
 - Subtext: "Friends reserve a gift, so nobody buys the same thing
   twice." in `.wishies(.regular, 16)`, `obInk` at 70% opacity, 8pt
   below the headline.
@@ -107,12 +110,14 @@ The Login button and Sign up link carry the accessibility identifiers
 
 ### Fanned cards (`WishlistFanView`)
 
-**Sample data.** A private, file-local array of three values. No
+**Sample data.** Three private, file-local values. Item names on
+reserved rows are short enough to fit beside the "Reserved" tag without
+truncating. No
 network, no models from `Wishie/Models` other than `GradientTheme`.
 
 | Position | Title | Subtitle | Theme | Items (name · reserved) |
 |----------|-------|----------|-------|--------------------------|
-| Front | Birthday 2026 | 12 items · 3 reserved | `.coral` | AirPods Pro · yes; Lego Orchid · no; Film camera · no; Running shoes · yes |
+| Front | Birthday 2026 | 12 items · 3 reserved | `.coral` | AirPods · yes; Lego Orchid · no; Film camera · no; Sneakers · yes |
 | Back left | Housewarming | 8 items | `.mint` | Moka pot · no; Desk lamp · no; Linen set · no |
 | Back right | Tết wishlist | 5 items | `.grape` | Kindle · no; Tea set · no; Sketchbook · no |
 

@@ -62,10 +62,10 @@ private struct SampleWishlist {
         subtitle: "12 items · 3 reserved",
         theme: .coral,
         items: [
-            Item(name: "AirPods Pro", reserved: true),
+            Item(name: "AirPods", reserved: true),
             Item(name: "Lego Orchid", reserved: false),
             Item(name: "Film camera", reserved: false),
-            Item(name: "Running shoes", reserved: true),
+            Item(name: "Sneakers", reserved: true),
         ]
     )
 
@@ -178,13 +178,13 @@ struct WishlistFanView: View {
         GeometryReader { geo in
             ZStack(alignment: .top) {
                 SampleWishlistCard(wishlist: .backLeft)
-                    .offset(y: 14)
+                    .offset(y: 18)
                     .rotationEffect(
                         .degrees(WishlistFanLayout.angle(for: .left, swayed: swayed)),
                         anchor: fanAnchor
                     )
                 SampleWishlistCard(wishlist: .backRight)
-                    .offset(y: 14)
+                    .offset(y: 18)
                     .rotationEffect(
                         .degrees(WishlistFanLayout.angle(for: .right, swayed: swayed)),
                         anchor: fanAnchor

@@ -69,10 +69,15 @@ struct LoginOrSignUpScreen: View {
                     .font(.wishiesDisplay(.bold, 18))
                     .foregroundStyle(Color("obInk"))
             }
-            Text("Make a list.\nShare one link.")
-                .font(.wishiesDisplay(.bold, 32))
-                .foregroundStyle(Color("obInk"))
-                .minimumScaleFactor(0.8)
+            VStack(alignment: .leading, spacing: -14) {
+                Text("Make a list.")
+                Text("Share one link.")
+            }
+            .font(.wishiesDisplay(.bold, 32))
+            .foregroundStyle(Color("obInk"))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .accessibilityElement(children: .combine)
             Text("Friends reserve a gift, so nobody buys the same thing twice.")
                 .font(.wishies(.regular, 16))
                 .foregroundStyle(Color("obInk").opacity(0.7))

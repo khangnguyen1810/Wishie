@@ -23,6 +23,12 @@ enum WishlistFanLayout {
     static let restAngle: Double = 14
     static let swayAngle: Double = 17
 
+    /// Beyond this container width the cards stop growing.
+    static let maxFanWidth: CGFloat = maxCardWidth / cardWidthRatio
+    /// Width over height of the box the fan exactly fills, so the fan can hug its cards instead of
+    /// leaving empty space above and below them in a tall container.
+    static let fanAspectRatio: CGFloat = designCardWidth / (cardWidthRatio * designFanHeight)
+
     static func cardWidth(for container: CGSize) -> CGFloat {
         let byWidth = container.width * cardWidthRatio
         let byHeight = designCardWidth * container.height / designFanHeight
@@ -194,6 +200,8 @@ struct WishlistFanView: View {
             .scaleEffect(WishlistFanLayout.scale(for: geo.size))
             .frame(width: geo.size.width, height: geo.size.height)
         }
+        .aspectRatio(WishlistFanLayout.fanAspectRatio, contentMode: .fit)
+        .frame(maxWidth: WishlistFanLayout.maxFanWidth)
         .dynamicTypeSize(.large)
         .accessibilityHidden(true)
         .onAppear {

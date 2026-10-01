@@ -15,9 +15,14 @@ struct LoginOrSignUpScreen: View {
         NavigationStack(path: $path) {
             VStack(spacing: 0) {
                 stage
+                // Spare height on a tall phone is split evenly above and below the copy.
+                Spacer(minLength: 24)
+                    .layoutPriority(-1)
+                // Above the stage, so on a short phone with large text the fan shrinks before the copy truncates.
                 copy
-                    .padding(.top, 24)
+                    .layoutPriority(0.5)
                 Spacer(minLength: 16)
+                    .layoutPriority(-1)
                 actions
                     .layoutPriority(1)
             }
@@ -44,12 +49,13 @@ struct LoginOrSignUpScreen: View {
         }
     }
 
-    /// Yellow area holding the fanned sample wishlists. Takes whatever height the copy and actions leave.
+    /// Yellow area holding the fanned sample wishlists. Hugs the fan on a tall phone, where the spare
+    /// height goes to the spacer above the actions, and shrinks with it on a short one.
     private var stage: some View {
         WishlistFanView()
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.vertical, 32)
+            .frame(maxWidth: .infinity)
             .background {
                 UnevenRoundedRectangle(bottomLeadingRadius: 44, bottomTrailingRadius: 44)
                     .fill(Color.lightYellow)

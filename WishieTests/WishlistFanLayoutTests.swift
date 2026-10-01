@@ -34,6 +34,22 @@ struct WishlistFanLayoutTests {
         #expect(WishlistFanLayout.cardWidth(for: CGSize(width: -20, height: -20)) == 0)
     }
 
+    // MARK: hugging box
+
+    @Test func fanExactlyFillsABoxOfItsAspectRatio() {
+        // Neither side of such a box is spare: the width rule and the height rule give the same card width.
+        let box = CGSize(width: 400, height: 400 / WishlistFanLayout.fanAspectRatio)
+        let byWidth = box.width * WishlistFanLayout.cardWidthRatio
+        let byHeight = WishlistFanLayout.designCardWidth * box.height / WishlistFanLayout.designFanHeight
+        #expect(abs(byWidth - byHeight) < 0.001)
+        #expect(abs(WishlistFanLayout.cardWidth(for: box) - byWidth) < 0.001)
+    }
+
+    @Test func cardsReachTheirWidthCapAtMaxFanWidth() {
+        let box = CGSize(width: WishlistFanLayout.maxFanWidth, height: 1000)
+        #expect(abs(WishlistFanLayout.cardWidth(for: box) - WishlistFanLayout.maxCardWidth) < 0.001)
+    }
+
     // MARK: scale
 
     @Test func scaleIsCardWidthOverDesignCardWidth() {

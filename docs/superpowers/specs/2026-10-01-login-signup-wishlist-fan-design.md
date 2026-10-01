@@ -64,15 +64,20 @@ A `VStack(spacing: 0)` on an `obScreenBg` background that ignores the
 safe area.
 
 **Stage (top).** A `lightYellow` rectangle with only its two bottom
-corners rounded (radius 44), extending under the status bar. It takes
-all the height left over after the copy and actions below it have
-their natural size: roughly half the screen on a standard iPhone, less
-on an iPhone SE. (A fixed 54% height, as in the mockup, would leave too
-little room for the copy and buttons on an SE.) `WishlistFanView` is
-centered inside it, below the top safe area.
+corners rounded (radius 44), extending under the status bar. It hugs
+`WishlistFanView` with 32pt of padding above and below (16pt at the
+sides), so its height follows the fan: about 43% of the screen on an
+iPhone 16 Pro Max. It does not stretch to fill a tall screen, because
+the fan is limited by the screen's width and the extra height would
+only be empty yellow. On a short screen it shrinks, and the fan with
+it, to whatever the copy and actions leave. (A fixed 54% height, as in
+the mockup, would leave too little room for the copy and buttons on an
+SE.)
 
 **Copy (below the stage).** Leading-aligned, 30pt horizontal padding
-(same as onboarding), 24pt below the stage:
+(same as onboarding), at least 24pt below the stage and 16pt above the
+actions. Any spare height on a tall screen is split evenly between
+those two gaps, so the copy sits midway between stage and actions:
 
 - Brand row: `Image("pen")` at 28×28 clipped to a rounded rectangle
   (radius 7), then "Wishie" in `.wishiesDisplay(.bold, 18)`, `obInk`.
@@ -85,9 +90,8 @@ centered inside it, below the top safe area.
   twice." in `.wishies(.regular, 16)`, `obInk` at 70% opacity, 8pt
   below the headline.
 
-**Actions (pinned to the bottom).** A `Spacer` separates copy from
-actions. 30pt horizontal padding, 40pt bottom safe-area padding (same
-as onboarding).
+**Actions (pinned to the bottom).** 30pt horizontal padding, 40pt
+bottom safe-area padding (same as onboarding).
 
 - Primary: `WishieButton(title: "Login", enabled: true, filColor:
   Color("obInk"), titleColor: .white)`. Appends `"login"` to `path`.
@@ -99,8 +103,10 @@ as onboarding).
 
 On a small screen the headline may scale down: apply
 `.minimumScaleFactor(0.8)` to the headline and let the subtext wrap to
-at most 3 lines. The actions have layout priority over the copy, so the
-Login button and Sign up link are never pushed off screen.
+at most 3 lines. Layout priority runs actions, then copy, then stage,
+then the two spacers: the Login button and Sign up link are never
+pushed off screen, and on a short screen with large text the fan
+shrinks before the copy truncates.
 
 Dynamic Type on this screen is capped at `.accessibility1`; beyond that
 the copy cannot fit above the actions on any phone.
@@ -146,7 +152,11 @@ unit to fit its container. The scaled card width is the smallest of:
 56% of the container width, 240pt, and the width at which the whole fan
 (280pt tall at design size) still fits the container height. This rule
 lives in a small pure type, `WishlistFanLayout`, so it can be unit
-tested. The fan ignores Dynamic Type (it is a decorative picture).
+tested. The view takes the aspect ratio at which the width rule and the
+height rule agree (`fanAspectRatio`, about 1.4 wide to 1 tall) and is
+no wider than the width at which the cards reach 240pt
+(`maxFanWidth`), so it never asks for more room than the fan fills.
+The fan ignores Dynamic Type (it is a decorative picture).
 
 **Fan.** The front card is upright and drawn last. The two back cards
 rotate around an anchor below their bottom edge
@@ -158,7 +168,8 @@ in place.
 Boolean flips inside
 `withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses:
 true))`, moving the back cards between ±14° and ±17° (a 6-second round
-trip). The front card does not move.
+trip). The front card does not move. The sway carries on after the
+user returns from `LoginView` or `SignUpView`; UI tests check this.
 
 **Reduce Motion.** Read `@Environment(\.accessibilityReduceMotion)`.
 When it is true, do not start the animation; the cards stay at ±14°.
@@ -192,12 +203,15 @@ are checked by screenshot, not by automated tests. Two things are
 automated:
 
 - Unit tests (Swift Testing) for `WishlistFanLayout`: card width on a
-  normal, a very wide, a very short, and an empty container; rest and
-  sway angles; and the rule that the sway starts only once and never
-  under Reduce Motion.
+  normal, a very wide, a very short, and an empty container; the
+  hugging aspect ratio and maximum width; rest and sway angles; and the
+  rule that the sway starts only once and never under Reduce Motion.
 - UI tests (XCTest) that launch the app unauthenticated and check that
-  Login opens `LoginView`, the Sign up link opens `SignUpView`, and the
-  Login button is still tappable at the largest Dynamic Type size.
+  Login opens `LoginView`, the Sign up link opens `SignUpView`, the
+  Login button is still tappable at the largest Dynamic Type size, and
+  the fan is moving on first appearance and again after returning from
+  `LoginView` and from `SignUpView` (by comparing screenshots of the
+  fan taken a second apart).
 
 - Build the `Wishie` scheme for an iOS simulator; it must succeed with
   no reference to `bgimg*` or `BackgroundAnimationView` remaining

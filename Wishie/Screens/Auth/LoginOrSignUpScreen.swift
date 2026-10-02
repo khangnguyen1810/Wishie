@@ -2,75 +2,36 @@
 //  LoginOrSignUpScreen.swift
 //  Wishie
 //
-//  Created by Nguyễn Khang Hữu on 7/10/25.
+//  Created by Nguyễn Khang Hữu on 7/10/25.
 //
 
 import SwiftUI
 
 struct LoginOrSignUpScreen: View {
-    let listImage = ["bgimg1","bgimg2", "bgimg3", "bgimg4"]
-    let listImage2 = ["bgimg5","bgimg6", "bgimg7", "bgimg8"]
     @State private var path = NavigationPath()
     @EnvironmentObject var authViewModel: AuthViewModel
+
     var body: some View {
         NavigationStack(path: $path) {
-            ZStack {
-                Image("bgimg7")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity)
-                    .opacity(0.8)
-                    .overlay(
-                        LinearGradient(
-                            gradient: Gradient(colors: [.darkGrey.opacity(0.5), .black.opacity(0.9)]),
-                            startPoint: .bottom,
-                            endPoint: .top
-                        )
-                    )
-                    .ignoresSafeArea()
-                VStack (spacing: -290) {
-                    BackgroundAnimationView(listImage: listImage)
-                        .rotationEffect(.degrees(-15))
-                        .scaleEffect(1.3)
-                        .offset(x: 40)
-                        .ignoresSafeArea()
-                    BackgroundAnimationView(listImage: listImage2)
-                        .rotationEffect(.degrees(-15))
-                        .scaleEffect(1.3)
-                        .offset(x: 40)
-                        .ignoresSafeArea()
-                }
-                .offset(y:30)
-                VStack {
-                    Spacer()
-                    Image("pen")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 100)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                    Text("Wishie")
-                        .font(.wishies(.bold, 30))
-                        .foregroundStyle(.white)
-                    WishieButton(
-                        title: "Login",
-                        enabled: true,
-                        width: UIScreen.main.bounds.width * 0.9
-                    ) {
-                        path.append("login")
-                    }
-                    WishieButton(
-                        title: "Sign up",
-                        enabled: true,
-                        filColor: .black,
-                        titleColor: .lightYellow,
-                        width: UIScreen.main.bounds.width * 0.9
-                    ) {
-                        path.append("signup")
-                    }
-                }
-                .padding(.bottom,50)
-               
+            VStack(spacing: 0) {
+                stage
+                // Spare height on a tall phone is split evenly above and below the copy.
+                Spacer(minLength: 24)
+                    .layoutPriority(-1)
+                // Above the stage, so on a short phone with large text the fan shrinks before the copy truncates.
+                copy
+                    .layoutPriority(0.5)
+                Spacer(minLength: 16)
+                    .layoutPriority(-1)
+                actions
+                    .layoutPriority(1)
             }
+            .safeAreaPadding(.bottom, 40)
+            .background {
+                Color("obScreenBg")
+                    .ignoresSafeArea()
+            }
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
             .navigationDestination(for: String.self) { path in
                 switch(path) {
                 case "login":
@@ -87,45 +48,79 @@ struct LoginOrSignUpScreen: View {
             }
         }
     }
+
+    /// Yellow area holding the fanned sample wishlists. Hugs the fan on a tall phone, where the spare
+    /// height goes to the spacer above the actions, and shrinks with it on a short one.
+    private var stage: some View {
+        WishlistFanView()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 32)
+            .frame(maxWidth: .infinity)
+            .background {
+                UnevenRoundedRectangle(bottomLeadingRadius: 44, bottomTrailingRadius: 44)
+                    .fill(Color.lightYellow)
+                    .ignoresSafeArea(edges: .top)
+            }
+    }
+
+    private var copy: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image("pen")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 28, height: 28)
+                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                Text("Wishie")
+                    .font(.wishiesDisplay(.bold, 18))
+                    .foregroundStyle(Color("obInk"))
+            }
+            VStack(alignment: .leading, spacing: -14) {
+                Text("Make a list.")
+                Text("Share one link.")
+            }
+            .font(.wishiesDisplay(.bold, 32))
+            .foregroundStyle(Color("obInk"))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .accessibilityElement(children: .combine)
+            Text("Friends reserve a gift, so nobody buys the same thing twice.")
+                .font(.wishies(.regular, 16))
+                .foregroundStyle(Color("obInk").opacity(0.7))
+                .lineLimit(3)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 30)
+    }
+
+    private var actions: some View {
+        VStack(spacing: 6) {
+            WishieButton(
+                title: "Login",
+                enabled: true,
+                filColor: Color("obInk"),
+                titleColor: .white
+            ) {
+                path.append("login")
+            }
+            .accessibilityIdentifier("auth.loginButton")
+
+            Button {
+                path.append("signup")
+            } label: {
+                Text("Don't have an account? \(Text("Sign up").font(.wishies(.bold, 15)).underline())")
+                    .font(.wishies(.regular, 15))
+                    .foregroundStyle(Color("obInk"))
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityIdentifier("auth.signUpLink")
+        }
+        .padding(.horizontal, 30)
+    }
 }
-struct BackgroundAnimationView: View {
-    var listImage: [String]
-    @State private var xOffset: CGFloat = 0
-    @State private var totalWidth: CGFloat = 0
-    
-    var body: some View {
-        GeometryReader { geo in
-            let imageWidth = geo.size.width / 4.6
-            let spacing: CGFloat = 10
-            let repeatedList = Array(repeating: listImage, count: 2).flatMap { $0 } // nhân đôi mảng cho loop mượt
-            
-            HStack(spacing: spacing) {
-                ForEach(repeatedList.indices, id: \.self) { i in
-                    imageBackground(name: repeatedList[i], width: imageWidth, height: imageWidth * 1.45)
-                }
-            }
-            .offset(x: xOffset)
-            .onAppear {
-                totalWidth = (imageWidth + spacing) * CGFloat(listImage.count)
-                startInfiniteScroll(width: totalWidth)
-            }
-        }
-        .clipped()
-    }
-    
-    private func startInfiniteScroll(width: CGFloat) {
-        withAnimation(.linear(duration: 10).repeatForever(autoreverses: true)) {
-            xOffset = -width
-        }
-    }
-    
-    @ViewBuilder
-    func imageBackground(name: String, width: CGFloat, height: CGFloat) -> some View {
-        Image(name)
-            .resizable()
-            .scaledToFill()
-            .frame(width: width, height: height)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .clipped()
-    }
+
+#Preview {
+    LoginOrSignUpScreen()
+        .environmentObject(AuthViewModel())
 }

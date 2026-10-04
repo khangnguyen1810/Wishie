@@ -36,170 +36,146 @@ struct SignUpView: View {
                     }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
-            Text("Welcome new friend, are you good ?")
-                .font(.wishies(.bold, 37))
-                .frame(maxWidth: .infinity,minHeight: 80 , alignment: .leading)
-                .padding(.vertical, 30)
-            HStack(spacing: 10) {
-                VStack {
-                    Text("First name")
-                        .font(.wishies(.bold, 17))
-                        .padding(.bottom, 15)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    TextField("First name", text: $firstName)
-                        .font(.wishies(.regular, 17))
-                        .padding(.horizontal,15)
-                        .textInputAutocapitalization(.never)
-                        .focused($focusedField, equals: .firstName)
-                        .onSubmit {
-                            focusedField = .lastName
-                        }
-                        .background {
-                            RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
-                                .frame(height: 56)
+            ScrollView {
+                Text("Welcome new friend, are you good ?")
+                    .font(.wishies(.bold, 37))
+                    .frame(maxWidth: .infinity,minHeight: 80 , alignment: .leading)
+                    .padding(.vertical, 30)
+                HStack(spacing: 10) {
+                    VStack {
+                        Text("First name")
+                            .font(.wishies(.bold, 17))
+                            .padding(.bottom, 15)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        TextField("First name", text: $firstName)
+                            .font(.wishies(.regular, 17))
+                            .padding(.horizontal,15)
+                            .textInputAutocapitalization(.never)
+                            .focused($focusedField, equals: .firstName)
+                            .onSubmit {
+                                focusedField = .lastName
+                            }
+                            .background {
+                                RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
+                                    .frame(height: 56)
                                 
-                        }
-                }
-                VStack {
-                    Text("Last name")
-                        .font(.wishies(.bold, 17))
-                        .padding(.bottom, 15)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    TextField("Last name", text: $lastName)
-                        .font(.wishies(.regular, 17))
-                        .padding(.horizontal,15)
-                        .textInputAutocapitalization(.never)
-                        .focused($focusedField, equals: .lastName)
-                        .onSubmit {
-                            focusedField = .email
-                        }
-                        .background {
-                            RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
-                                .frame(height: 56)
+                            }
+                    }
+                    VStack {
+                        Text("Last name")
+                            .font(.wishies(.bold, 17))
+                            .padding(.bottom, 15)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        TextField("Last name", text: $lastName)
+                            .font(.wishies(.regular, 17))
+                            .padding(.horizontal,15)
+                            .textInputAutocapitalization(.never)
+                            .focused($focusedField, equals: .lastName)
+                            .onSubmit {
+                                focusedField = .email
+                            }
+                            .background {
+                                RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
+                                    .frame(height: 56)
                                 
-                        }
-                }
-            }
-            .padding(.bottom,30)
-            Text("Email")
-                .font(.wishies(.bold, 17))
-                .padding(.bottom, 15)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            TextField("Email", text: $email)
-                .font(.wishies(.regular, 17))
-                .padding(.horizontal,15)
-                .textInputAutocapitalization(.never)
-                .focused($focusedField, equals: .email)
-                .onSubmit {
-                    focusedField = .phone
-                }
-                .background {
-                    RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
-                        .frame(height: 56)
+                            }
+                    }
                 }
                 .padding(.bottom,30)
-            Text("Phone")
-                .font(.wishies(.bold, 17))
-                .padding(.bottom, 15)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            TextField("Phone", text: $phone)
-                .font(.wishies(.regular, 17))
-                .padding(.horizontal,15)
-                .textInputAutocapitalization(.never)
-                .focused($focusedField, equals: .phone)
-                .onSubmit {
+                Text("Email")
+                    .font(.wishies(.bold, 17))
+                    .padding(.bottom, 15)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                TextField("Email", text: $email)
+                    .font(.wishies(.regular, 17))
+                    .padding(.horizontal,15)
+                    .textInputAutocapitalization(.never)
+                    .focused($focusedField, equals: .email)
+                    .onSubmit {
+                        focusedField = .phone
+                    }
+                    .background {
+                        RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
+                            .frame(height: 56)
+                    }
+                    .padding(.bottom,30)
+                Text("Phone")
+                    .font(.wishies(.bold, 17))
+                    .padding(.bottom, 15)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                TextField("Phone", text: $phone)
+                    .font(.wishies(.regular, 17))
+                    .padding(.horizontal,15)
+                    .textInputAutocapitalization(.never)
+                    .focused($focusedField, equals: .phone)
+                    .onSubmit {
+                        focusedField = nil
+                    }
+                    .background {
+                        RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
+                            .frame(height: 56)
+                    }
+                DateInputView(isCreating: .constant(true ), date: $dob)
+                    .padding(.vertical, 30)
+                Button(action: {
                     focusedField = nil
-                }
-                .background {
-                    RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
-                        .frame(height: 56)
-                }
-            DateInputView(isCreating: .constant(true ), date: $dob)
-                .padding(.vertical, 30)
-            Button(action: {
-                focusedField = nil
-                authVM.request = SignUpRequest(
-                    firstName: firstName,
-                    lastName: lastName,
-                    email: email,
-                    phone:phone,
-                    dateOfBirth: dob
-                )
-                goToPassword = true
-            }) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(email.isEmpty ? .black.opacity(0.4) : .black)
-                        .frame(height: 50)
-                    Text("Continue")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(.yellow)
-                }
-            }
-            .disabled(email.isEmpty)
-            
-            HStack {
-                Rectangle()
-                    .frame(width: UIScreen.main.bounds.width/3,height: 2)
-                Text("or")
-                    .font(.wishies(.italic, 15))
-                Rectangle()
-                    .frame(width: UIScreen.main.bounds.width/3,height: 2)
-            }
-            Button(action: {
-                authVM.isShowError = true
-                authVM.errorTitle = "Apple login is not supported"
-                authVM.errorMessage = "This feature is currently not supported on app"
-            }, label: {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(.black)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .shadow(color: .black.opacity(0.2), radius: 4, x:0, y: 5)
-                    HStack {
-                        Image(systemName: "apple.logo")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .foregroundStyle(.white)
-                            .frame(width: 20)
-                            .padding(.leading, 20)
+                    authVM.request = SignUpRequest(
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: email,
+                        phone:phone,
+                        dateOfBirth: dob
+                    )
+                    goToPassword = true
+                }) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(email.isEmpty ? .black.opacity(0.4) : .black)
+                            .frame(height: 50)
+                        Text("Continue")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundStyle(.yellow)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    Text("Login with Apple")
-                        .font(.wishies(.bold, 20))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity, alignment: .center)
                 }
-            })
-            .padding(.vertical, 10)
-            Button(action: {
-                guard let presentingViewController = UIApplication.topViewController() else { return }
-                authVM.loginWithGoogle(presentingViewController: presentingViewController)
-            }, label: {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .shadow(color: .black.opacity(0.2), radius: 4, x:0, y: 5)
-                    HStack {
-                        Image("google_icon")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 20)
-                            .padding(.leading, 20)
+                .disabled(email.isEmpty)
+                
+                HStack {
+                    Rectangle()
+                        .frame(width: UIScreen.main.bounds.width/3,height: 2)
+                    Text("or")
+                        .font(.wishies(.italic, 15))
+                    Rectangle()
+                        .frame(width: UIScreen.main.bounds.width/3,height: 2)
+                }
+                
+                Button(action: {
+                    guard let presentingViewController = UIApplication.topViewController() else { return }
+                    authVM.loginWithGoogle(presentingViewController: presentingViewController)
+                }, label: {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .shadow(color: .black.opacity(0.2), radius: 4, x:0, y: 5)
+                        HStack {
+                            Image("google_icon")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 20)
+                                .padding(.leading, 20)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("Login with Google")
+                            .font(.wishies(.bold, 20))
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity, alignment: .center)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    Text("Login with Google")
-                        .font(.wishies(.bold, 20))
-                        .foregroundStyle(.black)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                }
-            })
-            .padding(.vertical, 10)
-            Spacer()
+                })
+                .padding(.vertical, 10)
+                Spacer()
+            }
+            .scrollIndicators(.hidden)
         }
         .padding([.horizontal,.bottom], 20)
         .frame(maxWidth: .infinity,maxHeight: .infinity)

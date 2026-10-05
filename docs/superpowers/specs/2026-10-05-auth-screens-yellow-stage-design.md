@@ -288,8 +288,8 @@ name and birthday are not validated, as today.
 
 Removed from `SignUpView`: `dateOfBirthField`, `validateGoinButton`,
 and the unused `date`, `month`, `year`, `password` and `showPassword`
-state. The `Binding.max(_:)` extension at the bottom of the file stays
-if anything else in the project uses it and is deleted otherwise.
+state, and the `Binding.max(_:)` extension at the bottom of the file,
+which nothing in the project calls.
 
 ### Create password
 

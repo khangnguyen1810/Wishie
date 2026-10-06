@@ -112,13 +112,11 @@ final class AuthFormScreensUITests: XCTestCase {
         app.buttons["auth.forgotPasswordLink"].tap()
         XCTAssertTrue(app.staticTexts["auth.forgot.title"].waitForExistence(timeout: 5))
 
-        // The pushed screen sits on top of Login, whose elements stay in the accessibility
-        // tree beneath it. The pushed screen's elements come first, so take the first match.
-        let primary = app.buttons.matching(identifier: "auth.primaryButton").element(boundBy: 0)
+        let primary = app.buttons["auth.primaryButton"]
         XCTAssertEqual(primary.label, "Send reset link")
         XCTAssertFalse(primary.isEnabled)
 
-        let email = app.textFields.matching(identifier: "auth.field.email").element(boundBy: 0)
+        let email = app.textFields["auth.field.email"]
         type("linh@example", into: email)
         XCTAssertFalse(primary.isEnabled)
 
@@ -201,5 +199,38 @@ final class AuthFormScreensUITests: XCTestCase {
         password.typeText("8")
         XCTAssertTrue(primary.isEnabled)
         XCTAssertEqual(rule.label, "At least 8 characters, met")
+    }
+
+    // MARK: Largest text size
+
+    @MainActor
+    func testBackButtonStaysHittableAtLargestTextSize() throws {
+        let app = launchUnauthenticated(extraArguments: [
+            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+        ])
+        let back = app.buttons["auth.backButton"]
+
+        // Login, then Forgot password.
+        openLogin(app)
+        XCTAssertTrue(back.isHittable)
+        let forgot = app.buttons["auth.forgotPasswordLink"]
+        if !forgot.isHittable {
+            app.swipeUp()
+        }
+        forgot.tap()
+        XCTAssertTrue(app.staticTexts["auth.forgot.title"].waitForExistence(timeout: 5))
+        XCTAssertTrue(back.isHittable)
+        XCTAssertTrue(app.buttons["auth.primaryButton"].isHittable, "The pinned footer button must stay on screen")
+        back.tap()
+        XCTAssertTrue(app.staticTexts["auth.login.title"].waitForExistence(timeout: 5))
+        back.tap()
+
+        // Sign up, then Create password.
+        openCreatePassword(app)
+        XCTAssertTrue(back.isHittable)
+        XCTAssertTrue(app.buttons["auth.primaryButton"].isHittable, "The pinned footer button must stay on screen")
+        back.tap()
+        XCTAssertTrue(app.staticTexts["auth.signup.title"].waitForExistence(timeout: 5))
+        XCTAssertTrue(back.isHittable)
     }
 }

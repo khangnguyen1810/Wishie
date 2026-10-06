@@ -18,6 +18,7 @@ struct LoginView: View {
     @State private var password: String = ""
     @EnvironmentObject private var viewModel: AuthViewModel
     @FocusState private var focusedField: InputFieldType?
+    @State private var goToForgotPassword = false
 
     private var emailError: String? {
         AuthValidation.showsEmailError(email: email, isFocused: focusedField == .email)
@@ -44,9 +45,8 @@ struct LoginView: View {
                 .onSubmit {
                     focusedField = nil
                 }
-            NavigationLink {
-                ForgotPasswordView()
-                    .navigationBarBackButtonHidden()
+            Button {
+                goToForgotPassword = true
             } label: {
                 Text("Forgot password?")
                     .font(.wishies(.bold, 14))
@@ -73,6 +73,10 @@ struct LoginView: View {
         }
         .showDialogIfNeeded($viewModel.isShowError, title: viewModel.errorTitle, message: viewModel.errorMessage)
         .showFullScreenDialog($viewModel.isShowProgress)
+        .navigationDestination(isPresented: $goToForgotPassword) {
+            ForgotPasswordView()
+                .navigationBarBackButtonHidden()
+        }
     }
 }
 

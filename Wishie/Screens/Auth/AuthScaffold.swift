@@ -78,7 +78,6 @@ struct AuthScaffold<Content: View, Footer: View>: View {
                         .minimumScaleFactor(0.8)
                 }
             }
-            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         }
     }
 
@@ -95,7 +94,7 @@ struct AuthScaffold<Content: View, Footer: View>: View {
             scrollingBody
                 .environment(\.authScrollToField) { id in
                     withAnimation(.easeOut(duration: 0.25)) {
-                        proxy.scrollTo(id, anchor: .bottom)
+                        proxy.scrollTo(id)
                     }
                 }
         }
@@ -146,14 +145,12 @@ struct AuthScaffold<Content: View, Footer: View>: View {
 
     private var stage: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // Baloo 2's line box is tall, so each line is its own Text and the lines are pulled
-            // together. The whole title reads as one element.
             titleView
-            .accessibilityRepresentation {
-                Text(spokenTitle)
-                    .accessibilityAddTraits(.isHeader)
-                    .accessibilityIdentifier("auth.\(screenID).title")
-            }
+                .accessibilityRepresentation {
+                    Text(spokenTitle)
+                        .accessibilityAddTraits(.isHeader)
+                        .accessibilityIdentifier("auth.\(screenID).title")
+                }
             Text(subtitle)
                 .font(.wishies(.regular, 16))
                 .foregroundStyle(Color("obInk").opacity(0.7))
@@ -181,6 +178,7 @@ struct AuthScaffold<Content: View, Footer: View>: View {
         SampleWishlistCard(wishlist: .sample(for: cardTheme))
             .scaleEffect(cardWidth / WishlistFanLayout.designCardWidth, anchor: .bottomTrailing)
             .rotationEffect(.degrees(-9))
+            // y is 68 so the card's top edge clears the pinned back strip at rest.
             .offset(x: 40, y: 68)
             .dynamicTypeSize(.large)
             .allowsHitTesting(false)

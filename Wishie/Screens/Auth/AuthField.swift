@@ -149,13 +149,14 @@ struct AuthField: View {
             }
         }
         .id(kind.id)
-        .onChange(of: isFocused) { _, focused in
-            guard focused else { return }
+        .task(id: isFocused) {
+            guard isFocused else { return }
             // iOS scrolls only the text line into view. Once the keyboard has finished rising,
-            // bring the whole box clear of the keyboard's Done bar.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                scrollToField(kind.id)
-            }
+            // bring the whole box clear of the keyboard's Done bar. The task is cancelled if
+            // focus leaves first.
+            try? await Task.sleep(for: .milliseconds(350))
+            guard !Task.isCancelled else { return }
+            scrollToField(kind.id)
         }
     }
 

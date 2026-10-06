@@ -122,6 +122,10 @@ final class AuthFormScreensUITests: XCTestCase {
 
         email.typeText(".com")
         XCTAssertTrue(primary.isEnabled)
+        XCTAssertEqual(
+            app.toolbars.buttons.matching(identifier: "Done").count, 1,
+            "Only the top screen's keyboard bar may show"
+        )
     }
 
     // MARK: Sign up
@@ -202,6 +206,31 @@ final class AuthFormScreensUITests: XCTestCase {
     }
 
     // MARK: Keyboard
+
+    @MainActor
+    func testReturnOnLoginEmailMovesFocusToPassword() throws {
+        let app = launchUnauthenticated()
+        openLogin(app)
+
+        type("linh@example.com\n", into: app.textFields["auth.field.email"])
+        // No tap: the text must land in whichever field Return moved focus to.
+        app.typeText("secret")
+
+        XCTAssertTrue(app.buttons["auth.primaryButton"].isEnabled, "Return must move focus to the password field")
+        XCTAssertEqual(app.textFields["auth.field.email"].value as? String, "linh@example.com")
+    }
+
+    @MainActor
+    func testReturnOnSignUpFirstNameMovesFocusToLastName() throws {
+        let app = launchUnauthenticated()
+        openSignUp(app)
+
+        type("Linh\n", into: app.textFields["auth.field.firstName"])
+        app.typeText("Tran")
+
+        XCTAssertEqual(app.textFields["auth.field.firstName"].value as? String, "Linh")
+        XCTAssertEqual(app.textFields["auth.field.lastName"].value as? String, "Tran")
+    }
 
     @MainActor
     func testFocusedPasswordFieldStaysAboveTheKeyboardBar() throws {

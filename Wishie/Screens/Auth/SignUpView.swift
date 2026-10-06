@@ -72,7 +72,7 @@ struct SignUpView: View {
                 authVM.request = SignUpRequest(
                     firstName: firstName,
                     lastName: lastName,
-                    email: email,
+                    email: email.trimmingCharacters(in: .whitespacesAndNewlines),
                     phone: phone,
                     dateOfBirth: dob
                 )

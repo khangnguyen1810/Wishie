@@ -365,3 +365,39 @@ the same arguments as `LoginOrSignUpScreenUITests`.
 generation) and an iPhone 16 Pro Max simulator: each screen at default
 text size and at the largest accessibility size, with the keyboard up
 and down.
+
+## Changes made during implementation
+
+These differ from the sections above and describe the code as built.
+
+- **`InputFieldType` stays in `LoginView.swift`.** It was not moved to
+  `AuthField.swift`.
+- **Titles.** A title that needs two lines carries an explicit line
+  break: "Create your\naccount.", "Reset your\npassword.",
+  "Pick a\npassword."; "Welcome back." is one line. `AuthScaffold`
+  draws each line as its own single-line `Text` stacked with −14pt
+  spacing, the same workaround the landing headline uses for Baloo 2's
+  tall line box. At accessibility text sizes the title is one wrapping
+  `Text`, and its Dynamic Type is capped at `.accessibility1`.
+  VoiceOver reads the title as one heading.
+- **Top strip.** The back button sits in a pinned full-width
+  `lightYellow` strip that extends under the status bar. At rest it is
+  indistinguishable from the stage; when the form scrolls, content
+  passes under the strip instead of under the button and status bar.
+- **Decorative card.** Offset `(x: 40, y: 68)` so the strip does not
+  clip its top.
+- **Forgot password push.** `LoginView` pushes `ForgotPasswordView`
+  from a `Button` with `.navigationDestination(isPresented:)`, as
+  `SignUpView` does for Create password. A `NavigationLink` left the
+  Login screen in the accessibility tree underneath.
+- **Focused field and the keyboard.** `AuthScaffold` wraps its scroll
+  view in a `ScrollViewReader`; an `AuthField` scrolls itself fully
+  above the keyboard's Done bar shortly after it gains focus.
+- **Tests.** `AuthFormScreensUITests` also covers the focused password
+  field staying above the keyboard bar. UI tests run with
+  `-parallel-testing-enabled NO` against a simulator id.
+
+Known and accepted: Xcode logs `Invalid frame dimension (negative or
+non-finite)` once each time the keyboard appears. It comes from iOS
+laying out the keyboard toolbar that holds the Done button, not from
+this layout.

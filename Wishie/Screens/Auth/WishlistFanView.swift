@@ -51,7 +51,7 @@ enum WishlistFanLayout {
 
 // MARK: - Sample data
 
-private struct SampleWishlist {
+struct SampleWishlist {
     struct Item: Identifiable {
         let id = UUID()
         let name: String
@@ -96,12 +96,34 @@ private struct SampleWishlist {
             Item(name: "Sketchbook", reserved: false),
         ]
     )
+
+    static let wedding = SampleWishlist(
+        title: "Wedding",
+        subtitle: "10 items",
+        theme: .gold,
+        items: [
+            Item(name: "Dinner set", reserved: false),
+            Item(name: "Wine glasses", reserved: false),
+            Item(name: "Photo frame", reserved: false),
+        ]
+    )
+
+    /// The sample drawn in that theme. The auth form screens show one each as decoration.
+    static func sample(for theme: GradientTheme) -> SampleWishlist {
+        switch theme {
+        case .coral: front
+        case .mint: backLeft
+        case .grape: backRight
+        case .gold: wedding
+        case .green: front
+        }
+    }
 }
 
 // MARK: - Card
 
 /// One sample wishlist, styled after `HomeItemViewCell` so it previews what Home looks like.
-private struct SampleWishlistCard: View {
+struct SampleWishlistCard: View {
     let wishlist: SampleWishlist
 
     private var tint: Color {

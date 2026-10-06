@@ -21,7 +21,7 @@ struct ForgotPasswordView: View {
     var body: some View {
         AuthScaffold(
             screenID: "forgot",
-            title: "Reset your password.",
+            title: "Reset your\npassword.",
             subtitle: "We will email you a link.",
             cardTheme: .gold
         ) {

@@ -35,7 +35,7 @@ struct SignUpView: View {
     var body: some View {
         AuthScaffold(
             screenID: "signup",
-            title: "Create your account.",
+            title: "Create your\naccount.",
             subtitle: "It takes a minute.",
             cardTheme: .mint
         ) {

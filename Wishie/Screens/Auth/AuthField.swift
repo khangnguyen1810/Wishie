@@ -157,6 +157,7 @@ struct AuthField: View {
                 TextField("", text: $text)
             }
         }
+        .frame(minHeight: 56)
         .focused($isFocused)
         .font(.wishies(.regular, 17))
         .foregroundStyle(Color("obInk"))

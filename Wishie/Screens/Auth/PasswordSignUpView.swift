@@ -19,7 +19,7 @@ struct PasswordSignUpView: View {
     var body: some View {
         AuthScaffold(
             screenID: "password",
-            title: "Pick a password.",
+            title: "Pick a\npassword.",
             subtitle: AuthValidation.passwordSubtitle(firstName: authVM.request.firstName),
             cardTheme: .grape
         ) {

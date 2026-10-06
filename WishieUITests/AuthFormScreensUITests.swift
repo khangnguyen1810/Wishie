@@ -201,6 +201,30 @@ final class AuthFormScreensUITests: XCTestCase {
         XCTAssertEqual(rule.label, "At least 8 characters, met")
     }
 
+    // MARK: Keyboard
+
+    @MainActor
+    func testFocusedPasswordFieldStaysAboveTheKeyboardBar() throws {
+        let app = launchUnauthenticated()
+        openLogin(app)
+
+        type("linh@example.com", into: app.textFields["auth.field.email"])
+        let password = app.secureTextFields["auth.field.password"]
+        password.tap()
+
+        let done = app.toolbars.buttons["Done"]
+        XCTAssertTrue(done.waitForExistence(timeout: 5))
+        // Give the scroll that follows the keyboard time to settle.
+        Thread.sleep(forTimeInterval: 1)
+        // The accessibility frame is only the text line. The white box around it is 56pt tall and
+        // centered on it, so its bottom edge is 28pt below the line's center.
+        let boxBottom = password.frame.midY + 28
+        XCTAssertLessThanOrEqual(
+            boxBottom, done.frame.minY,
+            "The focused field's box (bottom \(boxBottom), text frame \(password.frame)) must sit fully above the keyboard's Done bar (\(done.frame))"
+        )
+    }
+
     // MARK: Largest text size
 
     @MainActor
@@ -213,6 +237,9 @@ final class AuthFormScreensUITests: XCTestCase {
         // Login, then Forgot password.
         openLogin(app)
         XCTAssertTrue(back.isHittable)
+        XCTAssertLessThanOrEqual(
+            app.staticTexts["auth.login.title"].frame.maxX, app.windows.firstMatch.frame.maxX
+        )
         let forgot = app.buttons["auth.forgotPasswordLink"]
         if !forgot.isHittable {
             app.swipeUp()

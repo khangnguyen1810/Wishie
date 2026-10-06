@@ -5,6 +5,18 @@
 
 import SwiftUI
 
+private struct AuthScrollToFieldKey: EnvironmentKey {
+    static let defaultValue: (String) -> Void = { _ in }
+}
+
+extension EnvironmentValues {
+    /// Scrolls the scaffold so the field with this id sits clear of the keyboard.
+    var authScrollToField: (String) -> Void {
+        get { self[AuthScrollToFieldKey.self] }
+        set { self[AuthScrollToFieldKey.self] = newValue }
+    }
+}
+
 /// The frame shared by the auth form screens: a yellow stage holding the title, a back button
 /// that stays put, a scrolling body, and an optional footer that rides above the keyboard.
 struct AuthScaffold<Content: View, Footer: View>: View {
@@ -44,6 +56,32 @@ struct AuthScaffold<Content: View, Footer: View>: View {
         !dynamicTypeSize.isAccessibilitySize
     }
 
+    /// Below accessibility sizes the title is drawn one Text per line, pulled together. At
+    /// accessibility sizes it is a single Text that wraps, so no line is cut short. Dynamic Type
+    /// for the title stops at accessibility1.
+    @ViewBuilder
+    private var titleView: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            Text(spokenTitle)
+                .font(.wishiesDisplay(.bold, 32))
+                .foregroundStyle(Color("obInk"))
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
+                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+        } else {
+            VStack(alignment: .leading, spacing: -14) {
+                ForEach(Array(titleLines.enumerated()), id: \.offset) { _, line in
+                    Text(line)
+                        .font(.wishiesDisplay(.bold, 32))
+                        .foregroundStyle(Color("obInk"))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+            }
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+        }
+    }
+
     private var titleLines: [String] {
         title.components(separatedBy: "\n")
     }
@@ -53,6 +91,17 @@ struct AuthScaffold<Content: View, Footer: View>: View {
     }
 
     var body: some View {
+        ScrollViewReader { proxy in
+            scrollingBody
+                .environment(\.authScrollToField) { id in
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        proxy.scrollTo(id, anchor: .bottom)
+                    }
+                }
+        }
+    }
+
+    private var scrollingBody: some View {
         ScrollView {
             VStack(spacing: 0) {
                 stage
@@ -99,15 +148,7 @@ struct AuthScaffold<Content: View, Footer: View>: View {
         VStack(alignment: .leading, spacing: 6) {
             // Baloo 2's line box is tall, so each line is its own Text and the lines are pulled
             // together. The whole title reads as one element.
-            VStack(alignment: .leading, spacing: -14) {
-                ForEach(Array(titleLines.enumerated()), id: \.offset) { _, line in
-                    Text(line)
-                        .font(.wishiesDisplay(.bold, 32))
-                        .foregroundStyle(Color("obInk"))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-            }
+            titleView
             .accessibilityRepresentation {
                 Text(spokenTitle)
                     .accessibilityAddTraits(.isHeader)

@@ -107,6 +107,7 @@ struct AuthField: View {
     /// Drives the border only. Screens attach their own `.focused` to move between fields.
     @FocusState private var isFocused: Bool
     @State private var isRevealed = false
+    @Environment(\.authScrollToField) private var scrollToField
 
     init(_ label: String, text: Binding<String>, kind: AuthFieldKind, error: String? = nil) {
         self.label = label
@@ -145,6 +146,15 @@ struct AuthField: View {
                     .font(.wishies(.medium, 13))
                     .foregroundStyle(Color("obError"))
                     .accessibilityIdentifier("auth.\(kind.id)Error")
+            }
+        }
+        .id(kind.id)
+        .onChange(of: isFocused) { _, focused in
+            guard focused else { return }
+            // iOS scrolls only the text line into view. Once the keyboard has finished rising,
+            // bring the whole box clear of the keyboard's Done bar.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                scrollToField(kind.id)
             }
         }
     }

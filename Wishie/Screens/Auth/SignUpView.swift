@@ -16,22 +16,22 @@ struct SignUpView: View {
     @State private var phone: String = ""
     @State private var goToPassword = false
     @State private var dob: Date = Date()
-
+    
     @FocusState private var focusedField: InputFieldType?
-
+    
     private var emailError: String? {
         AuthValidation.showsEmailError(email: email, isFocused: focusedField == .email)
-            ? AuthValidation.emailErrorMessage
-            : nil
+        ? AuthValidation.emailErrorMessage
+        : nil
     }
-
+    
     /// Side by side normally; stacked at accessibility text sizes, where two columns are too narrow.
     private var nameLayout: AnyLayout {
         dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 18))
-            : AnyLayout(HStackLayout(alignment: .top, spacing: 10))
+        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 18))
+        : AnyLayout(HStackLayout(alignment: .top, spacing: 10))
     }
-
+    
     var body: some View {
         AuthScaffold(
             screenID: "signup",
@@ -40,27 +40,44 @@ struct SignUpView: View {
             cardTheme: .mint
         ) {
             nameLayout {
-                AuthField("First name", text: $firstName, kind: .firstName)
-                    .focused($focusedField, equals: .firstName)
-                    .submitLabel(.next)
-                    .onSubmit {
-                        focusedField = .lastName
-                    }
-                AuthField("Last name", text: $lastName, kind: .lastName)
-                    .focused($focusedField, equals: .lastName)
-                    .submitLabel(.next)
-                    .onSubmit {
-                        focusedField = .email
-                    }
-            }
-            AuthField("Email", text: $email, kind: .email, error: emailError)
-                .focused($focusedField, equals: .email)
+                AuthField("First name",
+                          "Your first name",
+                          text: $firstName,
+                          kind: .firstName
+                )
+                .focused($focusedField, equals: .firstName)
                 .submitLabel(.next)
                 .onSubmit {
-                    focusedField = .phone
+                    focusedField = .lastName
                 }
-            AuthField("Phone", text: $phone, kind: .phone)
-                .focused($focusedField, equals: .phone)
+                AuthField("Last name",
+                          "Your last name" ,
+                          text: $lastName,
+                          kind: .lastName
+                )
+                .focused($focusedField, equals: .lastName)
+                .submitLabel(.next)
+                .onSubmit {
+                    focusedField = .email
+                }
+            }
+            AuthField("Email",
+                      "user@example.com",
+                      text: $email,
+                      kind: .email,
+                      error: emailError
+            )
+            .focused($focusedField, equals: .email)
+            .submitLabel(.next)
+            .onSubmit {
+                focusedField = .phone
+            }
+            AuthField("Phone",
+                      "+1 2345677...",
+                      text: $phone,
+                      kind: .phone
+            )
+            .focused($focusedField, equals: .phone)
             AuthBirthdayField(date: $dob)
             WishieButton(
                 title: "Continue",

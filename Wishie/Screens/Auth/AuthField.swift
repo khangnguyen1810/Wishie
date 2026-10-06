@@ -100,6 +100,7 @@ extension View {
 /// message when `error` is set. The password kinds add a show/hide button.
 struct AuthField: View {
     let label: String
+    let placeHolder: String
     @Binding var text: String
     let kind: AuthFieldKind
     var error: String?
@@ -109,11 +110,12 @@ struct AuthField: View {
     @State private var isRevealed = false
     @Environment(\.authScrollToField) private var scrollToField
 
-    init(_ label: String, text: Binding<String>, kind: AuthFieldKind, error: String? = nil) {
+    init(_ label: String,_ placeHolder: String = "", text: Binding<String>, kind: AuthFieldKind, error: String? = nil) {
         self.label = label
         self._text = text
         self.kind = kind
         self.error = error
+        self.placeHolder = placeHolder
     }
 
     private var chromeState: AuthFieldChromeState {
@@ -163,9 +165,9 @@ struct AuthField: View {
     private var input: some View {
         Group {
             if kind.isPassword && !isRevealed {
-                SecureField("", text: $text)
+                SecureField(placeHolder, text: $text)
             } else {
-                TextField("", text: $text)
+                TextField(placeHolder, text: $text)
             }
         }
         .frame(minHeight: 56)

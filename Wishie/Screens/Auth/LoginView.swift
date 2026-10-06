@@ -33,13 +33,13 @@ struct LoginView: View {
             subtitle: "Log in to see your lists.",
             cardTheme: .coral
         ) {
-            AuthField("Email", text: $email, kind: .email, error: emailError)
+            AuthField("Email", "user@example.com", text: $email, kind: .email, error: emailError)
                 .focused($focusedField, equals: .email)
                 .submitLabel(.next)
                 .onSubmit {
                     focusedField = .password
                 }
-            AuthField("Password", text: $password, kind: .password(isNew: false))
+            AuthField("Password","•••••••", text: $password, kind: .password(isNew: false))
                 .focused($focusedField, equals: .password)
                 .submitLabel(.done)
                 .onSubmit {

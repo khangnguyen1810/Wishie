@@ -2,68 +2,46 @@
 //  PasswordSignUpView.swift
 //  Wishie
 //
-//  Created by Nguyễn Khang Hữu on 26/10/25.
+//  Created by Nguyễn Khang Hữu on 26/10/25.
 //
 
 import SwiftUI
 
 struct PasswordSignUpView: View {
     @EnvironmentObject var authVM: AuthViewModel
-    @Environment(\.dismiss) var dismiss
-    @State private var showPassword: Bool = false
-    @FocusState private var focusedField: InputFieldType?
+    @FocusState private var isPasswordFocused: Bool
     @State private var password: String = ""
+
+    private var isLongEnough: Bool {
+        AuthValidation.isPasswordLongEnough(password)
+    }
+
     var body: some View {
-        VStack {
-            Button {
-                dismiss()
-            } label: {
-                Circle().frame(width: 50, height: 50)
-                    .foregroundStyle(.lightYellow)
-                    .overlay {
-                        Image(systemName: "arrow.left")
-                            .foregroundStyle(.black)
-                    }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            
-            Text("Hi new friend, please create password to continue")
-                .font(.wishies(.bold, 37))
-                .frame(maxWidth: .infinity,minHeight: 80 , alignment: .leading)
-                .padding(.vertical, 30)
-            Text("Password")
-                .font(.wishies(.bold, 17))
-                .padding(.bottom, 15)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            PasswordField(password: $password, showPassword: $showPassword)
-                .focused($focusedField, equals: .password)
+        AuthScaffold(
+            screenID: "password",
+            title: "Pick a password.",
+            subtitle: AuthValidation.passwordSubtitle(firstName: authVM.request.firstName),
+            cardTheme: .grape
+        ) {
+            AuthField("Password", text: $password, kind: .password(isNew: true))
+                .focused($isPasswordFocused)
+                .submitLabel(.done)
                 .onSubmit {
-                    focusedField = nil
+                    isPasswordFocused = false
                 }
-                .padding(.bottom, 15)
-            Spacer()
-            Button(action: {
-                focusedField = nil
+            ruleRow
+        } footer: {
+            WishieButton(
+                title: "Create account",
+                enabled: isLongEnough,
+                filColor: Color("obInk"),
+                titleColor: .white
+            ) {
+                isPasswordFocused = false
                 authVM.request.password = password
                 authVM.signup(request: authVM.request)
-            }, label: {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(password.isEmpty ? .black.opacity(0.4) : .black)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                    Text("Go in")
-                        .font(.wishies(.bold, 20))
-                        .foregroundStyle(.lightYellow)
-                }
-            })
-            .disabled(password.isEmpty)
-            .padding(.vertical, 20)
-        }
-        .padding([.horizontal,.bottom], 20)
-        .frame(maxWidth: .infinity,maxHeight: .infinity)
-        .background {
-            Color.lightYellow1.ignoresSafeArea()
+            }
+            .accessibilityIdentifier("auth.primaryButton")
         }
         .showDialogIfNeeded(
             $authVM.isShowError,
@@ -71,17 +49,37 @@ struct PasswordSignUpView: View {
             message: authVM.errorMessage
         )
         .showFullScreenDialog($authVM.isShowProgress)
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") {
-                    focusedField = nil 
+    }
+
+    /// The one password rule the backend enforces, ticked off as soon as it is met.
+    private var ruleRow: some View {
+        let text = "At least \(AuthValidation.minimumPasswordLength) characters"
+        return HStack(spacing: 8) {
+            ZStack {
+                if isLongEnough {
+                    Circle()
+                        .fill(Color("obInk"))
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(Color.lightYellow)
+                } else {
+                    Circle()
+                        .strokeBorder(Color("obInk"), lineWidth: 1.5)
                 }
             }
+            .frame(width: 16, height: 16)
+            Text(text)
+                .font(.wishies(.medium, 14))
+                .foregroundStyle(Color("obInk"))
         }
-        .onTapGesture {
-            hideKeyboard()
-        }
+        .opacity(isLongEnough ? 1 : 0.55)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(text), \(isLongEnough ? "met" : "not met")")
+        .accessibilityIdentifier("auth.passwordRule")
     }
 }
 
+#Preview {
+    PasswordSignUpView()
+        .environmentObject(AuthViewModel())
+}

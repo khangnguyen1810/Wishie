@@ -2,185 +2,87 @@
 //  SignUpView.swift
 //  Wishie
 //
-//  Created by Nguyễn Khang Hữu on 19/10/25.
+//  Created by Nguyễn Khang Hữu on 19/10/25.
 //
 
 import SwiftUI
 
 struct SignUpView: View {
     @EnvironmentObject var authVM: AuthViewModel
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var lastName: String = ""
     @State private var firstName: String = ""
     @State private var email: String = ""
-    @State private var password: String = ""
     @State private var phone: String = ""
-    @State private var date: String = ""
-    @State private var month: String = ""
-    @State private var year: String = ""
-    @State private var showPassword: Bool = false
     @State private var goToPassword = false
     @State private var dob: Date = Date()
-    
+
     @FocusState private var focusedField: InputFieldType?
+
+    private var emailError: String? {
+        AuthValidation.showsEmailError(email: email, isFocused: focusedField == .email)
+            ? AuthValidation.emailErrorMessage
+            : nil
+    }
+
+    /// Side by side normally; stacked at accessibility text sizes, where two columns are too narrow.
+    private var nameLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 18))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 10))
+    }
+
     var body: some View {
-        VStack {
-            Button {
-                dismiss()
-            } label: {
-                Circle().frame(width: 50, height: 50)
-                    .foregroundStyle(.lightYellow)
-                    .overlay {
-                        Image(systemName: "arrow.left")
-                            .foregroundStyle(.black)
+        AuthScaffold(
+            screenID: "signup",
+            title: "Create your account.",
+            subtitle: "It takes a minute.",
+            cardTheme: .mint
+        ) {
+            nameLayout {
+                AuthField("First name", text: $firstName, kind: .firstName)
+                    .focused($focusedField, equals: .firstName)
+                    .submitLabel(.next)
+                    .onSubmit {
+                        focusedField = .lastName
+                    }
+                AuthField("Last name", text: $lastName, kind: .lastName)
+                    .focused($focusedField, equals: .lastName)
+                    .submitLabel(.next)
+                    .onSubmit {
+                        focusedField = .email
                     }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            ScrollView {
-                Text("Welcome new friend, are you good ?")
-                    .font(.wishies(.bold, 37))
-                    .frame(maxWidth: .infinity,minHeight: 80 , alignment: .leading)
-                    .padding(.vertical, 30)
-                HStack(spacing: 10) {
-                    VStack {
-                        Text("First name")
-                            .font(.wishies(.bold, 17))
-                            .padding(.bottom, 15)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        TextField("First name", text: $firstName)
-                            .font(.wishies(.regular, 17))
-                            .padding(.horizontal,15)
-                            .textInputAutocapitalization(.never)
-                            .focused($focusedField, equals: .firstName)
-                            .onSubmit {
-                                focusedField = .lastName
-                            }
-                            .background {
-                                RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
-                                    .frame(height: 56)
-                                
-                            }
-                    }
-                    VStack {
-                        Text("Last name")
-                            .font(.wishies(.bold, 17))
-                            .padding(.bottom, 15)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        TextField("Last name", text: $lastName)
-                            .font(.wishies(.regular, 17))
-                            .padding(.horizontal,15)
-                            .textInputAutocapitalization(.never)
-                            .focused($focusedField, equals: .lastName)
-                            .onSubmit {
-                                focusedField = .email
-                            }
-                            .background {
-                                RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
-                                    .frame(height: 56)
-                                
-                            }
-                    }
+            AuthField("Email", text: $email, kind: .email, error: emailError)
+                .focused($focusedField, equals: .email)
+                .submitLabel(.next)
+                .onSubmit {
+                    focusedField = .phone
                 }
-                .padding(.bottom,30)
-                Text("Email")
-                    .font(.wishies(.bold, 17))
-                    .padding(.bottom, 15)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                TextField("Email", text: $email)
-                    .font(.wishies(.regular, 17))
-                    .padding(.horizontal,15)
-                    .textInputAutocapitalization(.never)
-                    .focused($focusedField, equals: .email)
-                    .onSubmit {
-                        focusedField = .phone
-                    }
-                    .background {
-                        RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
-                            .frame(height: 56)
-                    }
-                    .padding(.bottom,30)
-                Text("Phone")
-                    .font(.wishies(.bold, 17))
-                    .padding(.bottom, 15)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                TextField("Phone", text: $phone)
-                    .font(.wishies(.regular, 17))
-                    .padding(.horizontal,15)
-                    .textInputAutocapitalization(.never)
-                    .focused($focusedField, equals: .phone)
-                    .onSubmit {
-                        focusedField = nil
-                    }
-                    .background {
-                        RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
-                            .frame(height: 56)
-                    }
-                DateInputView(isCreating: .constant(true ), date: $dob)
-                    .padding(.vertical, 30)
-                Button(action: {
-                    focusedField = nil
-                    authVM.request = SignUpRequest(
-                        firstName: firstName,
-                        lastName: lastName,
-                        email: email,
-                        phone:phone,
-                        dateOfBirth: dob
-                    )
-                    goToPassword = true
-                }) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(email.isEmpty ? .black.opacity(0.4) : .black)
-                            .frame(height: 50)
-                        Text("Continue")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(.yellow)
-                    }
-                }
-                .disabled(email.isEmpty)
-                
-                HStack {
-                    Rectangle()
-                        .frame(width: UIScreen.main.bounds.width/3,height: 2)
-                    Text("or")
-                        .font(.wishies(.italic, 15))
-                    Rectangle()
-                        .frame(width: UIScreen.main.bounds.width/3,height: 2)
-                }
-                
-                Button(action: {
-                    guard let presentingViewController = UIApplication.topViewController() else { return }
-                    authVM.loginWithGoogle(presentingViewController: presentingViewController)
-                }, label: {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .shadow(color: .black.opacity(0.2), radius: 4, x:0, y: 5)
-                        HStack {
-                            Image("google_icon")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 20)
-                                .padding(.leading, 20)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        Text("Login with Google")
-                            .font(.wishies(.bold, 20))
-                            .foregroundStyle(.black)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                    }
-                })
-                .padding(.vertical, 10)
-                Spacer()
+            AuthField("Phone", text: $phone, kind: .phone)
+                .focused($focusedField, equals: .phone)
+            AuthBirthdayField(date: $dob)
+            WishieButton(
+                title: "Continue",
+                enabled: AuthValidation.canContinueSignUp(email: email, phone: phone),
+                filColor: Color("obInk"),
+                titleColor: .white
+            ) {
+                focusedField = nil
+                authVM.request = SignUpRequest(
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    phone: phone,
+                    dateOfBirth: dob
+                )
+                goToPassword = true
             }
-            .scrollIndicators(.hidden)
-        }
-        .padding([.horizontal,.bottom], 20)
-        .frame(maxWidth: .infinity,maxHeight: .infinity)
-        .background {
-            Color.lightYellow1.ignoresSafeArea()
+            .accessibilityIdentifier("auth.primaryButton")
+            AuthSocialSection {
+                guard let presentingViewController = UIApplication.topViewController() else { return }
+                authVM.loginWithGoogle(presentingViewController: presentingViewController)
+            }
         }
         .showDialogIfNeeded(
             $authVM.isShowError,
@@ -188,50 +90,16 @@ struct SignUpView: View {
             message: authVM.errorMessage
         )
         .showFullScreenDialog($authVM.isShowProgress)
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") {
-                    focusedField = nil
-                }
-            }
-        }
         .navigationDestination(isPresented: $goToPassword) {
             PasswordSignUpView()
                 .navigationBarBackButtonHidden()
         }
-        .onTapGesture {
-            hideKeyboard()
-        }
-    }
-    fileprivate func dateOfBirthField(placeHolder: String, text: Binding<String>) -> some View {
-        return TextField(placeHolder, text: text)
-            .keyboardType(.numberPad)
-            .font(.wishies(.regular, 17))
-            .padding(.horizontal,15)
-            .textInputAutocapitalization(.never)
-            .background {
-                RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
-                    .frame(height: 56)
-            }
-    }
-    private func validateGoinButton() -> Bool {
-        return email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-        phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
 
 #Preview {
-    SignUpView()
-        .environmentObject(AuthViewModel())
-}
-extension Binding where Value == String {
-    func max(_ limit: Int) -> Self {
-        if self.wrappedValue.count > limit {
-            DispatchQueue.main.async {
-                self.wrappedValue = String(self.wrappedValue.prefix(limit))
-            }
-        }
-        return self
+    NavigationStack {
+        SignUpView()
+            .environmentObject(AuthViewModel())
     }
 }

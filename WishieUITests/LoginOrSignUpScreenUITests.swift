@@ -40,7 +40,7 @@ final class LoginOrSignUpScreenUITests: XCTestCase {
         XCTAssertTrue(signUp.waitForExistence(timeout: 10))
         signUp.tap()
 
-        XCTAssertTrue(app.staticTexts["Welcome new friend, are you good ?"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["auth.signup.title"].waitForExistence(timeout: 5))
     }
 
     @MainActor
@@ -106,9 +106,9 @@ final class LoginOrSignUpScreenUITests: XCTestCase {
         let signUp = app.buttons["auth.signUpLink"]
         XCTAssertTrue(signUp.waitForExistence(timeout: 10))
         signUp.tap()
-        XCTAssertTrue(app.staticTexts["Welcome new friend, are you good ?"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["auth.signup.title"].waitForExistence(timeout: 5))
 
-        app.buttons.firstMatch.tap()
+        app.buttons["auth.backButton"].tap()
         XCTAssertTrue(signUp.waitForExistence(timeout: 5))
         Thread.sleep(forTimeInterval: 1)
 

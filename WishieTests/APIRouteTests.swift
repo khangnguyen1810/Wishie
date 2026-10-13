@@ -116,6 +116,15 @@ struct APIRouteTests {
         #expect(json == ["name": "Birthday", "description": "Party", "dueDate": "2026-09-01", "colorTheme": "coral"])
     }
 
+    @Test func deleteWishlistBuildsAnAuthenticatedDELETEWithNoBody() throws {
+        let request = try APIRoute.deleteWishlist(wishlistId: "w1").asURLRequest()
+
+        #expect(request.httpMethod == "DELETE")
+        #expect(request.url?.path == "/wishlists/w1")
+        #expect(request.value(forHTTPHeaderField: APIRoute.requiresAuthHeader) == "true")
+        #expect(request.httpBody == nil)
+    }
+
     @Test func nonUploadRoutesHaveNoMultipartFormData() {
         #expect(APIRoute.getWishlists.multipartFormData == nil)
     }

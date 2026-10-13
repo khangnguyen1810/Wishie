@@ -7,7 +7,6 @@
 
 import Foundation
 import FirebaseFirestore
-import Supabase
 
 protocol WishlistServiceProtocol {
     func createWishlist(wishList: WishlistModel) async throws -> WishlistModel
@@ -210,29 +209,10 @@ class WishlistService: WishlistServiceProtocol {
     
     func deleteWishlist(wishlistId: String) async throws -> Result<Bool, WishieError> {
         do {
-            let docRef = db.collection("wishList").document(wishlistId)
-            let snapshot = try await docRef.getDocument()
-            guard let data = snapshot.data(),
-                  let members = data["members"] as? [String: String],
-                  let items = data["wishListItems"] as? [[String: Any]] else {
-                throw NSError(domain: "Wishlist Service", code: 404)
+            let response: DeleteResponse = try await apiService.send(.deleteWishlist(wishlistId: wishlistId))
+            guard response.success else {
+                return .failure(WishieError.invalidResponse)
             }
-            for item in items {
-                if let url = item["imageUrl"] as? String, !url.isEmpty {
-                    try await deleteImageStorage(imageUrl: url)
-                }
-            }
-            let batch = db.batch()
-            batch.deleteDocument(docRef)
-            for (userId, _) in members {
-                let userRef = db
-                    .collection("users")
-                    .document(userId)
-                    .collection("wishlists")
-                    .document(wishlistId)
-                batch.deleteDocument(userRef)
-            }
-            try await batch.commit()
             return .success(true)
         } catch {
             return .failure(WishieError(error))
@@ -366,17 +346,6 @@ class WishlistService: WishlistServiceProtocol {
             }
     }
 
-    private func deleteImageStorage(imageUrl: String) async throws {
-        guard let range = imageUrl.range(
-            of: "/storage/v1/object/public/Wishie/"
-        ) else  { return }
-        let path = String(imageUrl[range.upperBound...])
-        
-        try await SupabaseManager.shared.client
-            .storage
-            .from("Wishie")
-            .remove(paths: [path])
-    }
     func getWishlistInfoByCode(by code: String) async -> Result<WishlistInfoResponse, WishieError> {
         do {
             let response: WishlistInfoResponse = try await apiService.send(.getWishlistInfoByCode(code: code))

@@ -204,4 +204,48 @@ struct WishlistServiceAPITests {
         }
         #expect(error == .server(statusCode: 404, message: "Wishlist w1 not found", error: "Not Found"))
     }
+
+    @Test func deleteWishlistSendsTheDeleteRouteForTheGivenId() async throws {
+        let stub = StubAPIService()
+        stub.sendResults = [DeleteResponse(success: true)]
+        let service = WishlistService(apiService: stub)
+
+        let result = try await service.deleteWishlist(wishlistId: "w1")
+
+        #expect(try result.get())
+        #expect(stub.sentRoutes.count == 1)
+        guard case .deleteWishlist(let wishlistId) = stub.sentRoutes[0] else {
+            Issue.record("expected .deleteWishlist route")
+            return
+        }
+        #expect(wishlistId == "w1")
+    }
+
+    @Test func deleteWishlistFailsWhenTheResponseReportsNoSuccess() async throws {
+        let stub = StubAPIService()
+        stub.sendResults = [DeleteResponse(success: false)]
+        let service = WishlistService(apiService: stub)
+
+        let result = try await service.deleteWishlist(wishlistId: "w1")
+
+        guard case .failure(let error) = result else {
+            Issue.record("expected a failure")
+            return
+        }
+        #expect(error == .invalidResponse)
+    }
+
+    @Test func deleteWishlistReturnsTheWishieErrorOnFailure() async throws {
+        let stub = StubAPIService()
+        stub.sendResults = [WishieError.server(statusCode: 403, message: "Only the owner can delete this wishlist", error: "Forbidden")]
+        let service = WishlistService(apiService: stub)
+
+        let result = try await service.deleteWishlist(wishlistId: "w1")
+
+        guard case .failure(let error) = result else {
+            Issue.record("expected a failure")
+            return
+        }
+        #expect(error == .server(statusCode: 403, message: "Only the owner can delete this wishlist", error: "Forbidden"))
+    }
 }

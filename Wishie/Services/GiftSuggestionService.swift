@@ -1,22 +1,24 @@
 import Foundation
-import FirebaseFunctions
 
 protocol GiftSuggestionServiceProtocol {
-    func fetchIdeas(interests: [String], age: Int?, existingItemNames: [String], country: String?) async throws -> [GiftIdea]
+    func fetchIdeas(interests: [String], age: Int?, existingItemNames: [String], country: String?) async throws -> Result<GiftSuggestionResponse, WishieError>
 }
 
 final class GiftSuggestionService: GiftSuggestionServiceProtocol {
-    private lazy var functions = Functions.functions()
+    
+    private let apiService: APIServiceProtocol
 
-    func fetchIdeas(interests: [String], age: Int?, existingItemNames: [String], country: String?) async throws -> [GiftIdea] {
-        var payload: [String: Any] = [
-            "interests": interests,
-            "existingItemNames": existingItemNames
-        ]
-        if let age { payload["age"] = age }
-        if let country, !country.isEmpty { payload["country"] = country }
-
-        let result = try await functions.httpsCallable("suggestGifts").call(payload)
-        return GiftIdea.parse(from: result.data)
+    init(apiService: APIServiceProtocol = APIService()) {
+        self.apiService = apiService
+    }
+    
+    func fetchIdeas(interests: [String], age: Int?, existingItemNames: [String], country: String?) async throws -> Result<GiftSuggestionResponse, WishieError> {
+        do {
+            let request = GiftSuggestionRequest(interests: interests, age: age, existingItems: existingItemNames, country: country)
+            let response: GiftSuggestionResponse = try await apiService.send(.giftSuggestion(information: request))
+            return .success(response)
+        } catch {
+            return .failure(WishieError(error))
+        }
     }
 }

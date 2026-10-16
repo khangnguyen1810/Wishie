@@ -94,3 +94,14 @@ struct InviteCodeResponse: Decodable {
 struct DeleteResponse: Decodable {
     let success: Bool
 }
+
+struct GiftSuggestionResponse: Decodable {
+    let suggestions: [GiftSuggestionItem]
+}
+
+struct GiftSuggestionItem: Decodable, Hashable {
+    let name : String
+    let description: String? 
+    let price: String?
+    let link: String?
+}

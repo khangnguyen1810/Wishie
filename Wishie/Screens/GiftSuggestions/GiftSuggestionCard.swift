@@ -22,14 +22,14 @@ struct GiftSuggestionCard: View {
                     .lineLimit(2)
 
                 let price = suggestion.metadata.price?.isEmpty == false ? suggestion.metadata.price! : suggestion.idea.price
-                if !price.isEmpty {
+                if let price{
                     Text(price)
                         .font(.wishies(.bold, 13))
                         .foregroundStyle(.wishiePink)
                 }
 
-                if !suggestion.idea.description.isEmpty {
-                    Text(suggestion.idea.description)
+                if  let description = suggestion.idea.description {
+                    Text(description)
                         .font(.wishies(.regular, 12))
                         .foregroundStyle(.gray)
                         .lineLimit(2)

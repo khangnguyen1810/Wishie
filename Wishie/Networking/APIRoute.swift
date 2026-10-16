@@ -28,10 +28,11 @@ enum APIRoute: URLRequestConvertible {
     case editWishlist(wishlistId: String, wishlist: EditWishlistRequest)
     case deleteWishlist(wishlistId: String)
     case addWishItem(wishlistId: String, wishItem: CreateWishlistItemRequest)
+    case giftSuggestion(information: GiftSuggestionRequest)
     var method: HTTPMethod {
         switch self {
         case .getWishlists, .getProfile, .getDetailWishlist, .getWishlistInfoByCode, .getInviteCode: return .get
-        case .login, .signup, .refresh, .createWishlist, .uploadWishlistImage, .joinWishlist, .pickItem, .addWishItem: return .post
+        case .login, .signup, .refresh, .createWishlist, .uploadWishlistImage, .joinWishlist, .pickItem, .giftSuggestion, .addWishItem: return .post
         case .uploadItemImage, .editWishlistItem, .markItemDesired, .archiveWishlist, .editWishlist: return .patch
         case .deleteItem, .deleteWishlist: return .delete
         }
@@ -58,6 +59,7 @@ enum APIRoute: URLRequestConvertible {
         case .editWishlist(let wishlistId, _): return "/wishlists/\(wishlistId)"
         case .deleteWishlist(let wishlistId): return "/wishlists/\(wishlistId)"
         case .addWishItem(let wishlistId, _): return "/wishlists/\(wishlistId)/items"
+        case .giftSuggestion: return "/gift-suggestions"
         }
     }
 
@@ -82,7 +84,8 @@ enum APIRoute: URLRequestConvertible {
                 .archiveWishlist,
                 .editWishlist,
                 .deleteWishlist,
-                .addWishItem: return true
+                .addWishItem,
+                .giftSuggestion: return true
         }
     }
 
@@ -155,6 +158,8 @@ enum APIRoute: URLRequestConvertible {
             return request
         case .addWishItem(_, let wishItem):
             request.httpBody = try JSONEncoder().encode(wishItem)
+        case .giftSuggestion(let information):
+            request.httpBody = try JSONEncoder().encode(information)
             return request
         }
     }

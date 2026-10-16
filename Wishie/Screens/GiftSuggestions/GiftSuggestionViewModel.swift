@@ -15,7 +15,7 @@ final class GiftSuggestionViewModel: ObservableObject {
     @Published var suggestions: [GiftSuggestion] = []
 
     let maxResults = 6
-    let minResults = 3
+    let minResults = 2
 
     private let existingItemNames: [String]
     private let suggestionService: GiftSuggestionServiceProtocol
@@ -79,21 +79,26 @@ final class GiftSuggestionViewModel: ObservableObject {
 
         let country = await countryProvider.resolveCountryName()
 
-        let ideas: [GiftIdea]
+        let ideas: [GiftSuggestionItem]
         do {
-            ideas = try await suggestionService.fetchIdeas(
+            let result = try await suggestionService.fetchIdeas(
                 interests: interestNames,
                 age: age,
                 existingItemNames: existingItemNames,
                 country: country
             )
+            switch result {
+            case .success(let suggestions):
+                ideas = suggestions.suggestions
+                await validate(ideas: ideas)
+            case .failure(let failure):
+                phase = .error(failure.message)
+            }
         } catch {
             phase = .error(error.localizedDescription)
             return
         }
-
-        await validate(ideas: ideas)
-
+        
         if suggestions.count >= minResults {
             phase = .results
         } else {
@@ -103,7 +108,7 @@ final class GiftSuggestionViewModel: ObservableObject {
 
     /// Validate candidate links concurrently (bounded), publishing each success as it arrives.
     /// Stops once `maxResults` have validated.
-    private func validate(ideas: [GiftIdea]) async {
+    private func validate(ideas: [GiftSuggestionItem]) async {
         let concurrency = 3
         var index = 0
 
@@ -114,7 +119,7 @@ final class GiftSuggestionViewModel: ObservableObject {
             let validated: [GiftSuggestion] = await withTaskGroup(of: GiftSuggestion?.self) { group in
                 for idea in batch {
                     group.addTask { [metadataService] in
-                        guard let metadata = try? await metadataService.fetchMetadata(from: idea.link),
+                        guard let metadata = try? await metadataService.fetchMetadata(from: idea.link ?? ""),
                               metadata.hasImage
                         else { return nil }
                         return GiftSuggestion(idea: idea, metadata: metadata)

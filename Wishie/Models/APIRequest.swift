@@ -58,3 +58,10 @@ struct EditWishlistRequest: Encodable {
     let dueDate: String?
     let colorTheme: String?
 }
+
+struct GiftSuggestionRequest: Encodable {
+    let interests: [String]
+    let age: Int?
+    let existingItems: [String]
+    let country: String?
+}

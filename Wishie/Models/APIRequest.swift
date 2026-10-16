@@ -15,13 +15,14 @@ struct CreateWishlistItemRequest: Encodable {
     let description: String
     let itemLink: String
     let price: String?
-
+    let imageUrl: String?
     init(_ item: WishlistItem) {
         self.id = item.id
         self.name = item.name
         self.description = item.description
         self.itemLink = item.itemLink
         self.price = item.price
+        self.imageUrl = item.image
     }
 }
 

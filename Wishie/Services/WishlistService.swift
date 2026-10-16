@@ -35,7 +35,7 @@ protocol WishlistServiceProtocol {
     func leaveWishlist(wishListId: String) async throws -> Result<Bool, WishieError>
     func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, WishieError>
     func setMostDesired(wishlistId: String, itemId: String, isMostDesired: Bool) async throws -> Result<WishlistItemResponse, WishieError>
-    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<Bool, WishieError>
+    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<WishlistItemResponse, WishieError>
     func observeUserWishlistIds(onChange: @escaping ([String]) -> Void) -> ListenerRegistration?
 }
 
@@ -309,23 +309,11 @@ class WishlistService: WishlistServiceProtocol {
         }
     }
 
-    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<Bool, WishieError> {
+    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<WishlistItemResponse, WishieError> {
         do {
-            let itemData: [String: Any] = [
-                "id": item.id,
-                "name": item.name,
-                "description": item.description,
-                "imageUrl": item.image ?? "",
-                "isPicked": item.isPicked,
-                "itemLink": item.itemLink,
-                "price": item.price ?? "",
-                "isMostDesired": item.isMostDesired
-            ]
-            let docRef = db.collection("wishList").document(wishlistId)
-            try await docRef.updateData([
-                "wishListItems": FieldValue.arrayUnion([itemData])
-            ])
-            return .success(true)
+            let request = CreateWishlistItemRequest(item)
+            let response: WishlistItemResponse = try await apiService.send(.addWishItem(wishlistId: wishlistId, wishItem: request))
+            return .success(response)
         } catch {
             return .failure(WishieError(error))
         }

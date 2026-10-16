@@ -31,7 +31,7 @@ struct GiftIdea: Hashable {
 }
 
 struct GiftSuggestion: Hashable, Identifiable {
-    let idea: GiftIdea
+    let idea: GiftSuggestionItem
     let metadata: ProductMetadata
 
     var id: String { metadata.productUrl }
@@ -39,7 +39,7 @@ struct GiftSuggestion: Hashable, Identifiable {
     func toWishlistItem() -> WishlistItem {
         WishlistItem(
             name: metadata.title.isEmpty ? idea.name : metadata.title,
-            description: metadata.productDescription.isEmpty ? idea.description : metadata.productDescription,
+            description: (metadata.productDescription.isEmpty ? idea.description : metadata.productDescription) ?? "No description",
             image: metadata.imageUrl,
             localImage: metadata.localImage,
             itemLink: metadata.productUrl,

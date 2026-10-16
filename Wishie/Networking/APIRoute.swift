@@ -158,6 +158,7 @@ enum APIRoute: URLRequestConvertible {
             return request
         case .addWishItem(_, let wishItem):
             request.httpBody = try JSONEncoder().encode(wishItem)
+            return request
         case .giftSuggestion(let information):
             request.httpBody = try JSONEncoder().encode(information)
             return request

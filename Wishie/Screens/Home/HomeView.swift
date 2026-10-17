@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import DotLottie
 
 enum SheetType: String, Identifiable {
     case add
@@ -27,6 +28,7 @@ struct HomeView: View {
     @State private var isShowWishlistDetail: Bool = false
     @State private var showDeleteConfirm = false
     @State private var showLeaveConfirm = false
+    @State private var isRefreshing = false
     @AppStorage(WishieConstants.hasSeenHomeTutorial) private var hasSeenHomeTutorial: Bool = false
     @State private var homeAppeared: Bool = false
     @State private var heroProgress: CGFloat = 0
@@ -239,6 +241,15 @@ struct HomeView: View {
                     if highlightedWishlist != nil {
                         Color.clear.frame(height: heroHeight + 5)
                     }
+                    if isRefreshing {
+                        DotLottieAnimation(
+                            fileName: "giftloading",
+                            config: AnimationConfig(autoplay: true, loop: true)
+                        )
+                        .view()
+                        .frame(width: 56, height: 56)
+                        .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                    }
                     if !hasSeenHomeTutorial {
                         HomeItemViewCell(item: exampleWishlistForTutorial)
                             .anchorPreference(key: CoachMarkBoundsKey.self, value: .bounds) { ["homeExampleItem": $0] }
@@ -304,7 +315,11 @@ struct HomeView: View {
             }
             .scrollIndicators(.hidden)
             .refreshable {
-                await homeViewModel.getListWishlist()
+                withAnimation(.easeOut(duration: 0.2)) { isRefreshing = true }
+                // Run in an unstructured Task so a cancellation of the refreshable action by SwiftUI
+                // doesn't propagate into the network request.
+                await Task { await homeViewModel.getListWishlist(showLoading: false) }.value
+                withAnimation(.easeIn(duration: 0.2)) { isRefreshing = false }
             }
 
             if let highlighted = highlightedWishlist {

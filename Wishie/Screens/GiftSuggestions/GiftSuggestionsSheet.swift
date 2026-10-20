@@ -2,18 +2,17 @@ import SwiftUI
 import DotLottie
 
 struct GiftSuggestionsSheet: View {
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: GiftSuggestionViewModel
-    private let onAdd: (WishlistItem) async -> Bool
 
+    private let onAdd: (WishlistItem) async -> Bool
     @State private var selectedInterestIds: Set<String> = []
     @State private var addedIds: Set<String> = []
     @State private var addingIds: Set<String> = []
-
     init(existingItemNames: [String], onAdd: @escaping (WishlistItem) async -> Bool) {
         self.onAdd = onAdd
         _viewModel = StateObject(wrappedValue: GiftSuggestionViewModel(existingItemNames: existingItemNames))
     }
-
     var body: some View {
         VStack(spacing: 16) {
             Capsule().fill(.gray.opacity(0.3)).frame(width: 40, height: 4).padding(.top, 12)
@@ -79,6 +78,11 @@ struct GiftSuggestionsSheet: View {
                     .font(.wishies(.regular, 13))
                     .foregroundStyle(.gray)
                 WishieButton(title: "Try again", enabled: true) { Task { await viewModel.generate() } }
+            }
+            if viewModel.phase == .results {
+                WishieButton(title: "Confirm add", enabled: true) {
+                    dismiss()
+                }
             }
         }
     }

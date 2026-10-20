@@ -51,11 +51,11 @@ class WishlistDetailViewController: ObservableObject {
         self.authService = authService
         self.productMetadataService = productMetadataService
     }
-
+    
     deinit {
         wishlistListener?.remove()
     }
-
+    
     func getDetailWishlist(wishlistId: String, showInitialLoading: Bool = false) async {
         do {
             isShowLoading = showInitialLoading
@@ -75,7 +75,7 @@ class WishlistDetailViewController: ObservableObject {
             isShowError = true
         }
     }
-
+    
     func pickItem(wishlistId: String) async {
         do {
             isShowLoading = true
@@ -146,7 +146,7 @@ class WishlistDetailViewController: ObservableObject {
                     wishlistInfo.items[index] = modifiedItem
                 }
                 isShowLoading = false
-            
+                
             case .failure(let failure):
                 isShowLoading = false
                 errorMessage = failure.localizedDescription
@@ -193,18 +193,18 @@ class WishlistDetailViewController: ObservableObject {
             isShowError = true
         }
     }
-
+    
     /// The item currently holding the most-desired flag, if any.
     var currentMostDesiredItem: WishlistItem? {
         wishlistInfo.items.first(where: { $0.isMostDesired })
     }
-
+    
     /// True when marking `itemSelected` would displace a different item that already holds the flag.
     var wouldReplaceMostDesired: Bool {
         guard !itemSelected.isMostDesired, let current = currentMostDesiredItem else { return false }
         return current.id != itemSelected.id
     }
-
+    
     func setDesired(wishlistId: String, isDesired: Bool) async {
         do {
             isShowLoading = true
@@ -224,7 +224,7 @@ class WishlistDetailViewController: ObservableObject {
             isShowError = true
         }
     }
-
+    
     func addNewWishlistItem(wishlistId: String) async {
         if !newItemLink.isEmpty && checkIfItemExists(withLink: newItemLink) {
             showDuplicateItemDialog = true
@@ -269,7 +269,7 @@ class WishlistDetailViewController: ObservableObject {
             isShowError = true
         }
     }
-
+    
     func addSuggestedItem(_ item: WishlistItem, wishlistId: String) async throws {
         if checkIfItemExists(withLink: item.itemLink) { return }
         var item = item
@@ -277,9 +277,17 @@ class WishlistDetailViewController: ObservableObject {
             item.image = try await wishlistService.upload(wishlistId: wishlistId, image: localImage)
             item.localImage = nil
         }
-        _ = try await wishlistService.addWishlistItem(wishlistId: wishlistId, item: item)
+        let result = try await wishlistService.addWishlistItem(wishlistId: wishlistId, item: item)
+        switch result {
+        case .success(_):
+            await getDetailWishlist(wishlistId: wishlistId)
+        case .failure(let error):
+            isShowLoading = false
+            errorMessage = error.localizedDescription
+            isShowError = true
+        }
     }
-
+    
     func fetchProductMetadataForNewItem(from urlString: String) async {
         isFetchingMetadata = true
         metadataFetchError = nil
@@ -304,7 +312,7 @@ class WishlistDetailViewController: ObservableObject {
             return !itemLink.isEmpty && itemLink == normalizedLink
         }
     }
-
+    
     func setNewItemFromMetadata(_ metadata: ProductMetadata) {
         newItemName = metadata.title
         newItemDescription = metadata.productDescription

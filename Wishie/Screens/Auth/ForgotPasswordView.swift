@@ -25,7 +25,7 @@ struct ForgotPasswordView: View {
             subtitle: "We will email you a link.",
             cardTheme: .gold
         ) {
-            AuthField("Email", text: $viewModel.forgotenEmail, kind: .email, error: emailError)
+            WishieTextField("Email", text: $viewModel.forgotenEmail, kind: .email, error: emailError)
                 .focused($isEmailFocused)
                 .submitLabel(.done)
                 .onSubmit {

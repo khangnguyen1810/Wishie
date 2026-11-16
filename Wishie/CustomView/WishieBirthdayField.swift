@@ -1,12 +1,12 @@
 //
-//  AuthBirthdayField.swift
+//  WishieBirthdayField.swift
 //  Wishie
 //
 
 import SwiftUI
 
-/// The Sign up birthday field. Looks like an `AuthField`; tapping it opens a date picker sheet.
-struct AuthBirthdayField: View {
+/// The Sign up birthday field. Looks like an `WishieTextField`; tapping it opens a date picker sheet.
+struct WishieBirthdayField: View {
     @Binding var date: Date
 
     @State private var showPicker = false
@@ -33,7 +33,7 @@ struct AuthBirthdayField: View {
                     .foregroundStyle(Color("obInk"))
                     .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
                     .padding(.horizontal, 16)
-                    .authFieldChrome(showPicker ? .focused : .idle)
+                    .wishieTextFieldChrome(showPicker ? .focused : .idle)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -43,7 +43,10 @@ struct AuthBirthdayField: View {
         }
         .sheet(isPresented: $showPicker) {
             VStack(spacing: 16) {
-                DatePicker("Birthday", selection: $draft, in: ...Date(), displayedComponents: .date)
+                DatePicker(
+                    "Birthday",
+                    selection: $draft,
+                    displayedComponents: .date)
                     .datePickerStyle(.wheel)
                     .labelsHidden()
                 WishieButton(
@@ -63,10 +66,4 @@ struct AuthBirthdayField: View {
             .presentationBackground(Color("obScreenBg"))
         }
     }
-}
-
-#Preview {
-    AuthBirthdayField(date: .constant(Date()))
-        .padding(30)
-        .background(Color("obScreenBg"))
 }

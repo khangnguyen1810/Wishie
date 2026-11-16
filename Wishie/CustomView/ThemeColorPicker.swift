@@ -8,13 +8,8 @@ import SwiftUI
 struct ThemeColorPicker: View {
     @Binding var selectedTheme: GradientTheme?
 
-    private let column = [
-        GridItem(.flexible(), spacing: 15),
-        GridItem(.flexible(), spacing: 15)
-    ]
-
     var body: some View {
-        LazyVGrid(columns: column, spacing: 15) {
+        HStack(spacing: 15) {
             ForEach(GradientTheme.allCases, id: \.self) { theme in
                 RoundedRectangle(cornerRadius: 10)
                     .fill(
@@ -25,23 +20,30 @@ struct ThemeColorPicker: View {
                         )
                     )
                     .aspectRatio(1, contentMode: .fit)
-                    .shadow(color: .lightYellow, radius: 1, x: -5, y: 5)
+                    .shadow(color: .gray.opacity(0.3), radius: 1, x: -5, y: 5)
                     .overlay {
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(
-                                selectedTheme == theme ? .wishiePink : .clear,
-                                lineWidth: 3
-                            )
+                        ZStack {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(selectedTheme == theme ? .white : .clear)
+                            RoundedRectangle(cornerRadius: 10)
+                                .strokeBorder(
+                                    selectedTheme == theme ? .black : .clear,
+                                    lineWidth: 2
+                                )
+                        }
                     }
+                    .background(content: {
+                        if selectedTheme == theme{
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.lightYellow)
+                                .padding(-3)
+                        }
+                    })
                     .onTapGesture {
                         selectedTheme = theme
                     }
             }
         }
     }
-}
-
-#Preview {
-    ThemeColorPicker(selectedTheme: .constant(.coral))
-        .padding()
 }

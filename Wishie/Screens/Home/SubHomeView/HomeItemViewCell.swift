@@ -2,7 +2,7 @@ import SwiftUI
 
 struct HomeItemViewCell: View {
     var item: (WishlistModel, UserModel)
-
+    var horizontalPadding: CGFloat? = 15
     private var itemPicked: [WishlistItem] {
         item.0.items.filter { $0.isPicked }
     }
@@ -54,7 +54,7 @@ struct HomeItemViewCell: View {
             statusBadge
                 .offset(x: -14, y: -14)
         }
-        .padding(.horizontal, 15)
+        .padding(.horizontal, horizontalPadding)
     }
 
     @ViewBuilder

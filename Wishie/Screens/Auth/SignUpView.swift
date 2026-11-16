@@ -40,7 +40,7 @@ struct SignUpView: View {
             cardTheme: .mint
         ) {
             nameLayout {
-                AuthField("First name",
+                WishieTextField("First name",
                           "Your first name",
                           text: $firstName,
                           kind: .firstName
@@ -50,7 +50,7 @@ struct SignUpView: View {
                 .onSubmit {
                     focusedField = .lastName
                 }
-                AuthField("Last name",
+                WishieTextField("Last name",
                           "Your last name" ,
                           text: $lastName,
                           kind: .lastName
@@ -61,7 +61,7 @@ struct SignUpView: View {
                     focusedField = .email
                 }
             }
-            AuthField("Email",
+            WishieTextField("Email",
                       "user@example.com",
                       text: $email,
                       kind: .email,
@@ -72,13 +72,13 @@ struct SignUpView: View {
             .onSubmit {
                 focusedField = .phone
             }
-            AuthField("Phone",
+            WishieTextField("Phone",
                       "+1 2345677...",
                       text: $phone,
                       kind: .phone
             )
             .focused($focusedField, equals: .phone)
-            AuthBirthdayField(date: $dob)
+            WishieBirthdayField(date: $dob)
             WishieButton(
                 title: "Continue",
                 enabled: AuthValidation.canContinueSignUp(email: email, phone: phone),

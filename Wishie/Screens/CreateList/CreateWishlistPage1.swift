@@ -31,30 +31,14 @@ struct CreateWishlistPage1: View {
                     focusedField = nil
                 }
                 .focused($focusedField, equals: .name)
-            VStack(alignment: .trailing, spacing: 4) {
-                TextField("Description...",text: $createWishlistViewModel.description, axis: .vertical)
-                    .font(.wishies(.regular, 17))
-                    .padding(10)
-                    .frame(maxHeight: 100, alignment: .topLeading)
-                    .lineLimit(2...4)
-                    .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(.lightYellow)
-                    )
-                    .onChange(of: createWishlistViewModel.description) { _, newValue in
-                        if newValue.count > 200 {
-                            createWishlistViewModel.description = String(newValue.prefix(200))
-                        }
-                    }
-                    .submitLabel(.done)
-                    .onSubmit {
-                        focusedField = nil
-                    }
-                    .focused($focusedField, equals: .description)
-                Text("\(createWishlistViewModel.description.count)/200")
-                    .font(.caption)
-                    .foregroundColor(createWishlistViewModel.description.count == 200 ? .red : .gray)
-            }
+            WishieTextView(
+                nil,
+                "Description...",
+                text: $createWishlistViewModel.description,
+                maxLength: 200,
+                focus: $focusedField,
+                equals: .description
+            )
             .padding(.bottom,20)
             DateInputView(isCreating: .constant(true), date: $createWishlistViewModel.dueDate)
         }

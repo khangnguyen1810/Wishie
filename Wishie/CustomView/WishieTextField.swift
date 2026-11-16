@@ -1,12 +1,12 @@
 //
-//  AuthField.swift
+//  WishieTextField.swift
 //  Wishie
 //
 
 import SwiftUI
 
-/// What an `AuthField` holds. Decides its keyboard, autofill behavior and identifiers.
-enum AuthFieldKind: Equatable {
+/// What an `WishieTextField` holds. Decides its keyboard, autofill behavior and identifiers.
+enum WishieTextFieldKind: Equatable {
     case firstName
     case lastName
     case email
@@ -55,15 +55,15 @@ enum AuthFieldKind: Equatable {
     }
 }
 
-enum AuthFieldChromeState {
+enum WishieTextFieldChromeState {
     case idle
     case focused
     case error
 }
 
 /// The white rounded box shared by every auth field, with its idle, focused and error borders.
-private struct AuthFieldChrome: ViewModifier {
-    let state: AuthFieldChromeState
+private struct WishieTextFieldChrome: ViewModifier {
+    let state: WishieTextFieldChromeState
 
     private var borderColor: Color {
         switch state {
@@ -91,18 +91,18 @@ private struct AuthFieldChrome: ViewModifier {
 }
 
 extension View {
-    func authFieldChrome(_ state: AuthFieldChromeState) -> some View {
-        modifier(AuthFieldChrome(state: state))
+    func wishieTextFieldChrome(_ state: WishieTextFieldChromeState) -> some View {
+        modifier(WishieTextFieldChrome(state: state))
     }
 }
 
 /// A labeled text field for the auth screens. Shows a focus ring while editing and an inline
 /// message when `error` is set. The password kinds add a show/hide button.
-struct AuthField: View {
+struct WishieTextField: View {
     let label: String
     let placeHolder: String
     @Binding var text: String
-    let kind: AuthFieldKind
+    let kind: WishieTextFieldKind
     var error: String?
 
     /// Drives the border only. Screens attach their own `.focused` to move between fields.
@@ -110,7 +110,7 @@ struct AuthField: View {
     @State private var isRevealed = false
     @Environment(\.authScrollToField) private var scrollToField
 
-    init(_ label: String,_ placeHolder: String = "", text: Binding<String>, kind: AuthFieldKind, error: String? = nil) {
+    init(_ label: String,_ placeHolder: String = "", text: Binding<String>, kind: WishieTextFieldKind, error: String? = nil) {
         self.label = label
         self._text = text
         self.kind = kind
@@ -118,7 +118,7 @@ struct AuthField: View {
         self.placeHolder = placeHolder
     }
 
-    private var chromeState: AuthFieldChromeState {
+    private var chromeState: WishieTextFieldChromeState {
         if error != nil { return .error }
         return isFocused ? .focused : .idle
     }
@@ -138,7 +138,7 @@ struct AuthField: View {
             .padding(.leading, 16)
             .padding(.trailing, kind.isPassword ? 4 : 16)
             .frame(minHeight: 56)
-            .authFieldChrome(chromeState)
+            .wishieTextFieldChrome(chromeState)
             .contentShape(Rectangle())
             .onTapGesture {
                 isFocused = true
@@ -208,9 +208,9 @@ struct AuthField: View {
 
 #Preview {
     VStack(spacing: 18) {
-        AuthField("Email", text: .constant("linh@example.com"), kind: .email)
-        AuthField("Email", text: .constant("linh@example"), kind: .email, error: AuthValidation.emailErrorMessage)
-        AuthField("Password", text: .constant("secret123"), kind: .password(isNew: false))
+        WishieTextField("Email", text: .constant("linh@example.com"), kind: .email)
+        WishieTextField("Email", text: .constant("linh@example"), kind: .email, error: AuthValidation.emailErrorMessage)
+        WishieTextField("Password", text: .constant("secret123"), kind: .password(isNew: false))
     }
     .padding(30)
     .background(Color("obScreenBg"))

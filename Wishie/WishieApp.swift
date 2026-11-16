@@ -14,7 +14,6 @@ import GoogleSignIn
 struct WishieApp: App {
     @StateObject private var authViewModel: AuthViewModel
     @StateObject private var coordinator: RootNavigationCoordinator
-    @State private var isActive: Bool = false
 
     init() {
         if FirebaseApp.app() == nil {
@@ -32,29 +31,16 @@ struct WishieApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ZStack {
-                if isActive {
-                    MainView()
-                        .environmentObject(authViewModel)
-                        .environmentObject(coordinator)
-                } else {
-                    Image("LaunchScreen")
-                        .resizable()
-                        .scaledToFill()
-                        .ignoresSafeArea()
+            MainView()
+                .environmentObject(authViewModel)
+                .environmentObject(coordinator)
+                .preferredColorScheme(.light)
+                .animation(.easeInOut(duration: 0.4), value: authViewModel.isLoggedIn)
+                .animation(RootNavigationAnimations.welcomeToAuth, value: coordinator.appState)
+                .splashScreen()
+                .onAppear {
+                    LocationManager.shared.requestPermission()
                 }
-            }
-            .preferredColorScheme(.light)
-            .animation(.easeInOut(duration: 0.4), value: authViewModel.isLoggedIn)
-            .animation(RootNavigationAnimations.welcomeToAuth, value: coordinator.appState)
-            .onAppear {
-                LocationManager.shared.requestPermission()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    withAnimation(.spring) {
-                        isActive = true
-                    }
-                }
-            }
             .onOpenURL { url in
                 GIDSignIn.sharedInstance.handle(url)
             }

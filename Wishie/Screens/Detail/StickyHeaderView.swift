@@ -48,6 +48,10 @@ struct StickyHeaderView<Content: View>: View {
                 }
                 .coordinateSpace(name: "SCROLL")
                 .ignoresSafeArea()
+                .overlay(alignment: .bottom) {
+                    EdgeBlur(edge: .bottom)
+                        .frame(height: proxy.safeAreaInsets.bottom + 60)
+                }
             }
         }
         .ignoresSafeArea()
@@ -129,6 +133,29 @@ struct StickyHeaderView<Content: View>: View {
                 .fill(Color(hex: headerColor).lightened(by: 0.45))
                 .padding(.bottom, -progress * 65)
         }
+    }
+}
+
+/// Progressive blur that fades out towards the inside of the screen, like the Photos app.
+private struct EdgeBlur: View {
+    let edge: VerticalEdge
+
+    var body: some View {
+        Rectangle()
+            .fill(.regularMaterial)
+            .mask {
+                LinearGradient(
+                    stops: [
+                        .init(color: .black, location: 0),
+                        .init(color: .black.opacity(0.6), location: 0.4),
+                        .init(color: .clear, location: 1)
+                    ],
+                    startPoint: edge == .top ? .top : .bottom,
+                    endPoint: edge == .top ? .bottom : .top
+                )
+            }
+            .allowsHitTesting(false)
+            .ignoresSafeArea()
     }
 }
 

@@ -149,8 +149,8 @@ struct HomeView: View {
                     WishlistQRCodeView(wishlistId: id)
                 case .wishListInfoScreen(let preview):
                     WishListInformationView(preview: preview, path: $path)
-                case .editWishlistInfo(wishlistId: let id):
-                    EditWishlistInfoView(wishlistId: id)
+                case .editWishlistInfo(wishlistId: let id, user: let user):
+                    EditWishlistInfoView(wishlistId: id, user: user)
                 case .wishListDetailScreen(wishlistId: let id, isFromInfo: let isFromInfo):
                     WishlistDetailView(
                         navigationPath: $path,
@@ -268,7 +268,7 @@ struct HomeView: View {
                                     heroHeight: heroProgress
                                 ) {
                                     Button {
-                                        path.append(Route.editWishlistInfo(wishlistId: wishlist.0.id))
+                                        path.append(Route.editWishlistInfo(wishlistId: wishlist.0.id, user: wishlist.1))
                                     } label: {
                                         Label("Change info", systemImage: "pencil")
                                     }

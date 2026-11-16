@@ -242,7 +242,7 @@ extension AuthScaffold where Footer == EmptyView {
         subtitle: "Log in to see your lists.",
         cardTheme: .coral
     ) {
-        AuthField("Email", text: .constant(""), kind: .email)
-        AuthField("Password", text: .constant(""), kind: .password(isNew: false))
+        WishieTextField("Email", text: .constant(""), kind: .email)
+        WishieTextField("Password", text: .constant(""), kind: .password(isNew: false))
     }
 }

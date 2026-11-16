@@ -16,7 +16,19 @@ class EditWishlistInfoViewModel: ObservableObject {
     @Published var isShowError: Bool = false
     @Published var errorTitle: String = ""
     @Published var errorMsg: String = ""
+    @Published var fetchedWishlist: WishlistModel = WishlistModel(name: "", userCreateId: "")
 
+    /// Wishlist used for the live preview: the fetched wishlist overlaid with the values currently being edited.
+    var previewWishlist: WishlistModel {
+        var preview = fetchedWishlist
+        preview.name = name
+        preview.description = description
+        preview.dueDate = dueDate
+        if let selectedTheme {
+            preview.theme = selectedTheme
+        }
+        return preview
+    }
     static let notFoundMessage = "This wishlist no longer exists. It may have been deleted."
 
     private var service: WishlistServiceProtocol
@@ -34,6 +46,7 @@ class EditWishlistInfoViewModel: ObservableObject {
                 description = wishlist.description
                 dueDate = wishlist.dueDate
                 selectedTheme = wishlist.theme
+                fetchedWishlist = wishlist
                 isLoading = false
             case .failure(let failure):
                 print(failure.localizedDescription)

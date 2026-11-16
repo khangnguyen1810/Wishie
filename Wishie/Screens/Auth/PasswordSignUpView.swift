@@ -23,7 +23,7 @@ struct PasswordSignUpView: View {
             subtitle: AuthValidation.passwordSubtitle(firstName: authVM.request.firstName),
             cardTheme: .grape
         ) {
-            AuthField("Password", "••••••", text: $password, kind: .password(isNew: true))
+            WishieTextField("Password", "••••••", text: $password, kind: .password(isNew: true))
                 .focused($isPasswordFocused)
                 .submitLabel(.done)
                 .onSubmit {

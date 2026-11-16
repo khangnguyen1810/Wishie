@@ -28,6 +28,7 @@ struct WishlistDetailView: View {
     @State private var showLinkNotValidOrNotExist: Bool = false
     @StateObject private var viewModel: WishlistDetailViewController = WishlistDetailViewController()
     @Binding var navigationPath: NavigationPath
+    @Namespace private var ns
     var wishlist: WishlistModel?
     var owner: UserModel?
     var currentUserId: String? {
@@ -67,20 +68,38 @@ struct WishlistDetailView: View {
                 .padding(.bottom, 100)
             }
             if viewModel.wishlistInfo.isOwner() {
-                Button {
-                    viewModel.showAddItemOptionSheet = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 50, height: 50)
-                        .background(Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.4))
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                if #available(iOS 26.0, *) {
+                    Button {
+                        viewModel.showAddItemOptionSheet = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundStyle(.black)
+                            .frame(width: 45, height: 45)
+                            .matchedTransitionSource(id: "addButton", in: ns)
+                    }
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.circle)
+                    .padding(.bottom, 24)
+                    .padding(.trailing, 20)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                } else {
+                    Button {
+                        viewModel.showAddItemOptionSheet = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Color(hex: viewModel.wishlistInfo.theme.secondary).lightened(by: 0.4))
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                    }
+                    .padding(.bottom, 24)
+                    .padding(.trailing, 20)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
-                .padding(.bottom, 24)
-                .padding(.trailing, 20)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+                
             }
         }
         .sheet(isPresented: $viewModel.showBottomSheet) {
@@ -116,6 +135,7 @@ struct WishlistDetailView: View {
                     }
                 }
             )
+            .navigationTransition(.zoom(sourceID: "addButton", in: ns))
             .presentationDetents([.height(340)])
         }
         .sheet(

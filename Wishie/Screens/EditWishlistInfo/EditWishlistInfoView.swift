@@ -6,19 +6,21 @@
 
 import SwiftUI
 
+
 struct EditWishlistInfoView: View {
     let wishlistId: String
+    let user: UserModel
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = EditWishlistInfoViewModel()
     @FocusState private var focusedField: Field?
-
+    
     private enum Field {
         case name
         case description
     }
-
+    
     var body: some View {
-        BaseWishieScreen {
+        BaseWishieScreen ( topBar: {
             TopAppBar {
                 Circle()
                     .fill(.lightYellow)
@@ -38,69 +40,36 @@ struct EditWishlistInfoView: View {
                     .font(.wishies(.bold, 20))
                     .foregroundStyle(.black)
             }
-        } content: {
+            .padding(10)
+        }, content: {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    TextField("Wishlist name", text: $viewModel.name)
-                        .font(.wishies(.regular, 17))
-                        .padding(.horizontal, 15)
-                        .textInputAutocapitalization(.never)
-                        .background {
-                            RoundedRectangle(cornerRadius: 15).fill(.lightYellow)
-                                .frame(height: 56)
-                        }
-                        .submitLabel(.done)
-                        .onSubmit { focusedField = nil }
-                        .focused($focusedField, equals: .name)
-
-                    VStack(alignment: .trailing, spacing: 4) {
-                        TextField("Description...", text: $viewModel.description, axis: .vertical)
-                            .font(.wishies(.regular, 17))
-                            .padding(10)
-                            .frame(maxHeight: 100, alignment: .topLeading)
-                            .lineLimit(2...4)
-                            .background(
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(.lightYellow)
-                            )
-                            .onChange(of: viewModel.description) { _, newValue in
-                                if newValue.count > 200 {
-                                    viewModel.description = String(newValue.prefix(200))
-                                }
-                            }
-                            .submitLabel(.done)
-                            .onSubmit { focusedField = nil }
-                            .focused($focusedField, equals: .description)
-                        Text("\(viewModel.description.count)/200")
-                            .font(.caption)
-                            .foregroundColor(viewModel.description.count == 200 ? .red : .gray)
-                    }
-
-                    DateInputView(isCreating: .constant(true), date: $viewModel.dueDate)
-
-                    Text("Choose your theme color")
-                        .font(.wishies(.regular, 17))
-                        .padding(.top)
-
-                    ThemeColorPicker(selectedTheme: $viewModel.selectedTheme)
-                }
-                .padding(.top, 20)
+                editViewContent
             }
+            .padding(.horizontal, 5)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button("Done") { focusedField = nil }
                 }
             }
-
-            WishieButton(
-                title: "Save changes",
-                enabled: !viewModel.name.isEmpty
-            ) {
-                Task { await viewModel.save(wishlistId: wishlistId) }
+            .safeAreaInset(edge: .top, spacing: 0) {
+                HomeItemViewCell(item: (viewModel.previewWishlist, user), horizontalPadding: 0)
+                    .frame(height: 150)
+                    .frame(maxWidth: .infinity)
+                    .padding(10)
             }
-            .padding(.bottom, 20)
-        }
+            .safeAreaInset(edge: .bottom) {
+                WishieButton(
+                    title: "Save changes",
+                    enabled: !viewModel.name.isEmpty
+                ) {
+                    Task { await viewModel.save(wishlistId: wishlistId) }
+                }
+                .padding(.bottom, 20)
+                .padding(.horizontal, 15)
+            }
+            
+        }, contentPadding: 0)
         .showFullScreenDialog($viewModel.isLoading)
         .showDialogIfNeeded($viewModel.isShowError, title: viewModel.errorTitle, message: viewModel.errorMsg)
         .task {
@@ -111,5 +80,37 @@ struct EditWishlistInfoView: View {
                 dismiss()
             }
         }
+    }
+    @ViewBuilder
+    var editViewContent: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            WishieTextField(
+                "Wishlist name",
+                "Andie's Birthday",
+                text: $viewModel.name,
+                kind: .firstName,
+                error: nil
+            )
+            .focused($focusedField, equals: .name)
+            
+            WishieTextView(
+                "Description",
+                "This is a wishlist...",
+                text: $viewModel.description,
+                maxLength: 200,
+                focus: $focusedField,
+                equals: .description
+            )
+            
+            WishieBirthdayField(date: $viewModel.dueDate)
+            
+            Text("Choose your theme color")
+                .font(.wishies(.bold, 15))
+                .foregroundStyle(Color("obInk"))
+            
+            ThemeColorPicker(selectedTheme: $viewModel.selectedTheme)
+        }
+        .padding(.top, 20)
+        .padding(.horizontal,5)
     }
 }

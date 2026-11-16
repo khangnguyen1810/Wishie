@@ -8,7 +8,7 @@ struct AddItemPasteLinkDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var urlInput: String = ""
     @State private var keyboardHeight: CGFloat = 0
-
+    @FocusState private var isFocused: Bool
     var body: some View {
         VStack(spacing: 0) {
             Capsule()
@@ -24,21 +24,17 @@ struct AddItemPasteLinkDetailSheet: View {
                 .padding(.bottom, 16)
 
             HStack(spacing: 10) {
-                TextField("https://...", text: $urlInput)
-                    .keyboardType(.URL)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .font(.wishies(.regular, 15))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(Color.lightYellow)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                Button {
-                    Task {
-                        await viewModel.fetchProductMetadataForNewItem(from: urlInput.trimmingCharacters(in: .whitespaces))
+                WishieTextField("", "https://...", text: $urlInput, kind: .firstName, error: nil)
+                    .focused($isFocused)
+                    .submitLabel(.done)
+                    .onSubmit {
+                        isFocused = false
+                        fetchAction()
                     }
-                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                } label: {
+                
+                Button {
+                   fetchAction()
+                } label: {                        
                     Text("Fetch")
                         .font(.wishies(.bold, 15))
                         .foregroundStyle(Color.wishiePink)
@@ -131,5 +127,11 @@ struct AddItemPasteLinkDetailSheet: View {
                 }
             )
         )
+    }
+    func fetchAction() {
+        Task {
+            await viewModel.fetchProductMetadataForNewItem(from: urlInput.trimmingCharacters(in: .whitespaces))
+        }
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }

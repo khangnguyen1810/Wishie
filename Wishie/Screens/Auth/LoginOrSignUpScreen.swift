@@ -10,11 +10,18 @@ import SwiftUI
 struct LoginOrSignUpScreen: View {
     @State private var path = NavigationPath()
     @EnvironmentObject var authViewModel: AuthViewModel
+    @Environment(\.splashPhase) private var splashPhase
+
+    /// Content rises in with a blur once the splash starts collapsing into the logo, like Welcome.
+    private var contentRevealed: Bool { splashPhase != .covering }
 
     var body: some View {
         NavigationStack(path: $path) {
             VStack(spacing: 0) {
                 stage
+                    .opacity(contentRevealed ? 1 : 0)
+                    .scaleEffect(contentRevealed ? 1 : 0.92, anchor: .top)
+                    .animation(.bouncy(duration: 0.6, extraBounce: 0.05), value: contentRevealed)
                 // Spare height on a tall phone is split evenly above and below the copy.
                 Spacer(minLength: 24)
                     .layoutPriority(-1)
@@ -25,6 +32,10 @@ struct LoginOrSignUpScreen: View {
                     .layoutPriority(-1)
                 actions
                     .layoutPriority(1)
+                    .blur(radius: contentRevealed ? 0 : 15)
+                    .opacity(contentRevealed ? 1 : 0)
+                    .offset(y: contentRevealed ? 0 : 240)
+                    .animation(.bouncy(duration: 0.6, extraBounce: 0.05).delay(0.15), value: contentRevealed)
             }
             .safeAreaPadding(.bottom, 40)
             .background {
@@ -65,19 +76,27 @@ struct LoginOrSignUpScreen: View {
 
     private var copy: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Image("pen")
+            HStack(spacing: 12) {
+                // Same asset the launch screen shows, so the splash morphs straight into it.
+                Image("SplashLogo")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 28, height: 28)
-                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                    .frame(width: 64, height: 64)
+                    // The splash flies its own copy of the logo here, so this one stays hidden until it lands.
+                    .opacity(splashPhase == .done ? 1 : 0)
+                    .splashLogoTarget()
+                    .accessibilityHidden(true)
                 Text("Wishie")
-                    .font(.wishiesDisplay(.bold, 18))
+                    .font(.wishiesDisplay(.bold, 26))
                     .foregroundStyle(Color("obInk"))
+                    .opacity(contentRevealed ? 1 : 0)
+                    .offset(x: contentRevealed ? 0 : -12)
+                    .animation(.bouncy(duration: 0.5).delay(0.2), value: contentRevealed)
             }
-            VStack(alignment: .leading, spacing: -14) {
-                Text("Make a list.")
-                Text("Share one link.")
+            Group {
+                VStack(alignment: .leading, spacing: -14) {
+                    Text("Make a list.")
+                    Text("Share one link.")
             }
             .font(.wishiesDisplay(.bold, 32))
             .foregroundStyle(Color("obInk"))
@@ -88,6 +107,11 @@ struct LoginOrSignUpScreen: View {
                 .font(.wishies(.regular, 16))
                 .foregroundStyle(Color("obInk").opacity(0.7))
                 .lineLimit(3)
+            }
+            .blur(radius: contentRevealed ? 0 : 15)
+            .opacity(contentRevealed ? 1 : 0)
+            .offset(y: contentRevealed ? 0 : 120)
+            .animation(.bouncy(duration: 0.6, extraBounce: 0.05).delay(0.1), value: contentRevealed)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 30)

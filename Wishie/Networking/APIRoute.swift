@@ -21,6 +21,7 @@ enum APIRoute: URLRequestConvertible {
     case getDetailWishlist(wishlistId: String)
     case markItemDesired(wishlistId: String, itemId: String, isMostDesired: Bool)
     case joinWishlist(code: String)
+    case leaveWishlist(wishlistId: String)
     case getInviteCode(wishlistId: String)
     case pickItem(wishlistId: String, itemId: String)
     case deleteItem(wishlistId: String, itemId: String)
@@ -32,7 +33,7 @@ enum APIRoute: URLRequestConvertible {
     var method: HTTPMethod {
         switch self {
         case .getWishlists, .getProfile, .getDetailWishlist, .getWishlistInfoByCode, .getInviteCode: return .get
-        case .login, .signup, .refresh, .createWishlist, .uploadWishlistImage, .joinWishlist, .pickItem, .giftSuggestion, .addWishItem: return .post
+        case .login, .signup, .refresh, .createWishlist, .uploadWishlistImage, .joinWishlist, .leaveWishlist, .pickItem, .giftSuggestion, .addWishItem: return .post
         case .uploadItemImage, .editWishlistItem, .markItemDesired, .archiveWishlist, .editWishlist: return .patch
         case .deleteItem, .deleteWishlist: return .delete
         }
@@ -53,6 +54,7 @@ enum APIRoute: URLRequestConvertible {
         case .markItemDesired(let wishlistId, let itemId, _): return "/wishlists/\(wishlistId)/items/\(itemId)/most-desired"
         case .getWishlistInfoByCode(let code), .joinWishlist(let code): return "/wishlists/join/\(code)"
         case .getInviteCode(let wishlistId): return "/wishlists/\(wishlistId)/share"
+        case .leaveWishlist(let wishlistId): return "/wishlists/\(wishlistId)/leave"
         case .pickItem(let wishlistId, let itemId): return "/wishlists/\(wishlistId)/items/\(itemId)/pick"
         case .deleteItem(let wishlistId, let itemId): return "/wishlists/\(wishlistId)/items/\(itemId)"
         case .archiveWishlist(let wishlistId, _): return "/wishlists/\(wishlistId)/archive"
@@ -79,6 +81,7 @@ enum APIRoute: URLRequestConvertible {
                 .markItemDesired,
                 .getInviteCode,
                 .joinWishlist,
+                .leaveWishlist,
                 .pickItem,
                 .deleteItem,
                 .archiveWishlist,
@@ -143,6 +146,7 @@ enum APIRoute: URLRequestConvertible {
                 .getInviteCode,
                 .deleteItem,
                 .joinWishlist,
+                .leaveWishlist,
                 .pickItem,
                 .deleteWishlist:
             return request

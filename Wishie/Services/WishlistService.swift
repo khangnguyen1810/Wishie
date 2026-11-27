@@ -249,40 +249,20 @@ class WishlistService: WishlistServiceProtocol {
         }
     }
 
+    /// `POST /wishlists/:id/leave`. The backend removes the caller's membership; a 404 means the
+    /// caller is no longer a member (e.g. they already left on another device).
     func leaveWishlist(wishListId: String) async throws -> Result<Bool, WishieError> {
         do {
-            guard let userId = UserDefaults.standard.string(forKey: WishieConstants.userIdKey) else {
-                throw NSError(domain: "Wishie App Storage", code: 403)
+            let response: DeleteResponse = try await apiService.send(.leaveWishlist(wishlistId: wishListId))
+            guard response.success else {
+                return .failure(WishieError.invalidResponse)
             }
-            let docRef = db.collection("wishList").document(wishListId)
-            let snapshot = try await docRef.getDocument()
-            guard let data = snapshot.data(),
-                  var items = data["wishListItems"] as? [[String: Any]] else {
-                throw NSError(domain: "Wishlist Service", code: 404)
-            }
-            for index in items.indices {
-                if let pickedBy = items[index]["pickedBy"] as? String, pickedBy == userId {
-                    items[index]["pickedBy"] = nil
-                    items[index]["isPicked"] = false
-                }
-            }
-            let batch = db.batch()
-            batch.updateData([
-                "members.\(userId)": FieldValue.delete(),
-                "wishListItems": items
-            ], forDocument: docRef)
-            let userRef = db.collection("users")
-                .document(userId)
-                .collection("wishlists")
-                .document(wishListId)
-            batch.deleteDocument(userRef)
-            try await batch.commit()
             return .success(true)
         } catch {
             return .failure(WishieError(error))
         }
     }
-    
+
     func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, WishieError> {
         do {
             let response: DeleteResponse = try await apiService.send(.deleteItem(wishlistId: wishlistId, itemId: itemId))

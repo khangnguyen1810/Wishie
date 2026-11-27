@@ -248,4 +248,48 @@ struct WishlistServiceAPITests {
         }
         #expect(error == .server(statusCode: 403, message: "Only the owner can delete this wishlist", error: "Forbidden"))
     }
+
+    @Test func leaveWishlistSendsTheLeaveRouteForTheGivenId() async throws {
+        let stub = StubAPIService()
+        stub.sendResults = [DeleteResponse(success: true)]
+        let service = WishlistService(apiService: stub)
+
+        let result = try await service.leaveWishlist(wishListId: "w1")
+
+        #expect(try result.get())
+        #expect(stub.sentRoutes.count == 1)
+        guard case .leaveWishlist(let wishlistId) = stub.sentRoutes[0] else {
+            Issue.record("expected .leaveWishlist route")
+            return
+        }
+        #expect(wishlistId == "w1")
+    }
+
+    @Test func leaveWishlistFailsWhenTheResponseReportsNoSuccess() async throws {
+        let stub = StubAPIService()
+        stub.sendResults = [DeleteResponse(success: false)]
+        let service = WishlistService(apiService: stub)
+
+        let result = try await service.leaveWishlist(wishListId: "w1")
+
+        guard case .failure(let error) = result else {
+            Issue.record("expected a failure")
+            return
+        }
+        #expect(error == .invalidResponse)
+    }
+
+    @Test func leaveWishlistReturnsTheWishieErrorWhenNotAMember() async throws {
+        let stub = StubAPIService()
+        stub.sendResults = [WishieError.server(statusCode: 404, message: "Not a member of this wishlist", error: "Not Found")]
+        let service = WishlistService(apiService: stub)
+
+        let result = try await service.leaveWishlist(wishListId: "w1")
+
+        guard case .failure(let error) = result else {
+            Issue.record("expected a failure")
+            return
+        }
+        #expect(error == .server(statusCode: 404, message: "Not a member of this wishlist", error: "Not Found"))
+    }
 }

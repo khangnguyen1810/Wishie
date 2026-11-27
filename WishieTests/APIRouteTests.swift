@@ -125,6 +125,15 @@ struct APIRouteTests {
         #expect(request.httpBody == nil)
     }
 
+    @Test func leaveWishlistBuildsAnAuthenticatedPOSTWithNoBody() throws {
+        let request = try APIRoute.leaveWishlist(wishlistId: "w1").asURLRequest()
+
+        #expect(request.httpMethod == "POST")
+        #expect(request.url?.path == "/wishlists/w1/leave")
+        #expect(request.value(forHTTPHeaderField: APIRoute.requiresAuthHeader) == "true")
+        #expect(request.httpBody == nil)
+    }
+
     @Test func nonUploadRoutesHaveNoMultipartFormData() {
         #expect(APIRoute.getWishlists.multipartFormData == nil)
     }

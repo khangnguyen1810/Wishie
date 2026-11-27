@@ -29,12 +29,18 @@ final class MockWishlistService: WishlistServiceProtocol {
     }
 
     // MARK: - addWishlistItem
-    var addWishlistItemResult: Result<Bool, WishieError> = .success(true)
+    /// When set, returned instead of the default success echoing the item back.
+    var addWishlistItemResult: Result<WishlistItemResponse, WishieError>?
     private(set) var addedItems: [WishlistItem] = []
 
-    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<Bool, WishieError> {
+    func addWishlistItem(wishlistId: String, item: WishlistItem) async throws -> Result<WishlistItemResponse, WishieError> {
         addedItems.append(item)
-        return addWishlistItemResult
+        if let addWishlistItemResult { return addWishlistItemResult }
+        return .success(WishlistItemResponse(
+            id: item.id, wishlistId: wishlistId, name: item.name, description: item.description,
+            imageUrl: item.image, isPicked: false, pickedBy: nil, itemLink: item.itemLink,
+            price: item.price, isMostDesired: false
+        ))
     }
 
     // MARK: - createWishlist
@@ -127,8 +133,11 @@ final class MockWishlistService: WishlistServiceProtocol {
         .success(WishlistModel(id: wishlistId, name: "", userCreateId: "", isArchived: isArchived))
     }
 
+    var leaveWishlistResult: Result<Bool, WishieError> = .success(true)
+    private(set) var leftWishlistIds: [String] = []
     func leaveWishlist(wishListId: String) async throws -> Result<Bool, WishieError> {
-        .success(true)
+        leftWishlistIds.append(wishListId)
+        return leaveWishlistResult
     }
 
     func deleteWishlistItem(wishlistId: String, itemId: String) async throws -> Result<Bool, WishieError> {

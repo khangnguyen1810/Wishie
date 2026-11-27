@@ -17,6 +17,9 @@ struct WishieButton: View {
     let height: CGFloat?
     let verticalPadding: CGFloat?
     let horizontalPadding: CGFloat?
+    let systemImage: String?
+    let cornerRadius: CGFloat
+    let font: Font
     let action: () -> Void
     init(title: String,
          enabled: Bool,
@@ -26,6 +29,9 @@ struct WishieButton: View {
          height: CGFloat = 60,
          verticalPadding: CGFloat? = 0,
          horizontalPadding: CGFloat? = 0,
+         systemImage: String? = nil,
+         cornerRadius: CGFloat = 20,
+         font: Font = .wishies(.bold, 20),
          action: @escaping () -> Void
     ) {
         self.title = title
@@ -36,17 +42,26 @@ struct WishieButton: View {
         self.height = height
         self.verticalPadding = verticalPadding
         self.horizontalPadding = horizontalPadding
+        self.systemImage = systemImage
+        self.cornerRadius = cornerRadius
+        self.font = font
         self.action = action
     }
     var body: some View {
         Button(action: action) {
             ZStack {
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: cornerRadius)
                     .fill(enabled ? fillColor : fillColor.opacity(0.5))
                     .frame(height: height)
                     .frame(maxWidth: width )
-                Text(title)
-                    .font(.wishies(.bold, 20))
+                HStack(spacing: 10) {
+                    if let systemImage {
+                        Image(systemName: systemImage)
+                            .font(.system(size: 18, weight: .bold))
+                    }
+                    Text(title)
+                        .font(font)
+                }
                     .foregroundStyle(
                         enabled ? titleColor : titleColor.opacity(0.5)
                     )

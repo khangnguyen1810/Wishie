@@ -10,44 +10,37 @@ struct HomeTabSelector: View {
     var animation: Namespace.ID
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 4) {
             tabItem(title: "My list", tab: .myList)
             tabItem(title: "Friend's list", tab: .friendsList)
         }
-        .frame(height: 44)
-        .padding(5)
-        .background {
-            Capsule()
-                .fill(Color.white)
-                .overlay(
-                    Capsule().stroke(Color(hex: "#E9D8AC"), lineWidth: 1)
-                )
-                .shadow(color: Color(hex: "#B48C3C").opacity(0.08), radius: 8, x: 0, y: 3)
-        }
+        .padding(4)
+        .frame(height: 50)
+        .background(Capsule().fill(HomePalette.track))
         .anchorPreference(key: CoachMarkBoundsKey.self, value: .bounds) { ["homeTabSelector": $0] }
     }
 
     @ViewBuilder
     private func tabItem(title: String, tab: HomeView.HomeTab) -> some View {
-        ZStack {
-            if selectedTab == tab {
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .shadow(color: Color(hex: "#F4667A").opacity(0.3), radius: 8, x: 0, y: 3)
-                    .matchedGeometryEffect(id: "TAB", in: animation)
-            }
+        let isSelected = selectedTab == tab
+        Button {
+            selectedTab = tab
+        } label: {
             Text(title)
-                .font(.wishiesDisplay(.bold, 15))
-                .foregroundStyle(selectedTab == tab ? .white : Color(hex: "#A5875A"))
-                .padding(.vertical, 11)
-                .frame(maxWidth: .infinity)
+                .font(.wishies(.bold, 16))
+                .foregroundStyle(isSelected ? Color.obInk : HomePalette.bodyText)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background {
+                    if isSelected {
+                        Capsule()
+                            .fill(Color.white)
+                            .shadow(color: Color.obInk.opacity(0.12), radius: 1.5, x: 0, y: 1)
+                            .matchedGeometryEffect(id: "TAB", in: animation)
+                    }
+                }
+                .contentShape(Capsule())
         }
-        .onTapGesture { selectedTab = tab }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

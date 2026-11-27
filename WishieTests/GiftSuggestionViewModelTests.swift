@@ -66,9 +66,8 @@ struct GiftSuggestionViewModelTests {
         let suggestion = StubSuggestionService()
         suggestion.ideas = makeIdeas(10)
         let metadata = MockProductMetadataService()
-        // Only 2 validate (< minResults of 3).
+        // Only 1 validates (< minResults of 2).
         metadata.results["https://ex.com/0"] = .success(MockProductMetadataService.metadata(for: "https://ex.com/0"))
-        metadata.results["https://ex.com/1"] = .success(MockProductMetadataService.metadata(for: "https://ex.com/1"))
 
         let vm = GiftSuggestionViewModel(
             existingItemNames: [],
@@ -79,7 +78,7 @@ struct GiftSuggestionViewModelTests {
         )
         await vm.generate()
 
-        #expect(vm.suggestions.count == 2)
+        #expect(vm.suggestions.count == 1)
         #expect(vm.phase == .empty)
     }
 

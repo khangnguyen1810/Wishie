@@ -4,73 +4,70 @@
 //
 
 import SwiftUI
-import SDWebImageSwiftUI
+
 struct HomeTopBar: View {
     var firstName: String
+    var subtitle: String
     var homeAppeared: Bool
     var onAddTapped: () -> Void
     var onProfileTapped: () -> Void
     var avatarUrl: String
 
     var body: some View {
-        TopAppBar {
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 8) {
-                    Text(firstName.isEmpty ? "Hey there!" : "Hey, \(firstName)!")
-                        .font(.wishiesDisplay(.extraBold, 28))
-                        .foregroundColor(Color(hex: "#5B3F0F"))
-                }
-                .opacity(homeAppeared ? 1 : 0)
-                .offset(y: homeAppeared ? 0 : 26)
-                .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.5).delay(0.05), value: homeAppeared)
-                Text("Your celebrations await ✨")
-                    .font(.wishies(.medium, 13))
-                    .foregroundStyle(Color(hex: "#9A7A3E"))
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(firstName.isEmpty ? "Hey there!" : "Hey, \(firstName)!")
+                    .font(.wishiesDisplay(.extraBold, 32))
+                    .foregroundStyle(Color.obInk)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .opacity(homeAppeared ? 1 : 0)
+                    .offset(y: homeAppeared ? 0 : 26)
+                    .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.5).delay(0.05), value: homeAppeared)
+                Text(subtitle)
+                    .font(.wishies(.bold, 15))
+                    .foregroundStyle(HomePalette.mutedText)
+                    .contentTransition(.opacity)
+                    .animation(.easeInOut(duration: 0.2), value: subtitle)
                     .opacity(homeAppeared ? 1 : 0)
                     .offset(y: homeAppeared ? 0 : 26)
                     .animation(.timingCurve(0.22, 1, 0.36, 1, duration: 0.5).delay(0.12), value: homeAppeared)
             }
-        } trailing: {
+            Spacer(minLength: 12)
             HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(
-                            LinearGradient(
-                                colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 44, height: 44)
-                        .shadow(color: Color(hex: "#F4667A").opacity(0.35), radius: 8, x: 0, y: 4)
+                Button(action: onAddTapped) {
                     Image(systemName: "plus")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(Color.white)
+                        .frame(width: 48, height: 48)
+                        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(HomePalette.accent))
                 }
-                .rotationEffect(.degrees(6))
+                .accessibilityLabel("Add or join a wishlist")
                 .anchorPreference(key: CoachMarkBoundsKey.self, value: .bounds) { ["homeAddButton": $0] }
-                .onTapGesture(perform: onAddTapped)
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.7))
-                        .frame(width: 44, height: 44)
-                        .overlay(
-                            Circle().stroke(
-                                LinearGradient(
-                                    colors: [Color(hex: "#FF9A76"), Color(hex: "#F4667A")],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 2
-                            )
-                        )
-                    WishieWebImage(url:  avatarUrl)
-                        .frame(width: 42, height: 42)
-                        .clipShape(Circle())
+
+                Button(action: onProfileTapped) {
+                    ZStack {
+                        Circle().fill(HomePalette.avatarFill)
+                        if !avatarUrl.isEmpty {
+                            WishieWebImage(url: avatarUrl, placeholderSize: 44)
+                                .frame(width: 44, height: 44)
+                                .clipShape(Circle())
+                        } else if let initial = firstName.first {
+                            Text(String(initial).uppercased())
+                                .font(.wishies(.bold, 18))
+                                .foregroundStyle(Color.obInk)
+                        } else {
+                            Image(systemName: "person.fill")
+                                .foregroundStyle(Color.obInk)
+                        }
+                    }
+                    .frame(width: 44, height: 44)
+                    .padding(2)
+                    .overlay(Circle().stroke(HomePalette.accent, lineWidth: 2))
                 }
-                .onTapGesture(perform: onProfileTapped)
+                .accessibilityLabel("Profile")
             }
-            .padding(.trailing, 4)
         }
+        .padding(.horizontal, 10)
     }
 }

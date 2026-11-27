@@ -37,7 +37,7 @@ struct GiftSuggestionParsingTests {
     }
 
     @Test func toWishlistItemPopulatesAllFields() {
-        let idea = GiftIdea(name: "Keyboard", description: "Clicky", price: "$80", link: "https://ex.com/kb")
+        let idea = GiftSuggestionItem(name: "Keyboard", description: "Clicky", price: "$80", link: "https://ex.com/kb")
         let metadata = ProductMetadata(
             title: "Real Keyboard",
             productDescription: "From store",
@@ -54,7 +54,7 @@ struct GiftSuggestionParsingTests {
     }
 
     @Test func toWishlistItemCarriesLocalImageIdentity() {
-        let idea = GiftIdea(name: "Keyboard", description: "Clicky", price: "$80", link: "https://ex.com/kb")
+        let idea = GiftSuggestionItem(name: "Keyboard", description: "Clicky", price: "$80", link: "https://ex.com/kb")
         let localImage = UIImage(systemName: "gift")!
         let metadata = ProductMetadata(
             title: "Real Keyboard",

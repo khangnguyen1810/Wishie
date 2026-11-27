@@ -37,3 +37,4 @@ firestore-debug.log
 .claude/
 .superpowers/
 .worktrees/
+.archify/

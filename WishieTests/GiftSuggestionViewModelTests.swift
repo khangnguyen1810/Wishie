@@ -7,17 +7,17 @@ import UIKit
 struct GiftSuggestionViewModelTests {
 
     final class StubSuggestionService: GiftSuggestionServiceProtocol {
-        var ideas: [GiftIdea] = []
+        var ideas: [GiftSuggestionItem] = []
         var error: Error?
         private(set) var didCallFetch = false
         private(set) var receivedAge: Int?
         private(set) var receivedCountry: String?
-        func fetchIdeas(interests: [String], age: Int?, existingItemNames: [String], country: String?) async throws -> [GiftIdea] {
+        func fetchIdeas(interests: [String], age: Int?, existingItemNames: [String], country: String?) async throws -> Result<GiftSuggestionResponse, WishieError> {
             didCallFetch = true
             receivedAge = age
             receivedCountry = country
             if let error { throw error }
-            return ideas
+            return .success(GiftSuggestionResponse(suggestions: ideas))
         }
     }
 
@@ -26,9 +26,9 @@ struct GiftSuggestionViewModelTests {
         func resolveCountryName() async -> String? { name }
     }
 
-    func makeIdeas(_ count: Int) -> [GiftIdea] {
+    func makeIdeas(_ count: Int) -> [GiftSuggestionItem] {
         (0..<count).map { i in
-            GiftIdea(name: "Gift \(i)", description: "d", price: "$1", link: "https://ex.com/\(i)")
+            GiftSuggestionItem(name: "Gift \(i)", description: "d", price: "$1", link: "https://ex.com/\(i)")
         }
     }
 
